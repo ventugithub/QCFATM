@@ -1,0 +1,134 @@
+\documentclass{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+
+\title{Formalizing the ATM problem}
+\author{Bryan O'Gorman}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+These notes attempt to formalize the ATM problem: given a set of flights, schedule them in a way that minimizes cost.
+
+\section{Configuration space}
+
+At the highest level, the configuration space is a set of 4D trajectories, one for each flight.
+Even with relatively coarsely discretized spacetime, that space is infeasably large.
+Therefore we parameterize each trajectory by its deviations from the ideal, conflict-ignorant one.
+Such deviations are of two types: temporal and spatial. 
+A temporal deviation is simply a delayed start (typically on the order of up to 30 minutes). 
+We assume that within the time-scale of such delays, the ideal conflict-ignorant trajectory is time-independent.
+There are two types of spatial deviations: global and local.
+A global spatial deviation changes the entire trajectory.
+For example, one parameterization of global spatial deviations treats each trajectory as an arc in a plane perpendicular to the ground and considers smooth one-parameter curves to the projection of the trajectory onto the ground.
+A local deviation consists of a set of maneuvers that change relatively small parts of the spatial trajectory.
+Such maneuvers may introduce a delay, but, as with the delays due to temporal deviations, we assume that the subsequent trajectory is unaffected other than simply being delayed.
+
+Henceforth, we focus on origination delays (temporal deviations) and maneuvers (local spatial deviations), because they seem most conducive to quantum annealing.
+
+\section{Cost function}
+
+In reality, the cost function results from factors such as fuel, labor, time, etc.; here we treat it as a unitless quantity that appropriately weights these factors.
+Because we are interested in the relative costs of different configurations, we treat the cost of the configuration in which all flights are routed along their independently optimal trajectories, ignoring conflicts, and are exactly on time, as zero.
+We further assume that the total cost is the sum of two different types of costs:
+\begin{itemize}
+  \item for each flight $i$, the cost $c_i^{\mathrm{late}}$ of being late on arrival,
+  \item for each pair of flights $\{i, j\}$, the cost of avoiding all conflicts between them 
+$c^{\mathrm{avoid}}_{ij} = \sum_{k} c^{\mathrm{avoid}}_{ijk}$, 
+which we treat as the sum of the costs of actively avoiding all potential collisions (indexed by $k$).
+\end{itemize}
+The total cost therefore is 
+\begin{equation*}
+c = 
+\sum_i c^{\mathrm{late}}_i + 
+\sum_{ij} \sum_{k \in K_{ij}} c^{\mathrm{avoid}}_{ijk}
+,
+\end{equation*}
+where each contribution to the cost function depends (implicitly as written so far) on the configuration space.
+Henceforth, we simplify things by ignoring the direct cost of the local maneuvers. 
+However, they will still indirectly contribute to the cost function via their introduction of further delays.
+The quantity to minimized can then be written
+\begin{equation*}
+c = 
+\sum_i c^{\mathrm{late}}_i (D_i),
+\end{equation*}
+where $D_i = d_i + \sum_k d_{ik}$ is the delay of flight $i$ at its destination, which will be a function of its origination delay $d_i$ and delays $d_{ik}$ introduced by local maneuvers.
+
+Lastly, we simplify things further by assuming that all destination delays are equally important (which comes by necessity from the absence of information to the contrary), so that the quantity to minimize is simply the total delay of all flights:
+\begin{equation*}
+c = D = \sum_i D_i.
+\end{equation*}
+
+\section{Classical subroutines}
+We further assume the availability of the following two subroutines, whose resource requirements we regard as negligible:
+\begin{itemize}
+\item given a flight (its origin and destination, and properties of the plane), return the optimal route
+\item given two flight paths, return the set of conflicts
+\item given two flight paths and start times, and one of the conflicts from above, return the minimum cost of avoiding the conflict (and maybe the induced delay if we allow that)
+\end{itemize}
+
+\section{Assumptions made}
+\begin{itemize}
+\item For each flight, the optimal route is time-independent (both spatially and in duration) over the timescale of possible delays.
+For example, if the flight has no potential collisions, its lateness on arrival will exactly equal its departure delay.
+\item Actively avoiding a collision (rather than avoiding via departure delays) does not change the cost of actively avoiding other collions on the same flight path. In reality, one could reason, e.g. that the little bit of fuel used in each active collision avoidance could add up to a disastrously empty tank, but in general we would like the effect of active collision avoidances to be as litle as possible.
+Similarly, one could argue that the plane burns fuel while idling.
+\end{itemize}
+
+\section{Potentially helpful assumptions}
+\begin{itemize}
+\item All conflicts are pairwise. That is, when two planes have a potential conflict, there are no other planes nearby. 
+Furthermore, when this conflict is avoided, it does not create a conflict with another flight. 
+(This may be the most unreasonable assumption, e.g. near major airports.)
+\item Collisions are symmetric. That is the cost of avoiding them is a function only of the magnitude of the difference in delays of the two flights up until that point. For example, the cost of avoiding a collision between $i$ and $j$ is the same whether $i$ is delayed by $d$ or $j$ is.
+\item The lateness cost functions are non-decreasing; we might as well allow it to be negative for earliness, though that could be compiled away by pushing the range of available departure times earlier.
+\end{itemize}
+
+\section{Towards a solution}\footnote{
+It remains to be proven that this problem is hard, either in general or for realistic values of its parameters (e.g. cost functions).}
+
+\subsection{Sparse case}
+
+First, we describe a method for solving the ``sparse'' version of the problem. 
+By sparsity, we mean that all conflicts are between only two trajectories and that no other trajectories are nearby in spacetime, so that potential maneuvers for avoiding a conflict between two flights do not introduce additional conflicts with other flights.
+
+Let $D_{ik} = d_i + \sum_{k' < k} d_{ik}$ be the delay of flight $i$ when it reaches potential conflict $k$.
+
+The delays $(d_{ik}, d_{jk})$ introduced by maneuvering to avoid conflict $k$ between flights $i$ and $j$ is solely a function of the delays $(D_{ik}, D_{jk})$ of those flights up until the conflict and the maneuver $a_{ijk}$ chosen to avoid the conflict.
+In particular, the delay depends only on the difference of the delays $\Delta_{ijk} = D_{ik} - D_{jk}$.
+It's plausible to assume that it furthermore depends only on the magnitude of this difference $|D_{ik} - D_{jk}|$, though it's not yet clear that that will help.
+
+In general, the avoidance delays as a function of this difference $\Delta_{ijk}$ will be a function of the specific maneuvers chosen. 
+We assume, for a given $\Delta_{ijk}$ that there is a minimal delay of each flight $d_{ik}^*$ assuming that the other is unchanged, and that there is a concave ``delay frontier'' in the region $[0, d_{ik}^*] \times [0, d_{jk}^*]$ connecting $(d_{ik}^*, 0)$ and $(0, d_{jk}^*)$ that gives the possible delays $(d_{ik}, d_{jk})$. 
+We parameterize this curve by $a_{ijk} \in [0, 1]$.
+More generally, there is a ``delay surface'' when various values of $\Delta_{ijk}$ are considered.
+
+We can make several simplifying assumptions of doubtful validity.
+One is that we can pick some optimal $a_{ijk}$, so that the delays at collision $k$ depend only on $\Delta_{ijk}$.
+Another is to suitably parameterize the ``delay surface'' so that the cost function is simple enough to write a QUBO for.\footnote{TODO}
+
+In the case where maneuvers do not introduce any further delays, we have
+\begin{equation*}
+c = 
+\sum_i c^{\mathrm{late}}_i (d_i) + 
+\sum_{ij} \sum_{k \in K_{ij}} c^{\mathrm{avoid}}_{ijk} (d_i, d_j)
+=
+\sum_i c^{\mathrm{late}}_i (d_i) + 
+\sum_{ij} \sum_{k \in K_{ij}} c^{\mathrm{avoid}}_{ijk} (|d_i - d_j|),
+\end{equation*}
+where $K_{ij}$ is the set of possible collisions between $i$ and $j$.
+This form invites a nice QUBO: discretize the each $d_i$, have a bit for each discrete value, enforce that exactly one of them is set, and replace each function above with a sum over the discretized domain of the appropriate quadratic monomials.
+
+\subsection{Dense case}
+The sparsity condition assumed above is in general false, even when ignoring near-airport trajectories.
+
+The other extreme is the ``dense'' case, in which all flights are restricted to a ``highway'' as in Olga's thesis.
+An appropriate QUBO for that problem is relatively straightforward, and can be written explicitly if needed.
+
+\subsection{General case}
+General instances fall into neither of the above extremes.
+One potential solution is to use some sort of master-slave subproblem decomposition to combine solvers for each extremal case into a general solution.
+
+\end{document}
