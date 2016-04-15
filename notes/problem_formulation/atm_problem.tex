@@ -228,7 +228,7 @@ The arrival time of flight $i$ at conflict $k$ then reads
 \end{equation*}
 where the set of conflicts the flight $i$ was involved in before $k$ is given by
 \begin{equation*}
-    K^<_{ik} = \{\tilde k \in\{k^i_1, \dots, k^i_{N_i}\}, \tilde k < k\}
+    K^<_{ik} = \{\tilde k : \tilde k \in\{k^i_1, \dots, k^i_{N_i}\}, \tilde k < k\}
 \end{equation*}
 and $t_{ik}$ denotes the arrival time of flight $i$ at conflict $k$ in the absence of any delays, i.e. in the wind-optimal case.
 
@@ -252,7 +252,7 @@ The total delay is given by
 \end{equation}
 The term which ensures the uniqueness of the variables $d_{ik}$ reads
 \begin{equation}
-    D^\text{one} =  \sum_k \sum_{i \in I_k} \left( \sum_\beta d_{ik\beta} - 1\right)^2
+    D^\text{one}(\{d_{ik}\})  =  \sum_k \sum_{i \in I_k} \left( \sum_\beta d_{ik\beta} - 1\right)^2
 \end{equation}
 In order to penalize the a real conflict, we need to write down the difference in the conflict arrival times in terms of the binary variables.
 \begin{eqnarray*}
@@ -269,6 +269,6 @@ and in the antiparallel case \eqref{eqn:spatial_conflict_antiparallel} if
 \end{equation*}
 
 In order to penalize real conflicts, we could introduce $\Delta_k$ as a slack variable.
-However, due to the unbounded region this variable assumes to avoid a conflict, the number of Qubits would be very large.
+However, due to the unbounded region this variable assumes to avoid a conflict, the number of qubits would be very large.
 
 \end{document}
