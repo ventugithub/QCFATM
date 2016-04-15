@@ -2,9 +2,10 @@
 
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
+\usepackage{graphicx}  % needed for figures
 
 \title{Formalizing the ATM problem}
-\author{Bryan O'Gorman}
+\author{Bryan O'Gorman, Tobias Stollenwerk}
 \date{\today}
 
 \begin{document}
@@ -73,7 +74,7 @@ We further assume the availability of the following two subroutines, whose resou
 \begin{itemize}
 \item For each flight, the optimal route is time-independent (both spatially and in duration) over the timescale of possible delays.
 For example, if the flight has no potential collisions, its lateness on arrival will exactly equal its departure delay.
-\item Actively avoiding a collision (rather than avoiding via departure delays) does not change the cost of actively avoiding other collions on the same flight path. In reality, one could reason, e.g. that the little bit of fuel used in each active collision avoidance could add up to a disastrously empty tank, but in general we would like the effect of active collision avoidances to be as litle as possible.
+\item Actively avoiding a collision (rather than avoiding via departure delays) does not change the cost of actively avoiding other collisions on the same flight path. In reality, one could reason, e.g. that the little bit of fuel used in each active collision avoidance could add up to a disastrously empty tank, but in general we would like the effect of active collision avoidances to be as little as possible.
 Similarly, one could argue that the plane burns fuel while idling.
 \end{itemize}
 
@@ -130,5 +131,144 @@ An appropriate QUBO for that problem is relatively straightforward, and can be w
 \subsection{General case}
 General instances fall into neither of the above extremes.
 One potential solution is to use some sort of master-slave subproblem decomposition to combine solvers for each extremal case into a general solution.
+
+\section{Separating spatial and temporal conflicts}
+The flights are indexed by
+\begin{equation*}
+    i \in \{i, \dots, n\}
+\end{equation*}
+For each flight $i$, the wind-optimal trajectories are given as a sequence of 4-dimensional space-time points
+\begin{equation*}
+    \tau_i = \{p^i_1, \dots, p^i_{M_i}\}
+\end{equation*}
+with
+\begin{equation*}
+    p^i_j = (\mathbf{r}^i_j, t^i_j \Delta_t) = \left( \underbrace{x^i_j \Delta_\text{lat}, y^i_j \Delta_\text{lon}, z^i_j \Delta_v}_{=:\mathbf{r}^i_j}, t^i_j \Delta_t\right)
+\end{equation*}
+The sequence of points in space are given by
+\begin{equation*}
+    r_i = \{\mathbf{r}^i_1, \dots, \mathbf{r}^i_{M_i}\}
+\end{equation*}
+Conflicts may occur if multiple flight trajectories
+\begin{equation*}
+    \{\tau_i : i \in I_k \subseteq \{1, \dots, n\}\}
+\end{equation*}
+become to close to each other in time and space.
+In the following, we will reduce the multiple flights involved in a given conflict to pairwise conflicts.
+With this, a conflict always involves only two flights.
+
+\subsection{Spatial conflicts}
+Given the trajectories we can calculate all the spatial conflicts.
+The existence of a real conflict depends on the arrival time of both flights $i$ and $j$ at the conflict $k$, $T_{ik}$ and $T_{jk}$ (see figure \ref{fig:spatial_conflicts}). 
+The corresponding departure times from the conflict are denoted by 
+\begin{equation*}
+    T'_{ik} = \frac{L_k}{v_i} + T_{ik}
+\end{equation*}
+where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocity of flight $i$.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.3\linewidth]{pics/spatial_conflict_parallel.pdf}
+    \hspace{1cm}
+    \includegraphics[width=0.3\linewidth]{pics/spatial_conflict_anti_parallel.pdf}
+    \caption{Parallel and antiparallel spatial conflict}
+    \label{fig:spatial_conflicts}
+\end{figure}
+
+\begin{itemize}
+    \item {\bf Parallel conflict:}
+        A real conflict exists if the difference between the arrival times is smaller than threshold $\Delta_p$ which depends on the trajectories, in particular the speed and position of both flights.
+        \begin{equation*}
+            \bigl| \underbrace{T_{jk} - T_{ik}}_{\Delta_k} \bigr| < \Delta_p
+        \end{equation*}
+        with
+        \begin{equation*}
+            \Delta_p = \Delta_p(v_i, v_j, r_i, r_j)
+        \end{equation*}
+        This can also be written as
+        \begin{equation}  \label{eqn:spatial_conflict_parallel}
+            \Delta_p > \Delta_k > -\Delta_p 
+        \end{equation}
+        
+    \item {\bf Antiparallel conflict:}
+        A real conflict exists if 
+        \begin{equation*}
+            T'_{ik} - T_{jk} > \Delta^1_{ap}(v_i, v_j, r_i, r_j)
+        \end{equation*}
+        and
+        \begin{equation*}
+            T'_{jk} - T_{ik} > \Delta^2_{ap}(v_i, v_j, r_i, r_j)
+        \end{equation*}
+        Hence
+        \begin{eqnarray*}
+            \frac{L_k}{v_i} + \underbrace{T_{ik} - T_{jk}}_{-\Delta_k} > \Delta^1_{ap} \\
+            \frac{L_k}{v_j} + \underbrace{T_{jk} - T_{ik}}_{\Delta_k} > \Delta^1_{ap} 
+        \end{eqnarray*}
+        This yields
+        \begin{equation} \label{eqn:spatial_conflict_antiparallel}
+            \frac{L_k}{v_i} - \Delta^1_{ap} > \Delta_k > \Delta^2_{ap} - \frac{L_k}{v_j}
+        \end{equation}
+\end{itemize}
+
+\subsection{Calculation of the conflict arrival times}
+A classical precalculation gives us all spatial conflicts $k$, and therefore a mapping
+\begin{equation*}
+    k \mapsto \{i, j\} = I_k
+\end{equation*}
+We can get the spatial conflicts in which the flight $i$ is involved, ordered by their temporal appearance:
+\begin{equation*}
+    i \mapsto (k^i_1, \dots, k^i_{N_i})
+\end{equation*}
+We conflict avoiding maneuver delays the flight by a certain amount of time
+\begin{equation*}
+    d_{ik} \quad, \quad  k\in\{k^i_1, \dots, k^i_{N_i}\}
+\end{equation*}
+The arrival time of flight $i$ at conflict $k$ then reads
+\begin{equation*}
+    T_{ik} = t_{ik} + \sum_{p \in K^<_{ik}} d_{ip}
+\end{equation*}
+where the set of conflicts the flight $i$ was involved in before $k$ is given by
+\begin{equation*}
+    K^<_{ik} = \{\tilde k \in\{k^i_1, \dots, k^i_{N_i}\}, \tilde k < k\}
+\end{equation*}
+and $t_{ik}$ denotes the arrival time of flight $i$ at conflict $k$ in the absence of any delays, i.e. in the wind-optimal case.
+
+\section{Independent delay model}
+We assume, that the delays $d_{ik}$ are independent of each other. 
+This means at every conflict $k \in  \{k^i_1, \dots, k^i_{N_i}\}$ for a given flight $i$, we can introduce a delay $d_{ik}$ which is independent of the delays of the other flights $d_{jk}$ for $j\neq i$.
+Our goal is then to write down a cost function penalizes the total delay as well as the appearance of real conflicts (depending on the arrival times).
+The departure delays $d_i$ can be seen as the result of a conflict $k^i_0$ at departure which only involved the flight itself.
+\begin{equation*}
+    d_i \to d_{ik^i_0}
+\end{equation*}
+
+The variables we try to optimize are the delays $d_{ik}$.
+We bound and discretize the values they can assume by introducing binary variables $d_{ik\beta}\in\{0, 1\}$ :
+\begin{equation*}
+    d_{ik} = \Delta_d \sum_\beta \beta d_{ik\beta}
+\end{equation*}
+The total delay is given by
+\begin{equation}
+    D(\{d_{ik}\}) = \Delta_d \sum_k \sum_{i \in I_k} \sum_\beta \beta d_{ik\beta}
+\end{equation}
+The term which ensures the uniqueness of the variables $d_{ik}$ reads
+\begin{equation}
+    D^\text{one} =  \sum_k \sum_{i \in I_k} \left( \sum_\beta d_{ik\beta} - 1\right)^2
+\end{equation}
+In order to penalize the a real conflict, we need to write down the difference in the conflict arrival times in terms of the binary variables.
+\begin{eqnarray*}
+    \Delta_k &=& T_{ik} - T_{jk} \\
+             &=& t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\beta} \right)
+\end{eqnarray*}
+With \eqref{eqn:spatial_conflict_parallel} we have a real conflict in the parallel case if
+\begin{equation*}
+    \Delta_k \in [-\Delta_p, \Delta_p]
+\end{equation*}
+and in the antiparallel case \eqref{eqn:spatial_conflict_antiparallel} if
+\begin{equation*}
+    \Delta_k \in \left[\frac{L_k}{v_i} - \Delta^1_{ap}, \Delta^2_{ap} - \frac{L_k}{v_j}\right]
+\end{equation*}
+
+In order to penalize real conflicts, we could introduce $\Delta_k$ as a slack variable.
+However, due to the unbounded region this variable assumes to avoid a conflict, the number of Qubits would be very large.
 
 \end{document}
