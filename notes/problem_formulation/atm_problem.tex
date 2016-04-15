@@ -192,20 +192,20 @@ where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocit
     \item {\bf Antiparallel conflict:}
         A real conflict exists if 
         \begin{equation*}
-            T'_{ik} - T_{jk} > \Delta^1_{ap}(v_i, v_j, r_i, r_j)
+            T'_{ik} - T_{jk} < \Delta^1_{ap}(v_i, v_j, r_i, r_j)
         \end{equation*}
         and
         \begin{equation*}
-            T'_{jk} - T_{ik} > \Delta^2_{ap}(v_i, v_j, r_i, r_j)
+            T'_{jk} - T_{ik} < \Delta^2_{ap}(v_i, v_j, r_i, r_j)
         \end{equation*}
         Hence
         \begin{eqnarray*}
-            \frac{L_k}{v_i} + \underbrace{T_{ik} - T_{jk}}_{-\Delta_k} > \Delta^1_{ap} \\
-            \frac{L_k}{v_j} + \underbrace{T_{jk} - T_{ik}}_{\Delta_k} > \Delta^1_{ap} 
+            \frac{L_k}{v_i} + \underbrace{T_{ik} - T_{jk}}_{-\Delta_k} < \Delta^1_{ap} \\
+            \frac{L_k}{v_j} + \underbrace{T_{jk} - T_{ik}}_{\Delta_k} < \Delta^1_{ap} 
         \end{eqnarray*}
         This yields
         \begin{equation} \label{eqn:spatial_conflict_antiparallel}
-            \frac{L_k}{v_i} - \Delta^1_{ap} > \Delta_k > \Delta^2_{ap} - \frac{L_k}{v_j}
+            \frac{L_k}{v_i} - \Delta^1_{ap} < \Delta_k < \Delta^2_{ap} - \frac{L_k}{v_j}
         \end{equation}
 \end{itemize}
 
@@ -267,8 +267,5 @@ and in the antiparallel case \eqref{eqn:spatial_conflict_antiparallel} if
 \begin{equation*}
     \Delta_k \in \left[\frac{L_k}{v_i} - \Delta^1_{ap}, \Delta^2_{ap} - \frac{L_k}{v_j}\right]
 \end{equation*}
-
-In order to penalize real conflicts, we could introduce $\Delta_k$ as a slack variable.
-However, due to the unbounded region this variable assumes to avoid a conflict, the number of qubits would be very large.
 
 \end{document}
