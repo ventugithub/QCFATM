@@ -1,4 +1,4 @@
-personal_ws-1.1 en 27 
+personal_ws-1.1 en 29 
 jk
 ip
 QUBO
@@ -12,6 +12,8 @@ Qubits
 ap
 discretize
 monomials
+indices
+Bryan's
 infeasably
 Stollenwerk
 TODO

@@ -132,7 +132,7 @@ An appropriate QUBO for that problem is relatively straightforward, and can be w
 General instances fall into neither of the above extremes.
 One potential solution is to use some sort of master-slave subproblem decomposition to combine solvers for each extremal case into a general solution.
 
-\section{Separating spatial and temporal conflicts}
+\section{Conflict calculation}
 The flights are indexed by
 \begin{equation*}
     i \in \{i, \dots, n\}
@@ -151,20 +151,20 @@ The sequence of points in space are given by
 \end{equation*}
 Conflicts may occur if multiple flight trajectories
 \begin{equation*}
-    \{\tau_i : i \in I_k \subseteq \{1, \dots, n\}\}
+    \{\tau_i : i \in I \subseteq \{1, \dots, n\}\}
 \end{equation*}
 become to close to each other in time and space.
 In the following, we will reduce the multiple flights involved in a given conflict to pairwise conflicts.
 With this, a conflict always involves only two flights.
 
-\subsection{Spatial conflicts}
+\subsection{Potential conflicts}
 Given the trajectories we can calculate all the spatial conflicts.
-The existence of a real conflict depends on the arrival time of both flights $i$ and $j$ at the conflict $k$, $T_{ik}$ and $T_{jk}$ (see figure \ref{fig:spatial_conflicts}). 
-The corresponding departure times from the conflict are denoted by 
+The existence of a real conflict depends on the arrival time of both flights $i$ and $j$ at the spatial conflict $k$, $T_{ik}$ and $T_{jk}$ (see figure~\ref{fig:spatial_conflicts}). 
+The corresponding departure times from the spatial conflict are denoted by 
 \begin{equation*}
     T'_{ik} = \frac{L_k}{v_i} + T_{ik}
 \end{equation*}
-where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocity of flight $i$.
+where $L_k$ spatial length of the spatial conflict $k$ and $v_i$ is the constant velocity of flight $i$.
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=0.3\linewidth]{pics/spatial_conflict_parallel.pdf}
@@ -176,7 +176,7 @@ where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocit
 
 \begin{itemize}
     \item {\bf Parallel conflict:}
-        A real conflict exists if the difference between the arrival times is smaller than threshold $\Delta_p$ which depends on the trajectories, in particular the speed and position of both flights.
+        A real conflict exists if the difference between the arrival times is smaller than a threshold $\Delta_p$ which depends on the trajectories, in particular the speed and position of both flights.
         \begin{equation*}
             \bigl| \underbrace{T_{jk} - T_{ik}}_{\Delta_k} \bigr| < \Delta_p
         \end{equation*}
@@ -185,8 +185,8 @@ where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocit
             \Delta_p = \Delta_p(v_i, v_j, r_i, r_j)
         \end{equation*}
         This can also be written as
-        \begin{equation}  \label{eqn:spatial_conflict_parallel}
-            \Delta_p > \Delta_k > -\Delta_p 
+        \begin{equation}  \label{eqn:conflict_parallel}
+            -\Delta_p < \Delta_k < \Delta_p 
         \end{equation}
         
     \item {\bf Antiparallel conflict:}
@@ -204,23 +204,50 @@ where $L_k$ spatial length of the conflict $k$ and $v_i$ is the constant velocit
             \frac{L_k}{v_j} + \underbrace{T_{jk} - T_{ik}}_{\Delta_k} < \Delta^1_{ap} 
         \end{eqnarray*}
         This yields
-        \begin{equation} \label{eqn:spatial_conflict_antiparallel}
+        \begin{equation} \label{eqn:conflict_antiparallel}
             \frac{L_k}{v_i} - \Delta^1_{ap} < \Delta_k < \Delta^2_{ap} - \frac{L_k}{v_j}
         \end{equation}
 \end{itemize}
 
+Now, we introduce the notion of a \textit{potential} conflict.
+The arrival time $T_{ik}$ is given by the arrival time in the wind optimal case $t_{ik}$ plus the delay it picked up due to earlier conflict avoiding maneuvers or a departure delay $D_{ik}$. 
+\begin{equation*}
+    T_{ik} = t_{ik} + D_{ik} \quad \forall i, k
+\end{equation*}
+and the difference of the arrival time of the two flights $i$ and $j$ at spatial conflict $k$ is given by
+\begin{eqnarray*}
+    \Delta_k &=& T_{ik} - T_{jk} \\
+             &=& t_{ik} - t_{jk} + D_{ik} - D_{jk}
+\end{eqnarray*}
+The maximal value of $D_{ik}$, $\forall i, k$ is bounded from above by some $D^{\text{max}}$.
+Hence, $\Delta_k$ is bounded by
+\begin{equation} \label{eqn:potential_conflict}
+    (t_{ik} - t_{jk} - D^{\text{max}})< \; \Delta_k \; < (t_{ik} - t_{jk} + D^{\text{max}})
+\end{equation}
+Therefore, we identify a spatial conflict $k$ as a \textbf{potential conflict} if for a $\Delta_k$ which is bounded by \eqref{eqn:potential_conflict}, one of the inequalities \eqref{eqn:conflict_parallel} or \eqref{eqn:conflict_antiparallel} is fulfilled.
+
+From now on, all indices $k$ will denote potential conflicts.
+
 \subsection{Calculation of the conflict arrival times}
-A classical precalculation gives us all spatial conflicts $k$, and therefore a mapping
+A classical precalculation gives us all potential conflicts $k$, and therefore a mapping
 \begin{equation*}
     k \mapsto \{i, j\} = I_k
 \end{equation*}
-We can get the spatial conflicts in which the flight $i$ is involved, ordered by their temporal appearance:
+We can get the potential conflicts in which the flight $i$ is involved, ordered by their temporal appearance:
 \begin{equation*}
     i \mapsto (k^i_1, \dots, k^i_{N_i})
 \end{equation*}
-We conflict avoiding maneuver delays the flight by a certain amount of time
+A conflict avoiding maneuver delays the flight by a certain amount of time
 \begin{equation*}
     d_{ik} \quad, \quad  k\in\{k^i_1, \dots, k^i_{N_i}\}
+\end{equation*}
+The departure delays $d_i$ can be seen as the result of a conflict $k^i_0$ at departure which only involved the flight itself.
+\begin{equation*}
+    d_i \to d_{ik^i_0}
+\end{equation*}
+Therefore we have
+\begin{equation*}
+    d_{ik} \quad, \quad  k\in\{k^i_0, k^i_1, \dots, k^i_{N_i}\}
 \end{equation*}
 The arrival time of flight $i$ at conflict $k$ then reads
 \begin{equation*}
@@ -228,18 +255,15 @@ The arrival time of flight $i$ at conflict $k$ then reads
 \end{equation*}
 where the set of conflicts the flight $i$ was involved in before $k$ is given by
 \begin{equation*}
-    K^<_{ik} = \{\tilde k : \tilde k \in\{k^i_1, \dots, k^i_{N_i}\}, \tilde k < k\}
+    K^<_{ik} = \{\tilde k : \tilde k \in\{k^i_0, \dots, k^i_{N_i}\}, \tilde k < k\}
 \end{equation*}
-and $t_{ik}$ denotes the arrival time of flight $i$ at conflict $k$ in the absence of any delays, i.e. in the wind-optimal case.
+and $t_{ik}$ denotes the arrival time of flight $i$ at a potential conflict $k$ in the absence of any delays, i.e.\ in the wind-optimal case.
 
 \section{Independent delay model}
 We assume, that the delays $d_{ik}$ are independent of each other. 
-This means at every conflict $k \in  \{k^i_1, \dots, k^i_{N_i}\}$ for a given flight $i$, we can introduce a delay $d_{ik}$ which is independent of the delays of the other flights $d_{jk}$ for $j\neq i$.
-Our goal is then to write down a cost function penalizes the total delay as well as the appearance of real conflicts (depending on the arrival times).
-The departure delays $d_i$ can be seen as the result of a conflict $k^i_0$ at departure which only involved the flight itself.
-\begin{equation*}
-    d_i \to d_{ik^i_0}
-\end{equation*}
+This means at every conflict $k \in  \{k^i_0, \dots, k^i_{N_i}\}$ for a given flight $i$, we can introduce a delay $d_{ik}$ which is independent of the delays of the other flight $d_{jk}$ for $j\neq i$ involved in the potential conflict.
+This is in contrast to Bryan's model which couples both delays thought a \textit{delay frontier}.
+Our goal is to write down a cost function which penalizes the total delay as well as the appearance of real conflicts (depending on the arrival times).
 
 The variables we try to optimize are the delays $d_{ik}$.
 We bound and discretize the values they can assume by introducing binary variables $d_{ik\beta}\in\{0, 1\}$ :
@@ -247,25 +271,72 @@ We bound and discretize the values they can assume by introducing binary variabl
     d_{ik} = \Delta_d \sum_\beta \beta d_{ik\beta}
 \end{equation*}
 The total delay is given by
-\begin{equation}
+\begin{equation} \label{eqn:idm_cost_delay}
     D(\{d_{ik}\}) = \Delta_d \sum_k \sum_{i \in I_k} \sum_\beta \beta d_{ik\beta}
 \end{equation}
 The term which ensures the uniqueness of the variables $d_{ik}$ reads
-\begin{equation}
+\begin{equation} \label{eqn:idm_cost_delay_unique}
     D^\text{one}(\{d_{ik}\})  =  \sum_k \sum_{i \in I_k} \left( \sum_\beta d_{ik\beta} - 1\right)^2
 \end{equation}
 In order to penalize the a real conflict, we need to write down the difference in the conflict arrival times in terms of the binary variables.
-\begin{eqnarray*}
-    \Delta_k &=& T_{ik} - T_{jk} \\
-             &=& t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\beta} \right)
-\end{eqnarray*}
-With \eqref{eqn:spatial_conflict_parallel} we have a real conflict in the parallel case if
-\begin{equation*}
-    \Delta_k \in [-\Delta_p, \Delta_p]
+\begin{eqnarray}
+    \Delta_k &=& T_{ik} - T_{jk} \notag \\
+             &=& t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\gamma} \right) \label{eqn:idm_delay_difference}
+\end{eqnarray}
+%With \eqref{eqn:conflict_parallel} we have a real conflict in the parallel case if
+%\begin{equation*}
+    %\Delta_k \in [-\Delta_p, \Delta_p]
+%\end{equation*}
+%and in the antiparallel case \eqref{eqn:conflict_antiparallel} if
+%\begin{equation*}
+    %\Delta_k \in \left[\frac{L_k}{v_i} - \Delta^1_{ap}, \Delta^2_{ap} - \frac{L_k}{v_j}\right]
+%\end{equation*}
+According to \eqref{eqn:conflict_parallel}, \eqref{eqn:conflict_antiparallel} and \eqref{eqn:potential_conflict} a conflict is avoided if the following holds:
+\begin{equation*} \label{eqn:idm_slack_greater_parallel}
+    \Delta_p < \Delta_k < (t_{ik} - t_{jk} + D^{\text{max}})
 \end{equation*}
-and in the antiparallel case \eqref{eqn:spatial_conflict_antiparallel} if
+or
+\begin{equation*} \label{eqn:idm_slack_lesser_parallel}
+     (t_{ik} - t_{jk} - D^{\text{max}}) < \Delta_k < -\Delta_p
+\end{equation*}
+for a parallel conflict, and
+\begin{equation*} \label{eqn:idm_slack_greater_antiparallel}
+    \Delta^2_{ap} - \frac{L_k}{v_j} < \Delta_k < (t_{ik} - t_{jk} + D^{\text{max}})
+\end{equation*}
+or
+\begin{equation*} \label{eqn:idm_slack_lesser_antiparallel}
+     (t_{ik} - t_{jk} - D^{\text{max}}) < \Delta_k < \frac{L_k}{v_i} - \Delta^1_{ap}
+\end{equation*}
+for an antiparallel conflict.
+We introduce the following notation for covering both the above cases.
+\begin{equation*} \label{eqn:idm_slack_greater}
+    \Delta^+_\text{min} < \Delta_k < \Delta^+_\text{max}
+\end{equation*}
+\begin{equation*} \label{eqn:idm_slack_lesser}
+    \Delta^-_\text{min} < \Delta_k < \Delta^-_\text{max}
+\end{equation*}
+With this, we can introduce two slack variables
+\begin{equation} \label{eqn:idm_slack_greater}
+    y^+_k =  \Delta_k - \Delta^+_\text{min} \in [0, \Delta^+_\text{max} - \Delta^+_\text{min}]
+\end{equation}
+\begin{equation} \label{eqn:idm_slack_lesser}
+    y^-_k =  \Delta_k - \Delta^-_\text{min} \in [0, \Delta^-_\text{max} - \Delta^-_\text{min}]
+\end{equation}
+By writing these slack variables in terms of binary variables $y^\pm_{k\alpha}$, we get
+\begin{equation} \label{eqn:idm_slack_binary}
+    y^\pm_k = \Delta_{y\pm} \sum_\alpha \alpha y^\pm_{k\alpha}
+\end{equation}
+With \eqref{eqn:idm_delay_difference}, \eqref{eqn:idm_slack_lesser}, \eqref{eqn:idm_slack_greater} and \eqref{eqn:idm_slack_binary} the contributions to the cost function which ensures the above inequalities, reads
+\begin{equation} \label{eqn:idm_cost_conflict}
+    S(\{d_{ik}\})  = \sum_{\lambda \in \{+, -\}} \sum_k \left( t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\gamma} \right) - \Delta^\lambda_\text{min} - \Delta_{y\lambda} \sum_\alpha \alpha y^\lambda_{k\alpha} \right)^2
+\end{equation}
+The contribution ensuring the uniqueness of the slack variables reads
+\begin{equation} \label{eqn:idm_cost_conflict_unique}
+    S^\text{one}(\{d_{ik}\})  = \sum_{\lambda \in \{+, -\}} \sum_k \left( \sum_\alpha \alpha y^\lambda_{k\alpha} - 1 \right)^2
+\end{equation}
+The whole cost function is the sum of \eqref{eqn:idm_cost_delay}, \eqref{eqn:idm_cost_delay_unique}, \eqref{eqn:idm_cost_conflict} and \eqref{eqn:idm_cost_conflict_unique}
 \begin{equation*}
-    \Delta_k \in \left[\frac{L_k}{v_i} - \Delta^1_{ap}, \Delta^2_{ap} - \frac{L_k}{v_j}\right]
+    C(\{d_{ik}\})  = D(\{d_{ik}\}) + D^\text{one}(\{d_{ik}\}) + S(\{d_{ik}\}) + S^\text{one}(\{d_{ik}\})
 \end{equation*}
 
 \end{document}
