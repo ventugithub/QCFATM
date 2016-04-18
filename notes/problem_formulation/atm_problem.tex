@@ -281,7 +281,7 @@ The term which ensures the uniqueness of the variables $d_{ik}$ reads
 In order to penalize the a real conflict, we need to write down the difference in the conflict arrival times in terms of the binary variables.
 \begin{eqnarray}
     \Delta_k &=& T_{ik} - T_{jk} \notag \\
-             &=& t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\gamma} \right) \label{eqn:idm_delay_difference}
+             &=& t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{jk}} \gamma d_{jq\gamma} \right) \label{eqn:idm_delay_difference}
 \end{eqnarray}
 %With \eqref{eqn:conflict_parallel} we have a real conflict in the parallel case if
 %\begin{equation*}
@@ -328,7 +328,7 @@ By writing these slack variables in terms of binary variables $y^\pm_{k\alpha}$,
 \end{equation}
 With \eqref{eqn:idm_delay_difference}, \eqref{eqn:idm_slack_lesser}, \eqref{eqn:idm_slack_greater} and \eqref{eqn:idm_slack_binary} the contributions to the cost function which ensures the above inequalities, reads
 \begin{equation} \label{eqn:idm_cost_conflict}
-    S(\{d_{ik}\})  = \sum_{\lambda \in \{+, -\}} \sum_k \left( t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{ik}} \gamma d_{iq\gamma} \right) - \Delta^\lambda_\text{min} - \Delta_{y\lambda} \sum_\alpha \alpha y^\lambda_{k\alpha} \right)^2
+    S(\{d_{ik}\})  = \sum_{\lambda \in \{+, -\}} \sum_{\substack{k\\i\in I_k}} \left( t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{jk}} \gamma d_{jq\gamma} \right) - \Delta^\lambda_\text{min} - \Delta_{y\lambda} \sum_\alpha \alpha y^\lambda_{k\alpha} \right)^2
 \end{equation}
 The contribution ensuring the uniqueness of the slack variables reads
 \begin{equation} \label{eqn:idm_cost_conflict_unique}
