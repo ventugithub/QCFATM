@@ -259,7 +259,8 @@ where the set of conflicts the flight $i$ was involved in before $k$ is given by
 \end{equation*}
 and $t_{ik}$ denotes the arrival time of flight $i$ at a potential conflict $k$ in the absence of any delays, i.e.\ in the wind-optimal case.
 
-\section{Independent delay model}
+\section{Models}
+\subsection{Independent delay model}
 We assume, that the delays $d_{ik}$ are independent of each other. 
 This means at every conflict $k \in  \{k^i_0, \dots, k^i_{N_i}\}$ for a given flight $i$, we can introduce a delay $d_{ik}$ which is independent of the delays of the other flight $d_{jk}$ for $j\neq i$ involved in the potential conflict.
 This is in contrast to Bryan's model which couples both delays thought a \textit{delay frontier}.
@@ -336,7 +337,59 @@ The contribution ensuring the uniqueness of the slack variables reads
 \end{equation}
 The whole cost function is the sum of \eqref{eqn:idm_cost_delay}, \eqref{eqn:idm_cost_delay_unique}, \eqref{eqn:idm_cost_conflict} and \eqref{eqn:idm_cost_conflict_unique}
 \begin{equation*}
-    C(\{d_{ik}\})  = D(\{d_{ik}\}) + D^\text{one}(\{d_{ik}\}) + S(\{d_{ik}\}) + S^\text{one}(\{d_{ik}\})
+    C_\text{IDM}(\{d_{ik}\})  = D(\{d_{ik}\}) + D^\text{one}(\{d_{ik}\}) + S(\{d_{ik}\}) + S^\text{one}(\{d_{ik}\})
 \end{equation*}
+
+\subsection{Delay Frontier Model}
+This is a Bryan's model written down in more detail.
+Here, the delays are the result of a conflict avoiding maneuver.
+The delays of the involved flights are a function of the difference in arrival times $\Delta_k$ and a maneuver parameter $a_k$
+\begin{equation} \label{eqn:dfm_delay_frontier}
+    d_{lk} = d_l(\Delta_k, a_k) \quad l \in I_k
+\end{equation}
+where 
+\begin{equation*}
+    a_k = \Delta_a \sum_\beta \beta a_{k\beta} \in [0, 1]
+\end{equation*}
+and
+\begin{equation*}
+    \Delta_k = \tilde \Delta \sum_\alpha \alpha \Delta_{k\alpha} \quad \in [\Delta^\lambda_\text{min}, \Delta^\lambda_\text{max}], \quad \lambda \in \{+, -\}
+\end{equation*}
+The form of this function has to be determined.
+After discretizing its arguments, we can write
+\begin{equation*}
+    d_{lk} = d_l(\alpha, \beta) \quad l \in I_k
+\end{equation*}
+Therefore, we only need to store the return values of the above function for the finite set of arguments, i.e.\ all combinations of $\alpha$ and $\beta$.
+To ensure uniqueness, we add the cost function term
+\begin{equation} \label{eqn:dfm_cost_maneuver_unique}
+    C^\text{one}(\{d_{ik}\})  =  \sum_k \left( \sum_\beta a_{k\beta} - 1\right)^2 + \sum_k \left( \sum_\alpha \Delta_{k\alpha} - 1\right)^2
+\end{equation}
+In order for \eqref{eqn:dfm_delay_frontier} to be fulfilled for the optimal solution of the problem, we add the following term to the cost function
+\begin{equation} \label{eqn:dfm_cost_delay_frontier}
+    S^d(\{d_{ik}\})  = \sum_{\substack{k\\l\in I_k}} \left(\Delta_d \sum_\beta \beta d_{lk\beta} - \sum_{\alpha, \beta} d_l(\alpha, \beta) \Delta_{k\alpha} a_{k \beta}\right)^2
+\end{equation}
+In the same way, we make \eqref{eqn:idm_delay_difference} hold, by adding 
+\begin{equation} \label{eqn:dfm_cost_delay_difference_relation}
+    S^\Delta(\{d_{ik}\})  = \sum_{\substack{k\\ \{i, j\}\in I_k}} \left( t_{ik} - t_{jk} + \Delta_d \left( \sum_\beta \sum_{p\in K^<_{ik}} \beta d_{ip\beta}  - \sum_\gamma \sum_{q\in K^<_{jk}} \gamma d_{jq\gamma} \right) - \tilde \Delta \sum_{\alpha} \alpha \Delta_{k\alpha}\right)^2
+\end{equation}
+By combining \eqref{eqn:idm_cost_delay}, \eqref{eqn:idm_cost_delay_unique}, \eqref{eqn:dfm_cost_maneuver_unique}, \eqref{eqn:dfm_cost_delay_frontier} and \eqref{eqn:dfm_cost_delay_difference_relation}, the cost function for the delay frontier model reads
+\begin{equation*}
+    C_\text{DFM}(\{d_{ik}\})  = D(\{d_{ik}\}) + D^\text{one}(\{d_{ik}\}) + C^\text{one}(\{d_{ik}\}) + S^d(\{d_{ik}\}) + S^\Delta(\{d_{ik}\})
+\end{equation*}
+\subsubsection{Variations of the Delay frontier model}
+We can reduce the number of variables by
+\begin{enumerate}
+    \item Both flights will always \textit{split the delay}: Set $a_k$ to a fixed value inside $[0, 1]$, presumably $a_k = 0.5$. This would eliminate all variables $a_{k\beta}$.
+    \item One flight makes a detour, the other remains on the wind-optimal route: Reduce the possible values values of $a_k$ to either $0$ or $1$. Hence $a_k$ itself becomes a binary variable.
+\end{enumerate}
+
+
+\subsection{Reduction of variables}
+Possible measures to reduce the number of variables in the above models
+\begin{itemize}
+    \item Use binary representation instead of unary representation for all variables
+    \item Make the maximal delay dependent on the conflict $D^\text{max} \to D^\text{max}_k$ since the maximal delay will depend on the specifics of the conflict, like velocity and spatial path.
+\end{itemize}
 
 \end{document}

@@ -1,6 +1,7 @@
-personal_ws-1.1 en 30 
+personal_ws-1.1 en 35 
 jk
 ip
+IDM
 QUBO
 iq
 avoidances
@@ -9,7 +10,9 @@ parameterization
 jq
 spacetime
 unitless
+lk
 Qubits
+discretizing
 ap
 discretize
 monomials
@@ -26,6 +29,8 @@ subproblem
 antiparallel
 O'Gorman
 extremal
+DFM
 ij
 ik
 parameterize
+unary
