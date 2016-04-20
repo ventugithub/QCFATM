@@ -94,7 +94,7 @@ Furthermore, when this conflict is avoided, it does not create a conflict with a
 \section[Towards a solution] {Towards a solution\footnote{
 It remains to be proven that this problem is hard, either in general or for realistic values of its parameters, e.g. cost functions.}}
 
-Let $D_{ik} = d_i + \sum_{k' < k} d_{ik}$ be the delay of flight $i$ when it reaches potential conflict $k$, and $a_k$ be some parameterization of the maneuvers chosen for conflict $k$.
+Let $D_{ik} = d_i + \sum_{k' < k} d_{ik}$ be the delay of flight $i$ when it reaches potential conflict $k$, and $\mathbf a_k$ be some parameterization of the maneuvers chosen for conflict $k$.
 Then the general cost function is, with all dependencies explicit,
 \begin{equation*}
 D(\mathbf d, \mathbf a) = \sum_i D_i(\mathbf d, \mathbf a)
@@ -114,17 +114,16 @@ In particular, the delay depends only on the difference of the delays $\Delta_{k
 It's plausible to assume that it furthermore depends only on the magnitude of this difference $|D_{ik} - D_{jk}|$, though it's not yet clear that that will help.
 
 In general, the avoidance delays as a function of this difference $\Delta_{k}$ will be a function of the specific maneuvers chosen. 
-For a given $\Delta_{k}$ that there is a minimal delay of each flight $d_{ik}^*$ assuming that the other is unchanged, and there is (presumably) a concave ``delay frontier'' in the region $[0, d_{ik}^*] \times [0, d_{jk}^*]$ connecting $(d_{ik}^*, 0)$ and $(0, d_{jk}^*)$ that gives the possible delays $(d_{ik}, d_{jk})$. 
-We parameterize this curve by $a_{k} \in [0, 1]$.
-More generally, there is a ``delay surface'' when various values of $\Delta_{k}$ are considered.
-
 The most general cost function in the sparse case is 
 \begin{equation*}
 D(\mathbf d, \mathbf a) 
 =
-\sum_i \left(d_i + \sum_k d_{ik} (D_{ik} - D_{jk}, a_k)\right).
+\sum_i \left(d_i + \sum_k d_{ik} (D_{ik} - D_{jk}, \mathbf a_k)\right).
 \end{equation*}
+Three special cases are as follows. 
 
+\noindent
+\textbf{No delay}
 In the (overly simplistic) case where maneuvers do not introduce any further delays, we have simply
 \begin{equation*}
 D = 
@@ -141,7 +140,21 @@ For the assumption that maneuvers do not introduce further delays to make any se
 Of course, we define $d_{ik}$ as piece-wise infinite for consistency with the rest of these notes, but in practice this would be implemented as a hard constraint.
 (Interestingly, this notational device has the morose interpretation that if the flights do collide, the further delay introduced is indeed infinite.)
 
-Both of the above forms invite straightforward QUBO formulations.
+\noindent 
+\textbf{Independent delays}
+There are no spatial maneuvers, but each flight $i$ is allowed to slow down by some delay $d_{ik}$ before conflict $k$ (and after the its previous one).
+In the above formalism, this is equivalent to $\mathbf a_k = (d_{ik}, d_{jk})$.
+In this case, there is no need for $\left(d_i\right)_{i=1}^n$ because for each flight the origination delay $d_i$ can just be subsumed into the delay $d_{ik}$ of the first conflict.
+Each potential conflict $k$ is an actual conflict when the difference between the total delays of the constituent flights are in some range $\left[\Delta_k^{\mathrm{min}}, \Delta_k^{\mathrm{max}}\right]$.
+
+\noindent 
+\textbf{Delay frontier}
+For a given $\Delta_{k}$ that there is a minimal delay of each flight $d_{ik}^*$ assuming that the other is unchanged, and there is (presumably) a concave ``delay frontier'' in the region $[0, d_{ik}^*] \times [0, d_{jk}^*]$ connecting $(d_{ik}^*, 0)$ and $(0, d_{jk}^*)$ that gives the possible delays $(d_{ik}, d_{jk})$. 
+We parameterize this curve by the scalar $\mathbf a_k = a_{k} \in [0, 1]$.
+More generally, there is a ``delay surface'' when various values of $\Delta_{k}$ are considered.
+Discretizing $a_k$ into only two values $\{0, 1\}$ is equivalent to requiring that exactly one flight maneuvers around the other, whose trajectory remains unchanged.
+
+All of the above forms invite straightforward QUBO formulations.
 Discretize and introduce bits for each discrete value for the variables $d_i$, $d_{ik}$, $\Delta_k = D_{ik} - D_{jk}$, and $a_k$:
 \begin{equation*}
     C = D + x C^{\mathrm{one}} + y C^{\mathrm{equal}},
@@ -161,7 +174,7 @@ C^{\mathrm{one}}
 +
 \sum_{ik} \left(\sum_{\beta} d_{ik\beta} - 1\right)^2
 +
-\sum_{ik} \left(\sum_{\gamma} \Delta_{ik\gamma} - 1\right)^2
+\sum_{k} \left(\sum_{\gamma} \Delta_{k\gamma} - 1\right)^2
 +
 \sum_{k} \left(\sum_{\delta} a_{k\delta}- 1\right)^2
 \end{equation*}
@@ -179,12 +192,13 @@ C^{\mathrm{equal}}
 &\hphantom{=,}
 \sum_{ik} \left[
     \left(\sum_{\beta} \beta d_{ik\beta}\right) - 
-\left(\sum_{\gamma \delta} d_{ik} (\gamma, \delta) \gamma_{k\gamma} a_{k\delta}\right)\right]^2
+\left(\sum_{\gamma \delta} d_{ik} (\gamma, \delta) \Delta_{k\gamma} a_{k\delta}\right)\right]^2
 \end{align*}
 is the penalty function ensuring that $\Delta_k = D_{ik} - D_{jk}$ and $d_{ik} = d_{ik}(\Delta_k, a_k)$, 
 the Greek indices represent the discrete values that the corresponding quantities can assume, and $x$ and $y$ are penalty weights.\footnote{In practice we could have varying penalty weights for the various penalties.}
 
 We could make a further approximation and for each conflict pick some optimal-in-expectation $a_k$, thereby removing that variable from the formulation.
+Alternatively, we could allow the delays $(d_{ik}, d_{jk})$ to take on any value at or beyond the delay frontier (i.e. somewhere in between the independent delays and delay frontier cases).
 We could also suitably parameterize the ``delay surface'' so that the cost function could be written in a functional form.
 
 \subsection{Dense case}
