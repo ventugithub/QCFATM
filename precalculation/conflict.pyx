@@ -64,15 +64,18 @@ cdef getCoarsePointConflict(vector[vector[vector[vector[vector[float]]]]] & coar
     cdef int i
     cdef int j
     cdef int k
-    conflicts = []
+    cdef vector[vector[int]] conflicts
+    conflicts.resize(3)
     for i in rangeI:
         for j in rangeJ:
             for k in rangeK:
                 if coarseTraj[i][j][k][0].size() != 0:
-                    conflicts.append((i, j, k))
+                    conflicts[0].push_back(i)
+                    conflicts[1].push_back(j)
+                    conflicts[2].push_back(k)
     return conflicts
 
-cdef getPointConflict(float lat1, float lon1, float time1, float lat2, float lon2, float time2, float spaceThreshold=55.56, float timeThreshold=60.0, earthRadius=6000):
+cdef getPointConflict(float lat1, float lon1, float time1, float lat2, float lon2, float time2, float spaceThreshold=55.56, float timeThreshold=60.0, float earthRadius=6000):
     """ Given two trajectory points (lat1, lon1, time1) and (lat2, lon2, time2)
     calculate if there is a conflict
 
@@ -183,6 +186,7 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
     cdef float lat2
     cdef float lon2
     cdef float time2
+    cdef vector[vector[int]] conflicts
 
     #########################################################
     ##### prepare coarse trajectory grid container ##########
@@ -256,7 +260,7 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                 # current coarse grid cell (I, J, K) which contain
                 # trajectory point as a list of 3-tuples (i, j, k)
                 conflicts = getCoarsePointConflict(coarseTraj, I, J, K)
-                if conflicts:
+                if conflicts[0].size() != 0:
                     # loop over all trajectory point in the current coarse grid cell
                     for l in range(coarseTraj[I][J][K][0].size()):
                         flight1 = int (coarseTraj[I][J][K][0][l])
@@ -264,10 +268,10 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                         lon1 = coarseTraj[I][J][K][3][l]
                         time1 = coarseTraj[I][J][K][4][l]
                         # loop over all trajectory points in the neigboring coarse gri cells
-                        for con in conflicts:
-                            Ip = con[0]
-                            Jp = con[1]
-                            Kp = con[2]
+                        for i in range(conflicts[0].size()):
+                            Ip = conflicts[0][i]
+                            Jp = conflicts[1][i]
+                            Kp = conflicts[2][i]
                             for m in range(coarseTraj[Ip][Jp][Kp][0].size()):
                                 flight2 = int(coarseTraj[Ip][Jp][Kp][0][m])
                                 lat2 = coarseTraj[Ip][Jp][Kp][2][m]
