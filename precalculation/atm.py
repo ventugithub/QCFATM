@@ -8,7 +8,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')
     parser.add_argument('-i', '--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data')
-    parser.add_argument('-o', '--output', default='conflicts', help='output file name without suffix')
+    parser.add_argument('-o', '--output', help='output file name without suffix')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict')
     parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict')
     parser.add_argument('--use_snapshots', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
