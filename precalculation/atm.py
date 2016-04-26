@@ -8,10 +8,10 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')
     parser.add_argument('-i', '--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data')
-    parser.add_argument('-o', '--output', default='pointConflicts.dat', help='output file')
+    parser.add_argument('-o', '--output', default='conflicts', help='output file name without suffix')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict')
     parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict')
-    parser.add_argument('--overwrite', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
+    parser.add_argument('--use_snapshots', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
     args = parser.parse_args()
 
     # nautic mile in kilometers
@@ -24,9 +24,12 @@ def main():
     mintime = args.mintime
 
     inputDataFile = args.input
-    filename = inputDataFile + ".h5"
+    filename = inputDataFile
+    if args.output:
+        filename = args.output
+    trajectoryFile = filename + ".csv"
     trajectories = None
-    if not os.path.exists(filename) or args.overwrite:
+    if not os.path.exists(trajectoryFile) or not args.use_snapshots:
         print "Read in trajectories ..."
         trajectories = pd.read_csv(inputDataFile,
                                    delimiter="\t",
@@ -39,13 +42,15 @@ def main():
         trajectories['flightIndex'] = trajectories['flight'].map(lambda x: np.where(flightNames == x)[0][0])
         # set consecutive flight index as dataset index
         trajectories = trajectories.set_index('flightIndex')
-        trajectories.to_hdf(filename, 'trajectories', mode='w')
+        trajectories.to_csv(trajectoryFile, mode='w')
     else:
         print "read in trajectories ..."
-        trajectories = pd.read_hdf(filename, 'trajectories')
+        trajectories = pd.read_csv(trajectoryFile)
 
     # calulate point conflicts
-    conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, args.output, mindistance, mintime)
+    pointConflictFile = filename + ".pointConflict.csv"
+    if not os.path.exists(pointConflictFile) or not args.use_snapshots:
+        conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, pointConflictFile, mindistance, mintime)
 
 if __name__ == "__main__":
         main()
