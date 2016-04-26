@@ -149,34 +149,34 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
     # maximal time value
     cdef float timeMax = times.max()
     # number of grid points in latitude direction
-    cdef int Nlat = int((latMax - latMin) / deltaLat) + 1
+    cdef unsigned int Nlat = int((latMax - latMin) / deltaLat) + 1
     # number of grid points in longitude direction
-    cdef int Nlon = int((lonMax - lonMin) / deltaLon) + 1
+    cdef unsigned int Nlon = int((lonMax - lonMin) / deltaLon) + 1
     # number of grid points in time
-    cdef int Ntime = int((timeMax - timeMin) / deltaTime) + 1
+    cdef unsigned int Ntime = int((timeMax - timeMin) / deltaTime) + 1
     # number of trajectory points
-    cdef int N = len(flightIndices)
+    cdef unsigned int N = len(flightIndices)
 
     # cython typed variable definitions (for speed)
-    cdef int i
-    cdef int n = 0
-    cdef int m = 0
-    cdef int j
-    cdef int l
-    cdef int k
-    cdef int lmin
-    cdef int lmax
-    cdef int kmin
-    cdef int kmax
-    cdef int c = 0
-    cdef int flight1
-    cdef int flight2
-    cdef int I
-    cdef int J
-    cdef int K
-    cdef int Ip
-    cdef int Jp
-    cdef int Kp
+    cdef unsigned int i
+    cdef unsigned int n = 0
+    cdef unsigned int m = 0
+    cdef unsigned int j
+    cdef unsigned int l
+    cdef unsigned int k
+    cdef unsigned int lmin
+    cdef unsigned int lmax
+    cdef unsigned int kmin
+    cdef unsigned int kmax
+    cdef unsigned int c = 0
+    cdef unsigned int flight1
+    cdef unsigned int flight2
+    cdef unsigned int I
+    cdef unsigned int J
+    cdef unsigned int K
+    cdef unsigned int Ip
+    cdef unsigned int Jp
+    cdef unsigned int Kp
     cdef float lat1
     cdef float lon1
     cdef float time1
@@ -258,7 +258,7 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                 conflicts = getCoarsePointConflict(coarseTraj, I, J, K)
                 if conflicts:
                     # loop over all trajectory point in the current coarse grid cell
-                    for l in range(int(coarseTraj[I][J][K][0].size())):
+                    for l in range(coarseTraj[I][J][K][0].size()):
                         flight1 = int (coarseTraj[I][J][K][0][l])
                         lat1 = coarseTraj[I][J][K][2][l]
                         lon1 = coarseTraj[I][J][K][3][l]
