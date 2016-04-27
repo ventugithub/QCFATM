@@ -50,7 +50,10 @@ def main():
     # calulate point conflicts
     pointConflictFile = filename + ".pointConflict.csv"
     if not os.path.exists(pointConflictFile) or not args.use_snapshots:
-        conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, pointConflictFile, mindistance, mintime)
+        pointConflicts = conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, pointConflictFile, mindistance, mintime)
+    else:
+        pointConflicts = pd.read_csv(pointConflictFile)
+    print pointConflicts.index.max(), " point conflicts detected"
 
 if __name__ == "__main__":
-        main()
+    main()

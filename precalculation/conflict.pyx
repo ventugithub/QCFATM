@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import cython
 import math
 from libc.math cimport sin, cos, acos, fabs
@@ -239,8 +240,15 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
     ##################################################
     ### calculate point conflicts ####################
     ##################################################
-    f = open(pointConflictFile, 'w')
-    f.write('# conflictIndex, flightIndex1, flightIndex2, lat1, lon1, time1, lat2, lon2, time2\n')
+    cdef vector[int] pcIndex
+    cdef vector[int] pcFlight1
+    cdef vector[int] pcFlight2
+    cdef vector[float] pcLat1
+    cdef vector[float] pcLon1
+    cdef vector[float] pcTime1
+    cdef vector[float] pcLat2
+    cdef vector[float] pcLon2
+    cdef vector[float] pcTime2
     # conflict number
     c = 0
     # progress bar
@@ -281,7 +289,29 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                                 if flight1 != flight2:
                                     isConflict = getPointConflict(lat1, lon1, time1, lat2, lon2, time2, spaceThreshold, temporalThreshold, earthRadius)
                                     if isConflict:
-                                        f.write('%i, %i, %i, %f, %f, %f, %f, %f, %f\n' % (c, coarseTraj[I][J][K][0][l], coarseTraj[Ip][Jp][Kp][0][m], lat1, lon1, time1, lat2, lon2, time2))
+                                        pcIndex.push_back(c)
+                                        pcFlight1.push_back(flight1)
+                                        pcFlight2.push_back(flight2)
+                                        pcLat1.push_back(lat1)
+                                        pcLon1.push_back(lon1)
+                                        pcTime1.push_back(time1)
+                                        pcLat2.push_back(lat2)
+                                        pcLon2.push_back(lon2)
+                                        pcTime2.push_back(time2)
                                         c = c + 1
     pbar.finish()
+    np.array(pcIndex)
+    pointConflicts = pd.DataFrame({'conflictIndex': np.array(pcIndex),
+                                   'flight1': np.array(pcFlight1),
+                                   'flight2': np.array(pcFlight2),
+                                   'lat1': np.array(pcLat1),
+                                   'lon1': np.array(pcLon1),
+                                   'time1': np.array(pcTime1),
+                                   'lat2': np.array(pcLat2),
+                                   'lon2': np.array(pcLon2),
+                                   'time2': np.array(pcTime2)
+                                   })
+    pointConflicts = pointConflicts.set_index('conflictIndex')
+    pointConflicts.to_csv(pointConflictFile, mode='w')
     print "Point conflict data written to", pointConflictFile
+    return pointConflicts
