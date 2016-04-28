@@ -312,6 +312,12 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                                    'time2': np.array(pcTime2)
                                    })
     pointConflicts = pointConflicts.set_index('conflictIndex')
+    # remove duplicates
+    pointConflictsSwap = pointConflicts.copy()
+    pointConflictsSwap.columns=['flight2', 'flight1', 'lat2', 'lat1', 'lon2', 'lon1', 'time2', 'time1']
+    pointConflicts = pd.concat([pointConflicts, pointConflictsSwap])
+    pointConflicts.drop_duplicates(inplace=True)
+    # save to csv file
     pointConflicts.to_csv(pointConflictFile, mode='w')
     print "Point conflict data written to", pointConflictFile
     return pointConflicts
