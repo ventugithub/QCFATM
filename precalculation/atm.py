@@ -53,7 +53,7 @@ def main():
         pointConflicts = conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, pointConflictFile, mindistance, mintime)
     else:
         pointConflicts = pd.read_csv(pointConflictFile)
-    print pointConflicts.index.max(), " point conflicts detected"
+    print pointConflicts.shape[0], "point conflicts detected"
 
 if __name__ == "__main__":
     main()
