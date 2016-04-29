@@ -48,12 +48,31 @@ def main():
         trajectories = pd.read_csv(trajectoryFile)
 
     # calulate point conflicts
-    pointConflictFile = filename + ".pointConflict.csv"
-    if not os.path.exists(pointConflictFile) or not args.use_snapshots:
-        pointConflicts = conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, pointConflictFile, mindistance, mintime)
+    rawPointConflictFile = filename + ".rawRawPointConflict.csv"
+    if not os.path.exists(rawPointConflictFile) or not args.use_snapshots:
+        rawPointConflicts = conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, mindistance, mintime)
+        # save to csv file
+        rawPointConflicts.to_csv(rawPointConflictFile, mode='w')
+        print "Point conflict data written to", rawPointConflictFile
     else:
-        pointConflicts = pd.read_csv(pointConflictFile)
-    print pointConflicts.shape[0], "point conflicts detected"
+        rawPointConflicts = pd.read_csv(rawPointConflictFile, index_col='conflictIndex')
+    print rawPointConflicts.shape[0], "raw point conflicts detected"
+
+    # calulate point conflicts
+    print "parse conflicts ..."
+    pointConflictFile = filename + ".pointConflicts.csv"
+    parallelConflictFile = filename + ".parallelConflicts.csv"
+    if not os.path.exists(pointConflictFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+        pointConflicts, parallelConflicts = conflict.parsePointConflicts(rawPointConflicts, deltaT=2)
+        pointConflicts.to_csv(pointConflictFile, mode='w')
+        print "Point conflict data written to", pointConflictFile
+        parallelConflicts.to_csv(parallelConflictFile, mode='w')
+        print "Parallel conflict data written to", parallelConflictFile
+    else:
+        pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+        parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
+    print pointConflicts.shape[0], "point conflicts identified"
+    print len(parallelConflicts.index.unique()), "parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
 if __name__ == "__main__":
     main()

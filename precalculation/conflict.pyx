@@ -59,9 +59,9 @@ cdef getCoarsePointConflict(vector[vector[vector[vector[vector[float]]]]] & coar
     J: coarse grid index in longitude direction
     K: coarse grid index in time direction
     """
-    rangeI = np.array((I - 1, I, I + 1), dtype=int)
-    rangeJ = np.array((J - 1, J, J + 1), dtype=int)
-    rangeK = np.array((K - 1, K, K + 1), dtype=int)
+    rangeI = np.array((I, I + 1), dtype=int)
+    rangeJ = np.array((J, J + 1), dtype=int)
+    rangeK = np.array((K, K + 1), dtype=int)
     cdef int i
     cdef int j
     cdef int k
@@ -103,7 +103,7 @@ cdef getPointConflict(float lat1, float lon1, float time1, float lat2, float lon
     else:
         return False
 
-def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistance, mintime):
+def detectConflicts(flightIndices, times, lat, lon, mindistance, mintime):
     """ Detect conflicts
 
     Arguments:
@@ -111,7 +111,6 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
     times: array of trajectory times (same length as flightIndices)
     lat: array of trajectory latitudes (same length as flightIndices)
     lon: array of trajectory longitudes (same length as flightIndices)
-    pointConflictFile: output file name
     mindistance: minimum distance in nautic miles to qualify as a conflict
     mintime: minimum time difference in minutes to qualify as a conflict
     """
@@ -313,11 +312,71 @@ def detectConflicts(flightIndices, times, lat, lon, pointConflictFile, mindistan
                                    })
     pointConflicts = pointConflicts.set_index('conflictIndex')
     # remove duplicates
-    pointConflictsSwap = pointConflicts.copy()
-    pointConflictsSwap.columns=['flight2', 'flight1', 'lat2', 'lat1', 'lon2', 'lon1', 'time2', 'time1']
-    pointConflicts = pd.concat([pointConflicts, pointConflictsSwap])
     pointConflicts.drop_duplicates(inplace=True)
-    # save to csv file
-    pointConflicts.to_csv(pointConflictFile, mode='w')
-    print "Point conflict data written to", pointConflictFile
+
+    # enforce flight1 < flight2 and remove duplicated
+    pc1 = pointConflicts[pointConflicts['flight1'] > pointConflicts['flight2']]
+    pc1.columns = ['flight2', 'flight1', 'lat2', 'lat1', 'lon2', 'lon1', 'time2', 'time1']
+    pc2 = pointConflicts[pointConflicts['flight1'] <= pointConflicts['flight2']]
+    pointConflicts = pd.concat([pc1, pc2])
+    pointConflicts.drop_duplicates(inplace=True)
+    # reset conflict index
+    pointConflicts.reset_index(drop=True, inplace=True)
+    pointConflicts.index.rename('conflictIndex', inplace=True)
+    pointConflicts.sort(['flight1', 'flight2', 'time1', 'time2'], inplace=True)
     return pointConflicts
+
+
+def parsePointConflicts(rawPointConflicts, deltaT=1):
+    # consecutive flight indices
+    flight1 = np.array(rawPointConflicts['flight1'], dtype=int)
+    flight2 = np.array(rawPointConflicts['flight2'], dtype=int)
+    # times in minutes
+    time1 = np.array(rawPointConflicts['time1'], dtype=int)
+    time2 = np.array(rawPointConflicts['time2'], dtype=int)
+    # latitude
+    lat1 = np.array(rawPointConflicts['lat1'], dtype=float)
+    lat2 = np.array(rawPointConflicts['lat2'], dtype=float)
+    # longitude
+    lon1 = np.array(rawPointConflicts['lon1'], dtype=float)
+    lon2 = np.array(rawPointConflicts['lon2'], dtype=float)
+
+    parallelConflict = np.empty_like(flight1)
+
+    cdef int i
+    cdef int j
+    cdef int f1
+    cdef int f2
+    i = 0
+    active = False
+    cdef int pc = 0
+    while i < len(flight1) - 1:
+        # check for parallel conflicts
+        f1Same = flight1[i + 1] == flight1[i]
+        f2Same = flight2[i + 1] == flight2[i]
+        t1Subsequent = time1[i + 1] - time1[i] <= deltaT
+        t2Subsequent = time2[i + 1] - time2[i] <= deltaT
+        if (f1Same and f2Same and t1Subsequent and t2Subsequent):
+            if not active:
+                pc = pc + 1
+            parallelConflict[i] = pc
+            i = i + 1
+            parallelConflict[i] = pc
+            active = True
+        elif active:
+            parallelConflict[i] = pc
+            active = False
+            i = i + 1
+        else:
+            parallelConflict[i] = 0
+            i = i + 1
+    rawPointConflicts['parallelConflict'] = parallelConflict
+
+    # get all potential point conflicts
+    pointConflicts = rawPointConflicts[rawPointConflicts['parallelConflict'] == 0]
+    pointConflicts.reset_index(drop=True, inplace=True)
+    pointConflicts = pointConflicts.drop('parallelConflict', axis=1)
+    pointConflicts.index.rename('conflictIndex', inplace=True)
+    parallelConflicts = rawPointConflicts[rawPointConflicts['parallelConflict'] != 0]
+    parallelConflicts.set_index('parallelConflict', drop=True, inplace=True)
+    return pointConflicts, parallelConflicts
