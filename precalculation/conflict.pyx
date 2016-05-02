@@ -113,6 +113,17 @@ def detectConflicts(flightIndices, times, lat, lon, mindistance, mintime):
     lon: array of trajectory longitudes (same length as flightIndices)
     mindistance: minimum distance in nautic miles to qualify as a conflict
     mintime: minimum time difference in minutes to qualify as a conflict
+
+    returns: Pandas DataFrame containing the raw point conflicts with columns
+            1. conflictIndex
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
     """
     #######################################################
     # constants
@@ -328,6 +339,46 @@ def detectConflicts(flightIndices, times, lat, lon, mindistance, mintime):
 
 
 def parsePointConflicts(rawPointConflicts, deltaT=1):
+    """ Given the raw point conflicts, group conflicts
+
+    Arguments:
+        rawPointConflicts: Pandas DataFrame with columns:
+            1. conflictIndex
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+
+        deltaT: time difference determining if two consecutive raw point conflicts
+                belong to the same parallel conflict
+
+    Returns: Tuple of two Pandas DataFrame
+        pointConflicts: Pandas DataFrame with columns:
+            1. conflictIndex
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+
+        parallelConflicts: Pandas DataFrame with columns:
+            1. parallelConflict index
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+    """
     # consecutive flight indices
     flight1 = np.array(rawPointConflicts['flight1'], dtype=int)
     flight2 = np.array(rawPointConflicts['flight2'], dtype=int)
@@ -370,6 +421,14 @@ def parsePointConflicts(rawPointConflicts, deltaT=1):
         else:
             parallelConflict[i] = 0
             i = i + 1
+    # check the last row
+    i = len(flight1) - 1
+    if active:
+        parallelConflict[i] = pc
+        active = False
+    else:
+        parallelConflict[i] = 0
+
     rawPointConflicts['parallelConflict'] = parallelConflict
 
     # get all potential point conflicts
@@ -380,3 +439,132 @@ def parsePointConflicts(rawPointConflicts, deltaT=1):
     parallelConflicts = rawPointConflicts[rawPointConflicts['parallelConflict'] != 0]
     parallelConflicts.set_index('parallelConflict', drop=True, inplace=True)
     return pointConflicts, parallelConflicts
+
+
+def getFlightConflicts(pointConflicts, parallelConflicts):
+    """ Given the point and parallel conflicts, calculate
+    the conflicts for each flight and order them by their
+    temporal appearance
+
+    Arguments:
+        pointConflicts: Pandas DataFrame with columns:
+            1. conflictIndex
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+
+        parallelConflicts: Pandas DataFrame with columns:
+            1. parallelConflict index
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+    """
+    # index slice object
+    idx = pd.IndexSlice
+    # copy the parallel conflicts
+    pc = parallelConflicts.copy()
+    # get the flights involved in parallel conflicts
+    flightsPara = pd.concat([parallelConflicts['flight1'], parallelConflicts['flight2']]).unique()
+    # set index of data frame to flight1 and flight2
+    pc.set_index(['flight1', 'flight2'], append=True, inplace=True)
+    pc.reset_index(level='parallelConflict', inplace=True)
+    # iterate over all involved flights
+    flight2Conflict = {}
+    print 'Calculate mapping of flight index to sorted parallel conflicts'
+    pbar = progressbar.ProgressBar().start()
+    pbar.maxval = len(flightsPara)
+    cdef int n = 0
+    for flight in flightsPara:
+        if n % 10== 0:
+            pbar.update(n)
+        n = n + 1
+        conflicts = pd.DataFrame(columns=('conflictIndex', 'arrivalTime', 'partnerFlight', 'parallelConflict'))
+        # get the indices of the flights involved in parallel conflicts with the current flight
+        parallelConflictIndices1 = pc.loc[(slice(flight,flight), slice(None)), 'parallelConflict'].unique()
+        parallelConflictIndices2 = pc.loc[(slice(None), slice(flight, flight)), 'parallelConflict'].unique()
+        # loop over the flights involved in parallel conflicts with the current flight
+        for pcIndex1 in parallelConflictIndices1:
+            # get the subset of parallel conflict data frame, which correspond to the
+            # parallel conflict with index: pcIndex
+            parallelConflict = parallelConflicts.loc[idx[pcIndex1], :]
+            # get the partner flight index
+            partnerFlight  = parallelConflict['flight2'].iloc[0]
+            # get the arrival time of the first flight at the conflict
+            arrivalTime  = parallelConflict['time1'].iloc[0]
+            # add row to data frame
+            conflicts.loc[len(conflicts)] = [pcIndex1, arrivalTime, partnerFlight, True]
+        for pcIndex2 in parallelConflictIndices2:
+            # get the subset of parallel conflict data frame, which correspond to the
+            # parallell conflict with index: pcIndex
+            parallelConflict = parallelConflicts.loc[idx[pcIndex1], :]
+            # get the partner flight index
+            partnerFlight  = parallelConflict['flight1'].iloc[0]
+            # get the arrival time of the first flight at the conflict
+            arrivalTime  = parallelConflict['time2'].iloc[0]
+            # add row to data frame
+            conflicts.loc[len(conflicts)] = [pcIndex2, arrivalTime, partnerFlight, True]
+        # sort data frame by arrival times
+        conflicts.sort_values('arrivalTime', inplace=True)
+        flight2Conflict[flight] = conflicts
+    pbar.finish()
+
+    print 'Calculate mapping of flight index to sorted point conflicts'
+    # copy the point conflicts
+    cc = pointConflicts.copy()
+    # set index of data frame to flight1 and flight2
+    cc.set_index(['flight1', 'flight2'], append=True, inplace=True)
+    cc.reset_index(level='conflictIndex', inplace=True)
+    # get the number of flights involved in point conflicts
+    flightsPoint = pd.concat([pointConflicts['flight1'], pointConflicts['flight2']]).unique()
+    pbar.start()
+    pbar.maxval = len(flightsPoint)
+    n = 0
+    for flight in flightsPoint:
+        if n % 10== 0:
+            pbar.update(n)
+        n = n + 1
+        conflicts = pd.DataFrame(columns=('conflictIndex', 'arrivalTime', 'partnerFlight', 'parallelConflict'))
+        # get the indices of the flights involved in point conflicts with the current flight
+        pointConflictIndices1 = cc.loc[(slice(flight,flight), slice(None)), 'conflictIndex'].unique()
+        pointConflictIndices2 = cc.loc[(slice(None), slice(flight, flight)), 'conflictIndex'].unique()
+        # loop over the flights involved in parallel conflicts with the current flight
+        for pcIndex1 in pointConflictIndices1:
+            # get the subset of point conflict data frame, which correspond to the
+            # point conflict with index: pcIndex
+            pointConflict = pointConflicts.loc[idx[pcIndex1], :]
+            # get the partner flight index
+            partnerFlight  = pointConflict['flight2']
+            # get the arrival time of the first flight at the conflict
+            arrivalTime  = pointConflict['time1']
+            # add row to data frame
+            conflicts.loc[len(conflicts)] = [pcIndex1, arrivalTime, partnerFlight, False]
+        for pcIndex2 in pointConflictIndices2:
+            # get the subset of point conflict data frame, which correspond to the
+            # pointl conflict with index: pcIndex
+            pointConflict = pointConflicts.loc[idx[pcIndex2], :]
+            # get the partner flight index
+            partnerFlight  = pointConflict['flight1']
+            # get the arrival time of the first flight at the conflict
+            arrivalTime  = pointConflict['time2']
+            # add row to data frame
+            conflicts.loc[len(conflicts)] = [pcIndex2, arrivalTime, partnerFlight, False]
+        # check if parallel conflicts exists for this flight number
+        if flight in flight2Conflict:
+            # concatenate parallell and point conflicts
+            conflicts = pd.concat([conflicts, flight2Conflict[flight]])
+        # sort data frame by arrival times
+        conflicts.sort_values('arrivalTime', inplace=True)
+        flight2Conflict[flight] = conflicts
+    pbar.finish()
+
+    return flight2Conflict

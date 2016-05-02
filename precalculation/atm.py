@@ -4,6 +4,7 @@ import numpy as np
 import conflict
 import os
 import argparse
+import pickle
 
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')
@@ -73,6 +74,14 @@ def main():
         parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
     print pointConflicts.shape[0], "point conflicts identified"
     print len(parallelConflicts.index.unique()), "parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
+
+    # calulate mapping of flight index to temporal sorted conflicts
+    flights2ConflictsFile = filename + ".flight2Conflicts.pickle"
+    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+        flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
+        pickle.dump(flights2Conflicts, open(flights2ConflictsFile, 'w'))
+    else:
+        flights2Conflicts = pickle.load(open(flights2ConflictsFile, 'r'))
 
 if __name__ == "__main__":
     main()
