@@ -437,6 +437,7 @@ def parsePointConflicts(rawPointConflicts, deltaT=1):
     pointConflicts = pointConflicts.drop('parallelConflict', axis=1)
     pointConflicts.index.rename('conflictIndex', inplace=True)
     parallelConflicts = rawPointConflicts[rawPointConflicts['parallelConflict'] != 0]
+    parallelConflicts.loc[:, 'parallelConflict'] = parallelConflicts['parallelConflict'].apply(lambda x: x - 1)
     parallelConflicts.set_index('parallelConflict', drop=True, inplace=True)
     return pointConflicts, parallelConflicts
 
@@ -539,12 +540,14 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
     cdef int n = 0
     flight2Conflict = {}
     for flight in flightsUnique:
-        pbar.update(n)
+        print flight
+        #pbar.update(n)
         n = n + 1
-        con = pd.DataFrame({'conflictIndex': np.array(conflicts[flight][0]) + np.array(conflicts[flight][3]) * N1,
-                            'arrivalTime': np.array(conflicts[flight][1]),
-                            'partnerFlight': np.array(conflicts[flight][2])},
+        con = pd.DataFrame({'conflictIndex': np.array(conflicts[flight][0], dtype=int) + np.array(conflicts[flight][3], dtype=int) * N1,
+                            'arrivalTime': np.array(conflicts[flight][1], dtype=int),
+                            'partnerFlight': np.array(conflicts[flight][2], dtype=int)},
                              columns=('conflictIndex', 'arrivalTime', 'partnerFlight'),
+                            dtype=int
                            )
         flight2Conflict[flight] = con
     pbar.finish()

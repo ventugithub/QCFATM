@@ -77,7 +77,7 @@ def main():
 
     # calulate mapping of flight index to temporal sorted conflicts
     flights2ConflictsFile = filename + ".flights2Conflicts.h5"
-    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+    if True or not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
         flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
         flights2Conflicts.to_hdf(filename + ".flights2Conflicts.h5", 'flights2Conflicts')
     else:
