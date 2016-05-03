@@ -468,6 +468,16 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
             7. longitude2
             8. time1
             9. time2
+    Returns:
+        dictionary containing the mapping from the flight index
+        to the conflicts (in temporal order)
+        keys: flight indices
+        values: Pandas DataFrame with columns
+            1. conflict index
+            2. arrival time
+            3. partner flight
+            4. flag indicating a parallel conflict (true) or
+               point conflict (false)
     """
     # index slice object
     idx = pd.IndexSlice
