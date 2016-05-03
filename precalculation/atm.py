@@ -76,12 +76,12 @@ def main():
     print len(parallelConflicts.index.unique()), "parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
     # calulate mapping of flight index to temporal sorted conflicts
-    flights2ConflictsFile = filename + ".flight2Conflicts.pickle"
+    flights2ConflictsFile = filename + ".flights2Conflicts.h5"
     if not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
         flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
-        pickle.dump(flights2Conflicts, open(flights2ConflictsFile, 'w'))
+        flights2Conflicts.to_hdf(filename + ".flights2Conflicts.h5", 'flights2Conflicts')
     else:
-        flights2Conflicts = pickle.load(open(flights2ConflictsFile, 'r'))
+        flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
 
 if __name__ == "__main__":
     main()
