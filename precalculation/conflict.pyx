@@ -6,7 +6,6 @@ from libc.math cimport sin, cos, acos, fabs
 from libcpp.vector cimport vector
 import progressbar
 
-
 cdef mapToCoarseGrid(float lat, float lon, float time, float latMin, float lonMin, float timeMin, float deltaLat=0.5, float deltaLon=0.5, float deltaTime=60.0):
     """ map trajectory point to coarse grid
 
@@ -540,8 +539,7 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
     cdef int n = 0
     flight2Conflict = {}
     for flight in flightsUnique:
-        print flight
-        #pbar.update(n)
+        pbar.update(n)
         n = n + 1
         con = pd.DataFrame({'conflictIndex': np.array(conflicts[flight][0], dtype=int) + np.array(conflicts[flight][3], dtype=int) * N1,
                             'arrivalTime': np.array(conflicts[flight][1], dtype=int),

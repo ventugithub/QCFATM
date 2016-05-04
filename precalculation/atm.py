@@ -4,7 +4,6 @@ import numpy as np
 import conflict
 import os
 import argparse
-import pickle
 
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')

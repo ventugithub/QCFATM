@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import tools
 import argparse
 from mpl_toolkits.basemap import Basemap
 
@@ -73,48 +74,6 @@ def addParallelConflicts(map, pointConflicts):
     x, y = map(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
     map.plot(x, y, 'g', markersize=6, marker='>', linestyle='o')
 
-def getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts):
-    """ given a conflict index, get both flights involved in the conflict
-
-    Arguments:
-        conflictIndex
-        pointConflicts
-        parallelConflicts
-
-    Returns: flight1, flight2
-    """
-    NPointConflicts = pointConflicts.index.max()
-    NParallelConflicts = parallelConflicts.index.max()
-    k = int(conflictIndex)
-    NConflicts = NPointConflicts + NParallelConflicts
-    if k >= 0 and k < NPointConflicts:
-        row = pointConflicts.loc[k]
-        flight1 = row['flight1']
-        flight2 = row['flight2']
-        return flight1, flight2, row
-    elif k >= NPointConflicts and k < NConflicts:
-        k = k - NPointConflicts
-        subset = parallelConflicts.loc[k]
-        flight1 = subset['flight1'].iloc[0]
-        flight2 = subset['flight2'].iloc[0]
-        return flight1, flight2, subset
-    else:
-        print "Conflict index %i out of range" % k
-        print "Point conflict indices range from 0 to", NPointConflicts - 1
-        print "Parallel conflict indices range from", NPointConflicts, " to", NParallelConflicts
-        exit(0)
-
-def getInvolvedConflicts(flights2Conflicts, flight):
-    """ Given a flight index, return the list of conflicts
-
-    Arguments:
-        flights2Conflicts: Pandas panel containing the mapping from flight index to conflict indices
-        flight: flight index
-    returns:
-        a list of conflict indices
-    """
-    return flights2Conflicts.loc[flight].dropna().sort_values('arrivalTime')['conflictIndex'].values.astype(int)
-
 def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
     """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
 
@@ -127,7 +86,7 @@ def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelCo
         red: plot all conflict points in red (default false)
     """
     # plot involved flight trajectories
-    flight1, flight2, conflictTrajectoryPoints = getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts)
+    flight1, flight2, conflictTrajectoryPoints = tools.getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts)
     addPoints(map, trajectories.loc[flight1], markersize=2, marker='+')
     addPoints(map, trajectories.loc[flight2], markersize=2, marker='+')
     # point conflict
@@ -151,7 +110,7 @@ def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, par
     col = 'b' if blue else 'g'
     # plot trajectory of flight
     for flightIndex in flightIndices:
-        conflicts = getInvolvedConflicts(flights2Conflicts, flightIndex)
+        conflicts = tools.getInvolvedConflicts(flights2Conflicts, flightIndex)
         for conflictIndex in conflicts:
             addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=red)
         addPoints(map, trajectories.loc[flightIndex], color=col, markersize=6, marker='+')
