@@ -6,7 +6,7 @@ import os
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')
+    parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-i', '--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data')
     parser.add_argument('-o', '--output', help='output file name without suffix')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict')

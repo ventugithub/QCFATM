@@ -218,21 +218,21 @@ def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=
             nx.draw(G, node_size=100, pos=layout, node_color=partition_color)
 
 def main():
-    parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data')
+    parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
     parser.add_argument('--trajectory_file', default='data/TrajDataV2_20120729.txt.csv', help='input file containing the trajectory data with consecutive flight index')
 
-    all_parser = subparsers.add_parser("all", help='Plot all trajectories and raw point conflicts')
+    all_parser = subparsers.add_parser("all", help='Plot all trajectories and raw point conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     all_parser.add_argument('--raw_point_conflict_file', default='data/TrajDataV2_20120729.txt.rawPointConflicts.csv', help='input file containing the raw point conflicts')
     all_parser.add_argument('--eastwest', action='store_true', help='plot eastbound and westbound flights in different colors')
 
-    conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts')
+    conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     conflict_parser.add_argument('--info', action='store_true', help='Show info for all conflicts without plotting')
     conflict_parser.add_argument('-k', '--conflictIndex', default=0, help='Conflict index to plot', type=int)
     conflict_parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
     conflict_parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
 
-    flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts')
+    flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     group = flight_parser.add_mutually_exclusive_group()
     group.add_argument('-i', '--flightIndex', default=0, help='flight index to plot', type=int)
     group.add_argument('-n', '--numberOfFlightIndices', default=0, help='Plot the n flights which have the most conflicts', type=int)
@@ -240,7 +240,7 @@ def main():
     flight_parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
     flight_parser.add_argument('--flights2conflicts_file', default='data/TrajDataV2_20120729.txt.flights2Conflicts.h5', help='input file the mapping from flight to conflict indices')
 
-    graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph')
+    graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     graph_parser.add_argument('-n', '--nparts', default=None, help='Number of partitions to plot', type=int)
     group_graph = graph_parser.add_mutually_exclusive_group()
     group_graph.add_argument('-p', '--partition', default=None, help='Partition to highlight', type=int)
