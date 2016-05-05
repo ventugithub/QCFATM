@@ -138,7 +138,7 @@ def detectConflicts(flightIndices, times, lat, lon, mindistance, mintime):
     # minimal acceptable distance in kilometers
     cdef float spaceThreshold = mindistance
     # minimal acceptable time difference in minutes
-    cdef float temporalThreshold = mintime
+    cdef float temporalThreshold = float(mintime)
 
 
     # consecutive flight indices
