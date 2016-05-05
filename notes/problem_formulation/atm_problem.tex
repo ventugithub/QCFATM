@@ -17,16 +17,26 @@ These notes attempt to formalize the ATM problem: given a set of flights, schedu
 \section{Configuration space}
 
 At the highest level, the configuration space is a set of 4D trajectories, one for each flight.
+By flight we mean an ideal trajectory (times and spatial points) between a 
+departure city and arrival city, including an ideal departure time.
 Even with relatively coarsely discretized spacetime, that space is infeasably large.
 Therefore we parameterize each trajectory by its deviations from the ideal, conflict-ignorant one.
 Such deviations are of two types: temporal and spatial. 
 A temporal deviation is simply a delayed start (typically on the order of up to 30 minutes). 
 We assume that within the time-scale of such delays, the ideal conflict-ignorant trajectory is time-independent.
-There are two types of spatial deviations: global and local.
-A global spatial deviation changes the entire trajectory.
-For example, one parameterization of global spatial deviations treats each trajectory as an arc in a plane perpendicular to the ground and considers smooth one-parameter curves to the projection of the trajectory onto the ground.
-A local deviation consists of a set of maneuvers that change relatively small parts of the spatial trajectory.
-Such maneuvers may introduce a delay, but, as with the delays due to temporal deviations, we assume that the subsequent trajectory is unaffected other than simply being delayed.
+We consider local spatial deviations, which consist of a set of
+maneuvers that change relatively small parts of the spatial trajectory
+\footnote{ There could also be global 
+spatial deviations, which change the entire trajectory, such as are
+used in Olg's thesis.
+For example, one parameterization of global spatial deviations treats each
+trajectory as an arc in a plane perpendicular to the ground and considers
+smooth one-parameter curves to the projection of the trajectory onto the
+ground.}.  
+Such maneuvers may
+introduce a delay, but, as with the delays due to temporal
+deviations, we assume that the subsequent ideal trajectory is unaffected 
+other than simply being delayed.
 
 Henceforth, we focus on origination delays (temporal deviations) and maneuvers (local spatial deviations).
 We assign an index to each flight
@@ -41,6 +51,7 @@ with
 \begin{equation*}
     p^i_j = \left( \varphi^i_j, \lambda^i_j, z^i_j, t^i_j \right)
 \end{equation*}
+where $(\varphi^i_j, \lambda^i_j)$ are the latitude and longitude.
 For simplicity, we will assume a constant altitude $z^i_j$ for all flights.
 \begin{equation*}
     p^i_j = \left( \varphi^i_j, \lambda^i_j, t^i_j \right)
@@ -51,15 +62,16 @@ Conflicts may occur if multiple flight trajectories
 \begin{equation*}
     \{\tau_i : i \in I_k \subseteq \{1, \dots, n\}\}
 \end{equation*}
-become to close to each other in time and space.
+become too close to each other in time and space.
 
-In the following we will define spatial, potential an real conflicts.
-A \textit{spatial conflict} occurs if two trajectories become to close to each other in space.
+In the following we will define spatial, potential, and real conflicts.
+A \textit{spatial conflict} occurs if two trajectories become too close 
+to each other in space.
 The existence of a \textit{real conflict} depends on the arrival time of both flights and at the spatial conflict.
 A \textit{potential conflict} exists, if a real conflict is possible considering a maximal flight delays upon arrival at the spatial conflict.
-For detail, see appendix \ref{app:potential_conflicts}.
+For details, see appendix \ref{app:potential_conflicts}.
 
-In any case, we denote the conflicts by $k$.
+In any case, we index the potential conflicts by $k$.
 A classical precalculation gives us the mapping to the involved flights
 \begin{equation*}
     k \mapsto I_k \subseteq \{1, \dots, n\}\}
@@ -76,6 +88,7 @@ In the following it will prove useful to introduce the set of conflicts the flig
 \begin{equation*}
     K^<_{ik} = \{\tilde k : \tilde k \in\{k^i_0, \dots, k^i_{N_i}\}, \tilde k < k\}
 \end{equation*}
+Note that the conflicts may note be point conflicts, but may extend in time ans space. See the appendix.
 
 
 \section{Cost function}
@@ -144,11 +157,15 @@ Similarly, one could argue that the plane burns fuel while idling.
 
 \section{Potentially helpful assumptions}
 \begin{itemize}
-\item All conflicts are pairwise. That is, when two planes have a potential conflict, there are no other planes nearby. 
+\item (Sparseness) All conflicts are pairwise. That is, when two planes have a potential conflict, there are no other planes nearby. 
 Furthermore, when this conflict is avoided, it does not create a conflict with another flight. 
 (This may be the most unreasonable assumption, e.g. near major airports or on crowded jetstreams.)
 \item Collisions are symmetric. That is, the cost of avoiding them is a function only of the magnitude of the difference in delays of the two flights up until that point. For example, the cost of avoiding a collision between $i$ and $j$ is the same whether $i$ is delayed by $d$ or $j$ is.
-\item The lateness cost functions are non-decreasing; we might as well allow it to be negative for earliness, though that could be compiled away by pushing the range of available departure times earlier. This is obviously satisfied for the linear cost functions with unit slope used here, and hard to imagine relaxing.
+\item The lateness cost functions are non-decreasing.
+% we might as well allow it to be negative for earliness, though that could be
+% compiled away by pushing the range of available departure times earlier. 
+This is obviously satisfied for the linear cost functions with unit slope used
+here, and hard to imagine relaxing.
 \end{itemize}
 
 \section{Models}
@@ -164,8 +181,10 @@ The delay it has picked up upon arrival at the potential conflict $k$, is
 \end{align*}
 
 \subsection{General Model}
-In general, delay introduced by conflict avoiding maneuver $d_{ik}$ is a function of the arrival delay of each involved flight $D_{jk}, \forall j \in I_k$ and the maneuver parameters $\mathbf{a_k}$
-\begin{equation} \label{eqn:local_delay}
+In general, the delay introduced by conflict avoiding maneuver $d_{ik}$ is a
+function of the arrival delay of each involved flight $D_{jk}, \forall j \in
+I_k$ and the maneuver parameters $\mathbf{a_k}$ \begin{equation}
+\label{eqn:local_delay}
     d_{ik} = d_{ik}(\mathbf D_{k}, \mathbf{a_k}) 
 \end{equation}
 where $\mathbf D_k = (D_{jk})_{j \in I_k}$.
@@ -177,10 +196,19 @@ The total delay \eqref{eqn:total_delay} is then given by
 \end{align*}
 
 \subsection{Sparse case}
-First, we describe a method for solving the ``sparse'' version of the problem. 
-By sparsity, we mean that all potential conflicts are between only two trajectories and that no other trajectories are nearby in spacetime, so that potential maneuvers for avoiding a conflict between two flights do not introduce additional potential conflicts with other flights.\footnote{This could be extended to an $m$-sparse version, where each conflict can affect $m-1$ others.}
+First, we describe a method for solving the ``sparse'' version of the problem.
+By sparsity, we mean that all potential conflicts are between only two
+trajectories and that no other trajectories are nearby in spacetime, so that
+potential maneuvers for avoiding a conflict between two flights do not
+introduce additional potential conflicts with other flights.\footnote{This
+could be extended to an $m$-sparse version, where each conflict can affect
+$m-1$ others.}
 
-We assume that $d_{ik}$ is function of the difference of the delays 
+Making the assumption that the maneuvers depend only on the difference
+between of the arrival times of the flights, 
+we can write $d_{ik}$ as a function of the difference of the delays 
+for the two flights, where $i$ can be either of the two indices $j$ and $l$, 
+with $l<j$, involved in conflict $k$.
 \begin{equation*}
     \Delta_{k} := D_{lk} - D_{jk} \quad l < j \in I_k
 \end{equation*}
@@ -197,7 +225,8 @@ and the total delay reads
 Three special cases are as follows. 
 
 \subsubsection{No Delay Model}
-In the (overly simplistic) case where maneuvers do not introduce any further delays, we have simply
+
+In the (totally unrealistic) case where maneuvers do not introduce any further delays, we have simply
 \begin{equation*}
     \Delta_k = d_i - d_j
 \end{equation*}
@@ -215,7 +244,10 @@ Of course, we define $d_{ik}$ as piece-wise infinite for consistency with the re
 (Interestingly, this notational device has the morose interpretation that if the flights do collide, the further delay introduced is indeed infinite.)
 
 \subsubsection{Independent Delay Model}
-There are no spatial maneuvers, but each flight $i$ is allowed to slow down by some delay $d_{ik}$ before conflict $k$ (and after the its previous one).
+In this model we assume that the delay introduced by a conflict-avoiding 
+maneuver is independent of the other flight. 
+% There are no spatial maneuvers, but each flight $i$ is allowed to slow down by
+% some delay $d_{ik}$ before conflict $k$ (and after the its previous one).  
 In the above formalism, this is equivalent to $\mathbf a_k = (d_{ik}, d_{jk})$.
 In this case, there is no need for $\left(d_i\right)_{i=1}^n$ because for each flight the origination delay $d_i$ can just be subsumed into the delay $d_{ik}$ of the first conflict.
 Each potential conflict $k$ is an actual conflict when the difference between the total delays of the constituent flights are in some range $\left[\Delta_k^{\mathrm{min}}, \Delta_k^{\mathrm{max}}\right]$.
