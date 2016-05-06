@@ -149,12 +149,16 @@ def getPartitions(graph, partition):
             G[partition[nodes.index(edge[0])]].add_edge(edge[0], edge[1])
     return G
 
-def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=None, grid=False, separate=False):
+def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False):
     """ Plot the conflicts as a graph with flights as nodes and conflicts as edges
 
     Arguments:
         pointConflicts: Pandas Dataframe containing the point conflicts
         parallelConflicts: Pandas Dataframe containing the parallel conflicts
+        nparts: number of partitions
+        partition: partition number to highlight
+        grid: plot each partition as a individual subplot
+        separate: plot the whole graph with partitions separated
     """
     # get edge tuples defining a graph
     l = pd.concat([parallelConflicts.loc[:, ['flight1', 'flight2']], pointConflicts.loc[:, ['flight1', 'flight2']]]).values.tolist()
@@ -170,9 +174,9 @@ def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=
     for edge in l:
         G.add_edge(edge[0], edge[1])
 
-    if not nparts:
+    if not nparts and not connectedComponents:
         nx.draw(G, pos=nx.spring_layout(G), node_size=100)
-    else:
+    elif not connectedComponents:
         try:
             import metis
         except:
@@ -216,11 +220,109 @@ def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=
                 d = nx.spring_layout(graphs[n], center=(xpos, ypos))
                 layout = dict(layout.items() + d.items())
             nx.draw(G, node_size=100, pos=layout, node_color=partition_color)
+    else:
+        compgen = nx.connected_components(G)
+        NNodes = len(nodes)
+        partition = np.empty((NNodes), dtype=int)
+        ipart = 0
+        ipart_max = 0
+        max_comp = 0
+        for c in compgen:
+            if len(c) > max_comp:
+                max_comp = len(c)
+                ipart_max = ipart
+            for node in c:
+                partition[list(nodes).index(int(node))] = ipart
+            ipart = ipart + 1
+        nparts = ipart
+        partition_color = np.array(partition)
+        partition_color = partition_color == ipart_max
+        layout = {}
+        nrow = 3
+        ncol = 5
+        nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
+        nrows = nmulti * nrow
+        scale = 2
+        graphs = getPartitions(l, partition)
+        for n in range(nparts):
+            xpos = scale * (n % nrows)
+            ypos = scale * (n - n % nrows) / nrows
+            d = nx.spring_layout(graphs[n], center=(xpos, ypos))
+            layout = dict(layout.items() + d.items())
+        nx.draw(G, node_size=100, pos=layout, node_color=partition_color)
+
+def getConflictCluster(pointConflicts, parallelConflicts, nmin=2, nmax=10, plot=True):
+    """ Calculate the partition of a given graph with maximal cluster coefficient
+
+    Arguments:
+        pointConflicts: Pandas Dataframe containing the point conflicts
+        parallelConflicts: Pandas Dataframe containing the parallel conflicts
+        nmin: Minimum number of partitions to search for
+        nmax: Maximum number of partitions to search for
+    """
+    # get edge tuples defining a graph
+    l = pd.concat([parallelConflicts.loc[:, ['flight1', 'flight2']], pointConflicts.loc[:, ['flight1', 'flight2']]]).values.tolist()
+    # convert to networkx format
+    # extract nodes from graph
+    nodes = set([n1 for n1, n2 in l] + [n2 for n1, n2 in l])
+    # create networkx graph
+    G = nx.Graph()
+    # add nodes
+    for node in nodes:
+        G.add_node(node)
+    # add edges
+    for edge in l:
+        G.add_edge(edge[0], edge[1])
+
+    try:
+        import metis
+    except:
+        print "Unable search for graph partition without metis installed"
+        raise
+
+    maxClusterCoef = 0
+    maxClusterGraphs = None
+    maxClusterNParts = None
+    maxClusterPartitioning = None
+    maxClusterPartition = None
+    for nparts in range(nmin, nmax + 1):
+        p = metis.part_graph(G, nparts=nparts)
+        graphs = getPartitions(l, p[1])
+        n = 0
+        for graph in graphs:
+            avclust = nx.average_clustering(graph)
+            if avclust > maxClusterCoef:
+                maxClusterCoef = avclust
+                maxClusterNParts = nparts
+                maxClusterGraphs = graphs
+                maxClusterPartitioning = p
+                maxClusterPartition = n
+            n = n + 1
+
+    if plot:
+        partition_color = np.array(maxClusterPartitioning[1])
+        partition_color = (partition_color == maxClusterPartition)
+        layout = {}
+        nrow = 3
+        ncol = 5
+        nmulti = (maxClusterNParts - maxClusterNParts % (nrow * ncol)) / (nrow * ncol) + 1
+        nrows = nmulti * nrow
+        scale = 2
+        for n in range(maxClusterNParts):
+            xpos = scale * (n % nrows)
+            ypos = scale * (n - n % nrows) / nrows
+            d = nx.spring_layout(maxClusterGraphs[n], center=(xpos, ypos))
+            layout = dict(layout.items() + d.items())
+        nx.draw(G, node_size=100, pos=layout, node_color=partition_color)
+
+    return maxClusterPartitioning[1], maxClusterPartition
 
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
     parser.add_argument('--trajectory_file', default='data/TrajDataV2_20120729.txt.csv', help='input file containing the trajectory data with consecutive flight index')
+    parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
+    parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
 
     all_parser = subparsers.add_parser("all", help='Plot all trajectories and raw point conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     all_parser.add_argument('--raw_point_conflict_file', default='data/TrajDataV2_20120729.txt.rawPointConflicts.csv', help='input file containing the raw point conflicts')
@@ -229,15 +331,11 @@ def main():
     conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     conflict_parser.add_argument('--info', action='store_true', help='Show info for all conflicts without plotting')
     conflict_parser.add_argument('-k', '--conflictIndex', default=0, help='Conflict index to plot', type=int)
-    conflict_parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
-    conflict_parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
 
     flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     group = flight_parser.add_mutually_exclusive_group()
     group.add_argument('-i', '--flightIndex', default=0, help='flight index to plot', type=int)
     group.add_argument('-n', '--numberOfFlightIndices', default=0, help='Plot the n flights which have the most conflicts', type=int)
-    flight_parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
-    flight_parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
     flight_parser.add_argument('--flights2conflicts_file', default='data/TrajDataV2_20120729.txt.flights2Conflicts.h5', help='input file the mapping from flight to conflict indices')
 
     graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -246,8 +344,12 @@ def main():
     group_graph.add_argument('-p', '--partition', default=None, help='Partition to highlight', type=int)
     group_graph.add_argument('--grid', action='store_true', help='Plot all partitions in multiple plots')
     group_graph.add_argument('--separate', action='store_true', help='Spatially separate partitions in plot')
-    graph_parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
-    graph_parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
+    group_graph.add_argument('--component', action='store_true', help='Plot all connected components of the graph')
+
+    subset_parser = subparsers.add_parser("subset", help='Calculate disjunct subset with maximal internal cluster coefficient', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    subset_parser.add_argument('-n', '--nmin', default=2, help='Minimal number of partitions to search', type=int)
+    subset_parser.add_argument('-m', '--nmax', default=10, help='Maximal number of partitions to search', type=int)
+    subset_parser.add_argument('-o', '--output', help='output file name without suffix')
 
     args = parser.parse_args()
 
@@ -287,7 +389,13 @@ def main():
     if args.mode == 'graph':
         pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
         parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
-        plotConflictGraph(pointConflicts, parallelConflicts, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid)
+        plotConflictGraph(pointConflicts, parallelConflicts, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component)
+        plt.show()
+
+    if args.mode == 'subset':
+        pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
+        parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
+        partitioning, partition = getConflictCluster(pointConflicts, parallelConflicts, nmin=args.nmin, nmax=args.nmax, plot=True)
         plt.show()
 
 if __name__ == "__main__":
