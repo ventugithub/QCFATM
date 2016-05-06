@@ -1,0 +1,7 @@
+data/*mintime*
+*.pyc
+build/
+*.so
+conflict.cpp
+conflict.html
+
