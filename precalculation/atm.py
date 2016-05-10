@@ -76,11 +76,19 @@ def main():
 
     # calulate mapping of flight index to temporal sorted conflicts
     flights2ConflictsFile = filename + ".flights2Conflicts.h5"
-    if True or not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
         flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
         flights2Conflicts.to_hdf(filename + ".flights2Conflicts.h5", 'flights2Conflicts')
     else:
         flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
 
+    multiConflictFile = filename + ".multiConflict.csv"
+    if not os.path.exists(multiConflictFile) or not args.use_snapshots:
+        multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime)
+        # save to csv file
+        multiConflicts.to_csv(multiConflictFile, mode='w')
+        print "Raw multi point conflict data written to", multiConflictFile
+    else:
+        multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
 if __name__ == "__main__":
     main()

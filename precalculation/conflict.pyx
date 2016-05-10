@@ -4,6 +4,7 @@ import cython
 import math
 from libc.math cimport sin, cos, acos, fabs
 from libcpp.vector cimport vector
+from libcpp cimport bool
 import progressbar
 
 cdef mapToCoarseGrid(float lat, float lon, float time, float latMin, float lonMin, float timeMin, float deltaLat=0.5, float deltaLon=0.5, float deltaTime=60.0):
@@ -101,6 +102,77 @@ cdef getPointConflict(float lat1, float lon1, float time1, float lat2, float lon
         return True
     else:
         return False
+
+def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
+    #######################################################
+    # constants
+    #######################################################
+    # earth radius in kilometers
+    cdef float earthRadius = 6367.0
+    # minimal acceptable distance in kilometers
+    cdef float spaceThreshold = mindistance
+    # minimal acceptable time difference in minutes
+    cdef float temporalThreshold = float(mintime)
+
+    # merge point and parallel conflicts to one data frame
+    cdef int N1 = len(pointConflicts)
+    parallelConflicts.index = parallelConflicts.index + N1
+    parallelConflicts.index.name = 'conflictIndex'
+    pointConflicts.index.name = 'conflictIndex'
+    conflicts = pd.concat([pointConflicts, parallelConflicts])
+    cdef int N = len(conflicts)
+
+    # convert colums to numpy arrays
+    #conflictIndex = np.array(conflicts.index, dtype=int)
+    #flight1 = np.array(conflicts.flight1, dtype=int)
+    #time1 = np.array(conflicts.time1, dtype=int)
+    #lat1 = np.array(conflicts.lat1, dtype=float)
+    #lon1 = np.array(conflicts.lon1, dtype=float)
+    #flight2 = np.array(conflicts.flight2, dtype=int)
+    #time2 = np.array(conflicts.time2, dtype=int)
+    #lat2 = np.array(conflicts.lat2, dtype=float)
+    #lon2 = np.array(conflicts.lon2, dtype=float)
+
+    cdef vector[int] conflictIndex = conflicts.index.values
+    cdef vector[int] time1 = conflicts.time1.values
+    cdef vector[int] time2 = conflicts.time2.values
+    cdef vector[int] lat1 = conflicts.lat1.values
+    cdef vector[int] lat2 = conflicts.lat2.values
+    cdef vector[int] lon1 = conflicts.lon1.values
+    cdef vector[int] lon2 = conflicts.lon2.values
+    # calculate multi conflicts
+    cdef vector[int] multiConflictsFirst
+    cdef vector[int] multiConflictsSecond
+    print "Calculate conflict involving more than two flights"
+    pbar = progressbar.ProgressBar().start()
+    pbar.maxval = N
+    cdef int i
+    cdef bool isConflict11
+    cdef bool isConflict12
+    cdef bool isConflict21
+    cdef bool isConflict22
+    for i in range(N):
+        for j in range(N):
+            if i % 100 == 0:
+                pbar.update(i)
+            if i != j:
+                isConflict11 = getPointConflict(lat1[i], lon1[i], time1[i], lat1[j], lon1[j], time1[j], spaceThreshold, temporalThreshold, earthRadius)
+                isConflict12 = getPointConflict(lat1[i], lon1[i], time1[i], lat2[j], lon2[j], time2[j], spaceThreshold, temporalThreshold, earthRadius)
+                isConflict21 = getPointConflict(lat2[i], lon2[i], time2[i], lat1[j], lon1[j], time1[j], spaceThreshold, temporalThreshold, earthRadius)
+                isConflict22 = getPointConflict(lat2[i], lon2[i], time2[i], lat2[j], lon2[j], time2[j], spaceThreshold, temporalThreshold, earthRadius)
+                if isConflict11 or isConflict12 or isConflict21 or isConflict22:
+                    # check if one of the raw point conflicts is a parallel conflict
+                    multiConflictsFirst.push_back(conflictIndex[i])
+                    multiConflictsSecond.push_back(conflictIndex[j])
+    pbar.finish()
+
+    multiConflicts = pd.DataFrame({'conflict1': np.array(multiConflictsFirst),
+                                   'conflict2': np.array(multiConflictsSecond)
+                                   })
+    multiConflicts.drop_duplicates(inplace=True)
+    multiConflicts.index.name = 'multiConflictIndex'
+
+    return multiConflicts
 
 def detectConflicts(flightIndices, times, lat, lon, mindistance, mintime):
     """ Detect conflicts
