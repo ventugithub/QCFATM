@@ -1,4 +1,4 @@
-data/*mintime*
+data/
 *.pyc
 build/
 *.so
