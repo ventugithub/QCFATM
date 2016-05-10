@@ -11,8 +11,8 @@ def getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts):
 
     Returns: flight1, flight2
     """
-    NPointConflicts = pointConflicts.index.max()
-    NParallelConflicts = parallelConflicts.index.max()
+    NPointConflicts = len(pointConflicts)
+    NParallelConflicts = len(parallelConflicts.index)
     k = int(conflictIndex)
     NConflicts = NPointConflicts + NParallelConflicts
     if k >= 0 and k < NPointConflicts:
@@ -29,7 +29,7 @@ def getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts):
     else:
         msg = "Conflict index %i out of range\n" % k
         msg = msg + "Point conflict indices range from 0 to %i\n" % (NPointConflicts - 1)
-        msg = msg +  "Parallel conflict indices range from %i to %i\n" %(NPointConflicts, NParallelConflicts)
+        msg = msg + "Parallel conflict indices range from %i to %i\n" % (NPointConflicts, NConflicts)
         raise ValueError(msg)
 
 def getInvolvedConflicts(flights2Conflicts, flight):

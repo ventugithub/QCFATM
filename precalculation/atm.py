@@ -8,10 +8,10 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-i', '--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data')
-    parser.add_argument('-o', '--output', help='output file name without suffix')
-    parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict')
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict')
+    parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
+    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
+    parser.add_argument('--multi', action='store_true', help='Calculate non-pairwise conflicts')
     args = parser.parse_args()
 
     # nautic mile in kilometers
@@ -24,10 +24,8 @@ def main():
     mintime = args.mintime
 
     inputDataFile = args.input
-    filename = inputDataFile
-    if args.output:
-        filename = args.output
-    trajectoryFile = filename + ".csv"
+    filename = "%s.mindist%05.1f_mintime%03i" % (inputDataFile, args.mindistance, args.mintime)
+    trajectoryFile = args.input + ".csv"
     trajectories = None
     if not os.path.exists(trajectoryFile) or not args.use_snapshots:
         print "Read in trajectories ..."
@@ -48,9 +46,9 @@ def main():
         trajectories = pd.read_csv(trajectoryFile)
 
     # calulate point conflicts
-    rawPointConflictFile = filename + ".rawRawPointConflict.csv"
+    rawPointConflictFile = filename + ".rawPointConflicts.csv"
     if not os.path.exists(rawPointConflictFile) or not args.use_snapshots:
-        rawPointConflicts = conflict.detectConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, mindistance, mintime)
+        rawPointConflicts = conflict.detectRawConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, trajectories.altitude, mindistance, mintime)
         # save to csv file
         rawPointConflicts.to_csv(rawPointConflictFile, mode='w')
         print "Point conflict data written to", rawPointConflictFile
@@ -63,7 +61,7 @@ def main():
     pointConflictFile = filename + ".pointConflicts.csv"
     parallelConflictFile = filename + ".parallelConflicts.csv"
     if not os.path.exists(pointConflictFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
-        pointConflicts, parallelConflicts = conflict.parsePointConflicts(rawPointConflicts, deltaT=2)
+        pointConflicts, parallelConflicts = conflict.parseRawPointConflicts(rawPointConflicts, deltaT=2)
         pointConflicts.to_csv(pointConflictFile, mode='w')
         print "Point conflict data written to", pointConflictFile
         parallelConflicts.to_csv(parallelConflictFile, mode='w')
@@ -76,19 +74,21 @@ def main():
 
     # calulate mapping of flight index to temporal sorted conflicts
     flights2ConflictsFile = filename + ".flights2Conflicts.h5"
-    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+    if not os.path.exists(flights2ConflictsFile) or not args.use_snapshots:
         flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
         flights2Conflicts.to_hdf(filename + ".flights2Conflicts.h5", 'flights2Conflicts')
     else:
         flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
 
-    multiConflictFile = filename + ".multiConflict.csv"
-    if not os.path.exists(multiConflictFile) or not args.use_snapshots:
-        multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime)
-        # save to csv file
-        multiConflicts.to_csv(multiConflictFile, mode='w')
-        print "Raw multi point conflict data written to", multiConflictFile
-    else:
-        multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
+    if args.multi:
+        multiConflictFile = filename + ".multiConflicts.csv"
+        if not os.path.exists(multiConflictFile) or not args.use_snapshots:
+            multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime)
+            # save to csv file
+            multiConflicts.to_csv(multiConflictFile, mode='w')
+            print "Multi conflict data written to", multiConflictFile
+        else:
+            multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
+        print multiConflicts.shape[0], "non-pairwise conflicts identified"
 if __name__ == "__main__":
     main()

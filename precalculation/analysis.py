@@ -155,15 +155,9 @@ def addTrajectories(map, trajectories, eastWest=False):
 
 def addPointConflicts(map, pointConflicts):
     x, y = map(pointConflicts['lon1'].values, pointConflicts['lat1'].values)
-    map.plot(x, y, 'r', markersize=6, marker='<', linestyle='o')
+    map.plot(x, y, 'r', markersize=6, marker='<', linestyle='None')
     x, y = map(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
-    map.plot(x, y, 'g', markersize=6, marker='>', linestyle='o')
-
-def addParallelConflicts(map, pointConflicts):
-    x, y = map(pointConflicts['lon1'].values, pointConflicts['lat1'].values)
-    map.plot(x, y, 'r', markersize=6, marker='<', linestyle='o')
-    x, y = map(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
-    map.plot(x, y, 'g', markersize=6, marker='>', linestyle='o')
+    map.plot(x, y, 'g', markersize=6, marker='>', linestyle='None')
 
 def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
     """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
@@ -202,24 +196,25 @@ def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, par
     # plot trajectory of flight
     for flightIndex in flightIndices:
         conflicts = tools.getInvolvedConflicts(flights2Conflicts, flightIndex)
+
         for conflictIndex in conflicts:
             addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=red)
         addPoints(map, trajectories.loc[flightIndex], color=col, markersize=6, marker='+')
 
-def addMostInvolvedFlightsAndConflicts(map, nmin, nmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts):
+def addMostInvolvedFlightsAndConflicts(map, nfmin, nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts):
     """ Plot the trajectories and conflicts of flights with the highest number of conflicts
 
     Arguments:
         map: basemap object for plotting
-        nmin: minimal index in the list of flights ordered by their conflicts to include
-        nmax: maximal index in the list of flights ordered by their conflicts to include
+        nfmin: minimal index in the list of flights ordered by their conflicts to include
+        nfmax: maximal index in the list of flights ordered by their conflicts to include
         trajectories: Pandas Dataframe containing all trajectories
         pointConflicts: Pandas Dataframe containing the point conflicts
         parallelConflicts: Pandas Dataframe containing the parallel conflicts
         flights2Conflicts: Pandas panel containing the mapping from flight index to conflict indices
     """
     # get the flights with the most number of conflicts
-    mostInvolvedFlights = flights2Conflicts.count().T.sort_values('conflictIndex', ascending=False).index[nmin:nmax + 1].values
+    mostInvolvedFlights = flights2Conflicts.count().T.sort_values('conflictIndex', ascending=False).index[nfmin:nfmax + 1].values
     addFlightsAndConflicts(map, mostInvolvedFlights, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=True, red=True)
 
 def getPartitions(graph, partition):
@@ -384,14 +379,14 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
     else:
         nx.draw(G, node_size=100, pos=node_position, node_color=node_color)
 
-def getConflictCluster(pointConflicts, parallelConflicts, nmin=2, nmax=10, plot=True):
+def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plot=True):
     """ Calculate the partition of a given graph with maximal cluster coefficient
 
     Arguments:
         pointConflicts: Pandas Dataframe containing the point conflicts
         parallelConflicts: Pandas Dataframe containing the parallel conflicts
-        nmin: Minimum number of partitions to search for
-        nmax: Maximum number of partitions to search for
+        npmin: Minimum number of partitions to search for
+        npmax: Maximum number of partitions to search for
     """
     # get edge tuples defining a graph
     l = pd.concat([parallelConflicts.loc[:, ['flight1', 'flight2']], pointConflicts.loc[:, ['flight1', 'flight2']]]).values.tolist()
@@ -418,7 +413,7 @@ def getConflictCluster(pointConflicts, parallelConflicts, nmin=2, nmax=10, plot=
     maxClusterNParts = None
     maxClusterPartitioning = None
     maxClusterPartition = None
-    for nparts in range(nmin, nmax + 1):
+    for nparts in range(npmin, npmax + 1):
         p = metis.part_graph(G, nparts=nparts)
         graphs = getPartitions(l, p[1])
         n = 0
@@ -453,13 +448,16 @@ def getConflictCluster(pointConflicts, parallelConflicts, nmin=2, nmax=10, plot=
 def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
-    parser.add_argument('--trajectory_file', default='data/TrajDataV2_20120729.txt.csv', help='input file containing the trajectory data with consecutive flight index')
-    parser.add_argument('--point_conflict_file', default='data/TrajDataV2_20120729.txt.pointConflicts.csv', help='input file containing the point conflicts')
-    parser.add_argument('--parallel_conflict_file', default='data/TrajDataV2_20120729.txt.parallelConflicts.csv', help='input file containing the parallel conflicts')
-    parser.add_argument('--multi_conflict_file', default='data/TrajDataV2_20120729.txt.multiConflicts.csv', help='input file containing the conflicts between pairwise conflicts')
+    parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
+    parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
+    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict', type=int)
+    parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
+    parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
+    parser.add_argument('--multiConflictFile', help='input file containing the conflicts between pairwise conflicts (overwrites -t and -d)')
+    parser.add_argument('--flights2ConflictsFile', help='input file the mapping from flight to conflict indices (overwrites -t and -d)')
+    parser.add_argument('--rawPointConflictFile', help='input file containing the raw point conflicts')
 
     all_parser = subparsers.add_parser("all", help='Plot all trajectories and raw point conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    all_parser.add_argument('--raw_point_conflict_file', default='data/TrajDataV2_20120729.txt.rawPointConflicts.csv', help='input file containing the raw point conflicts')
     all_parser.add_argument('--eastwest', action='store_true', help='plot eastbound and westbound flights in different colors')
 
     conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -467,10 +465,9 @@ def main():
     conflict_parser.add_argument('-k', '--conflictIndex', default=0, help='Conflict index to plot', type=int)
 
     flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    group = flight_parser.add_mutually_exclusive_group()
-    group.add_argument('-i', '--flightIndex', default=0, help='flight index to plot', type=int)
-    group.add_argument('-n', '--numberOfFlightIndices', default=0, help='Plot the n flights which have the most conflicts', type=int)
-    flight_parser.add_argument('--flights2conflicts_file', default='data/TrajDataV2_20120729.txt.flights2Conflicts.h5', help='input file the mapping from flight to conflict indices')
+    flight_parser.add_argument('-i', '--flightIndex', default=None, help='flight index to plot', type=int)
+    flight_parser.add_argument('--nfmin', default=0, help='minimal index in the list of flights ordered by their conflicts to include', type=int)
+    flight_parser.add_argument('--nfmax', default=1, help='maximal index in the list of flights ordered by their conflicts to include', type=int)
 
     graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     graph_parser.add_argument('-n', '--nparts', default=None, help='Number of partitions to plot', type=int)
@@ -482,28 +479,45 @@ def main():
     group_graph.add_argument('--component', action='store_true', help='Plot all connected components of the graph')
 
     subset_parser = subparsers.add_parser("subset", help='Calculate disjunct subset with maximal internal cluster coefficient', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    subset_parser.add_argument('-n', '--nmin', default=2, help='Minimal number of partitions to search', type=int)
-    subset_parser.add_argument('-m', '--nmax', default=10, help='Maximal number of partitions to search', type=int)
-    subset_parser.add_argument('-o', '--output', help='output file name without suffix')
+    subset_parser.add_argument('-n', '--npmin', default=2, help='Minimal number of partitions to search', type=int)
+    subset_parser.add_argument('-m', '--npmax', default=10, help='Maximal number of partitions to search', type=int)
 
     args = parser.parse_args()
 
-    trajectories = pd.read_csv(args.trajectory_file, index_col='flightIndex')
+    trajectoryFile = '%s.csv' % args.input
+    trajectories = pd.read_csv(trajectoryFile, index_col='flightIndex')
+    name = "mindist%05.1f_mintime%03i" % (args.mindistance, args.mintime)
+    rawPointConflictFile = '%s.%s.rawPointConflicts.csv' % (args.input, name)
+    pointConflictFile = '%s.%s.pointConflicts.csv' % (args.input, name)
+    parallelConflictFile = '%s.%s.parallelConflicts.csv' % (args.input, name)
+    multiConflictFile = '%s.%s.multiConflicts.csv' % (args.input, name)
+    flights2ConflictsFile = '%s.%s.flights2Conflicts.h5' % (args.input, name)
+    if args.rawPointConflictFile:
+        rawPointConflictFile = args.rawPointConflictFile
+    if args.pointConflictFile:
+        pointConflictFile = args.pointConflictFile
+    if args.parallelConflictFile:
+        parallelConflictFile = args.parallelConflictFile
+    if args.multiConflictFile:
+        multiConflictFile = args.multiConflictFile
+    if args.flights2ConflictsFile:
+        flights2Conflicts = args.flights2ConflictsFile
+
     if args.mode == 'all':
-        rawpointConflicts = pd.read_csv(args.raw_point_conflict_file)
+        rawpointConflicts = pd.read_csv(rawPointConflictFile)
         map = prepareWorldMapPlot()
         addTrajectories(map, trajectories, eastWest=args.eastwest)
         addPointConflicts(map, rawpointConflicts)
         plt.show()
 
     if args.mode == 'conflict':
-        pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
-        parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
+        pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+        parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
         NPointConflicts = pointConflicts.index.max()
         NParallelConflicts = parallelConflicts.index.max()
         if args.info:
-            print "Read point conflicts from ", args.point_conflict_file
-            print "Read paraellel conflicts from", args.parallel_conflict_file
+            print "Read point conflicts from ", pointConflictFile
+            print "Read paraellel conflicts from", parallelConflictFile
             print "Point conflict indices range from 0 to", NPointConflicts - 1
             print "Parallel conflict indices range from", NPointConflicts, " to", NParallelConflicts
         else:
@@ -512,30 +526,30 @@ def main():
             plt.show()
 
     if args.mode == 'flight':
-        pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
-        parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
-        flights2Conflicts = pd.read_hdf(args.flights2conflicts_file, 'flights2Conflicts')
+        pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+        parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
+        flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
         map = prepareWorldMapPlot()
         if args.flightIndex:
             addFlightsAndConflicts(map, [args.flightIndex], trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
         else:
-            addMostInvolvedFlightsAndConflicts(map, args.numberOfFlightIndices, trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
+            addMostInvolvedFlightsAndConflicts(map, args.nfmin, args.nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
         plt.show()
     if args.mode == 'graph':
         if not args.multi:
-            pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
-            parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
+            pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+            parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
             plotConflictGraph(pointConflicts, parallelConflicts, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component)
         else:
-            pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
-            multiConflicts = pd.read_csv(args.multi_conflict_file, index_col='multiConflictIndex')
+            pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+            multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
             plotMultiConflictGraph(multiConflicts, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component, NPointConflicts=len(pointConflicts))
         plt.show()
 
     if args.mode == 'subset':
-        pointConflicts = pd.read_csv(args.point_conflict_file, index_col='conflictIndex')
-        parallelConflicts = pd.read_csv(args.parallel_conflict_file, index_col='parallelConflict')
-        partitioning, partition = getConflictCluster(pointConflicts, parallelConflicts, nmin=args.nmin, nmax=args.nmax, plot=True)
+        pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
+        parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
+        partitioning, partition = getConflictCluster(pointConflicts, parallelConflicts, npmin=args.npmin, npmax=args.npmax, plot=True)
         plt.show()
 
 if __name__ == "__main__":
