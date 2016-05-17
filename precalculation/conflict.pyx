@@ -531,8 +531,8 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
     cdef int N2 = len(pflight1)
     pFlightsUnique = pd.concat([parallelConflicts['flight1'], parallelConflicts['flight2']]).unique()
     flightsUnique = np.unique(np.append(pd.concat([pointConflicts['flight1'], pointConflicts['flight2']]).unique(), pFlightsUnique))
-    cdef int N = max(flight1.max(), pflight1.max())
-    cdef int M = max(flight2.max(), pflight2.max())
+    cdef int N = max(flight1.max() if flight1.shape[0] else 0, pflight1.max() if pflight1.shape[0] else 0)
+    cdef int M = max(flight2.max() if flight2.shape[0] else 0, pflight2.max() if pflight2.shape[0] else 0)
     N = max(N, M) + 1
 
     cdef vector[vector[vector[int]]] conflicts
@@ -552,14 +552,15 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
         conflicts[flight2[i]][3].push_back(False)
 
     print 'Calculate mapping from flight index to parallel conflicts ...'
-    conflicts[pflight1[0]][0].push_back(parallelConflictIndex[0])
-    conflicts[pflight1[0]][1].push_back(time1[0])
-    conflicts[pflight1[0]][2].push_back(flight2[0])
-    conflicts[pflight1[0]][3].push_back(True)
-    conflicts[pflight2[0]][0].push_back(parallelConflictIndex[0])
-    conflicts[pflight2[0]][1].push_back(time2[0])
-    conflicts[pflight2[0]][2].push_back(flight1[0])
-    conflicts[pflight2[0]][3].push_back(True)
+    if N2 > 0:
+        conflicts[pflight1[0]][0].push_back(parallelConflictIndex[0])
+        conflicts[pflight1[0]][1].push_back(time1[0])
+        conflicts[pflight1[0]][2].push_back(flight2[0])
+        conflicts[pflight1[0]][3].push_back(True)
+        conflicts[pflight2[0]][0].push_back(parallelConflictIndex[0])
+        conflicts[pflight2[0]][1].push_back(time2[0])
+        conflicts[pflight2[0]][2].push_back(flight1[0])
+        conflicts[pflight2[0]][3].push_back(True)
     for i in range(1, N2):
         if (parallelConflictIndex[i] != parallelConflictIndex[i - 1]):
             conflicts[pflight1[i]][0].push_back(parallelConflictIndex[i])
