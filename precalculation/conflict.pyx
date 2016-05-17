@@ -682,7 +682,7 @@ def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
         for j in range(N):
             if i % 100 == 0:
                 pbar.update(i)
-            if i != j:
+            if conflictIndex[i] != conflictIndex[j]:
                 isConflict11 = getRawPointConflict(lat1[i], lon1[i], alt1[i], time1[i], lat1[j], lon1[j], alt1[j], time1[j],
                                                    spaceThreshold=spaceThreshold, timeThreshold=temporalThreshold,
                                                    altitudeThreshold=altitudeThreshold, earthRadius=earthRadius)
