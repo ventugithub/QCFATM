@@ -217,23 +217,22 @@ def addMostInvolvedFlightsAndConflicts(map, nfmin, nfmax, trajectories, pointCon
     mostInvolvedFlights = flights2Conflicts.count().T.sort_values('conflictIndex', ascending=False).index[nfmin:nfmax + 1].values
     addFlightsAndConflicts(map, mostInvolvedFlights, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=True, red=True)
 
-def getPartitions(graph, partition):
+def getPartitions(G, partition):
     # number of partitions
     Np = len(set(partition))
-    # extract nodes from graph
-    nodes = list(set([n1 for n1, n2 in graph] + [n2 for n1, n2 in graph]))
-    # create networkx graphs
-    G = []
+    graphs = []
     for n in range(Np):
-        G.append(nx.Graph())
+        graphs.append(nx.Graph())
+    # get list of nodes
+    lnodes = list(G.nodes())
     # add nodes
-    for node, p in zip(nodes, partition):
-        G[p].add_node(node)
+    for i in range(len(lnodes)):
+        graphs[partition[i]].add_node(lnodes[i])
     # add edges
-    for edge in graph:
-        if partition[nodes.index(edge[0])] == partition[nodes.index(edge[1])]:
-            G[partition[nodes.index(edge[0])]].add_edge(edge[0], edge[1])
-    return G
+    for edge in G.edges():
+        if partition[lnodes.index(edge[0])] == partition[lnodes.index(edge[1])]:
+            graphs[partition[lnodes.index(edge[0])]].add_edge(edge[0], edge[1])
+    return graphs
 
 def plotConflictGraph(pointConflicts, parallelConflicts, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False):
     """ Plot the conflicts as a graph with flights as nodes and conflicts as edges
@@ -279,7 +278,7 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
         edges: list of tuples defining the graph
         nparts: number of partitions
         partition: partition number to highlight
-        grid: plot each partition as a individual subplot
+        grid: plot each partition as highlighted region in the whole graph as a individual subplot
         separate: plot the whole graph with partitions separated
         connectedComponents: find all connected components and plot them spatially separated
         node_color: sequence of color values in [0, 1], same length as number of nodes
@@ -288,7 +287,7 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
     l = edges
     # convert to networkx format
     # extract nodes from graph
-    nodes = set([n1 for n1, n2 in l] + [n2 for n1, n2 in l])
+    nodes = np.sort(np.unique(np.array([n1 for n1, n2 in l] + [n2 for n1, n2 in l])))
     # create networkx graph
     G = nx.Graph()
     # add nodes
@@ -327,7 +326,7 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
                 partition_color_i = partition_color == i
                 nx.draw(G, node_color=partition_color_i, node_size=100, ax=ax[i], pos=init_pos)
         elif separate:
-            graphs = getPartitions(l, p[1])
+            graphs = getPartitions(G, p[1])
             partition_color = np.array(p[1])
             # partition_color = np.array(partition_color)/float(nparts)
             perm = np.random.permutation(nparts)
@@ -337,11 +336,11 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
             ncol = 5
             nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
             nrows = nmulti * nrow
-            scale = 2
+            scale = 4
             for n in range(nparts):
                 xpos = scale * (n % nrows)
                 ypos = scale * (n - n % nrows) / nrows
-                d = nx.spring_layout(graphs[n], center=(xpos, ypos))
+                d = nx.circular_layout(graphs[n], center=(xpos, ypos), scale=1.0)
                 layout = dict(layout.items() + d.items())
             nx.draw(G, node_size=100, pos=layout, node_color=partition_color)
     elif connectedComponents:
@@ -369,7 +368,7 @@ def plotGraph(edges, nparts=None, partition=None, grid=False, separate=False, co
         nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
         nrows = nmulti * nrow
         scale = 2
-        graphs = getPartitions(l, partition)
+        graphs = getPartitions(G, partition)
         for n in range(nparts):
             xpos = scale * (n % nrows)
             ypos = scale * (n - n % nrows) / nrows
@@ -415,7 +414,7 @@ def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plo
     maxClusterPartition = None
     for nparts in range(npmin, npmax + 1):
         p = metis.part_graph(G, nparts=nparts)
-        graphs = getPartitions(l, p[1])
+        graphs = getPartitions(G, p[1])
         n = 0
         for graph in graphs:
             avclust = nx.average_clustering(graph)
@@ -473,8 +472,8 @@ def main():
     graph_parser.add_argument('-n', '--nparts', default=None, help='Number of partitions to plot', type=int)
     graph_parser.add_argument('--multi', action='store_true', help='Plot conflicts between pairwise conflicts instead of pairwise conflicts only')
     group_graph = graph_parser.add_mutually_exclusive_group()
-    group_graph.add_argument('-p', '--partition', default=None, help='Partition to highlight', type=int)
-    group_graph.add_argument('--grid', action='store_true', help='Plot all partitions in multiple plots')
+    group_graph.add_argument('-p', '--partition', default=None, help='Plot whole graph and highlight a special partition', type=int)
+    group_graph.add_argument('--grid', action='store_true', help='Plot several subplots, each highlighting another partition in the whole graph')
     group_graph.add_argument('--separate', action='store_true', help='Spatially separate partitions in plot')
     group_graph.add_argument('--component', action='store_true', help='Plot all connected components of the graph')
 
