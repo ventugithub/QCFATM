@@ -300,28 +300,49 @@ def getConflictGraph(pointConflicts, parallelConflicts):
         G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
     return G
 
-def plotMultiConflictGraph(multiConflicts, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, NPointConflicts=False):
-    """ Plot the interaction between pairwise conflicts as a graph with pairwise conflicts as nodes
+def getMultiConflictGraph(multiConflicts):
+    """ Get the interaction between pairwise conflicts as a graph with pairwise conflicts as nodes
 
     Arguments:
         multiConflicts: Pandas Dataframe containing the conflicts between pairwise conflicts
-        nparts: number of partitions
-        partition: partition number to highlight
-        grid: plot each partition as a individual subplot
-        separate: plot the whole graph with partitions separated
-        connectedComponents: find all connected components and plot them spatially separated
-        NPointConflicts: number of point conflicts to draw different colors for point and parallel conflicts (default: highlight only greatest cluster)
     """
     # get edge tuples defining a graph
-    l = multiConflicts.loc[:, ['conflict1', 'conflict2']].values.tolist()
-    if not NPointConflicts:
-        plotGraph(l, nparts=nparts, partition=partition, grid=grid, separate=separate, connectedComponents=connectedComponents)
-    else:
-        nodes = set([n1 for n1, n2 in l] + [n2 for n1, n2 in l])
-        node_color = np.array(list(nodes)) >= NPointConflicts
-        plotGraph(l, nparts=nparts, partition=partition, grid=grid, separate=separate, connectedComponents=connectedComponents, node_color=node_color)
+    def getConflictType(arr):
+        if all(arr == 2):
+            return 1.0
+        elif not any(arr):
+            return 0.0
+        else:
+            return 0.5
+    grouped = multiConflicts.groupby(['conflict1', 'conflict2'])
+    conflicts = grouped.agg({'deltaTMin': min, 'multiConflictType': getConflictType, 'conflictType1': getConflictType, 'conflictType2': getConflictType})
+    conflicts.reset_index(level=['conflict1', 'conflict2'], inplace=True)
 
-def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, node_position=False, node_color='r', font_size=8):
+    # get edge tuples defining a graph
+    l = conflicts.loc[:, ['conflict1', 'conflict2']].values.tolist()
+    # convert to networkx format
+    # extract nodes from graph
+    nodes = np.array([n1 for n1, n2 in l] + [n2 for n1, n2 in l])
+    # get conflict type of each pair-conflict
+    pairConflictTypes = conflicts.loc[:, ['conflictType1', 'conflictType2']].values.tolist()
+    nodecolor = np.array([n1 for n1, n2 in pairConflictTypes] + [n2 for n1, n2 in pairConflictTypes])
+    # edge weights
+    deltaTMax = np.max(conflicts['deltaTMin'].values) + 1
+    weights = (3.0/deltaTMax * (deltaTMax - conflicts['deltaTMin'].values)).tolist()
+    # edge colors
+    conflictType = conflicts['multiConflictType'].values.tolist()
+    # create networkx graph
+    G = nx.Graph()
+    # add nodes
+    for i in range(len(nodes)):
+        G.add_node(nodes[i], color=nodecolor[i])
+    # add edges
+    for i in range(len(l)):
+        edge = l[i]
+        G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
+    return G
+
+def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, node_position=False, font_size=8):
     """ Plot the a graph
 
     Arguments:
@@ -331,13 +352,22 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
         grid: plot each partition as highlighted region in the whole graph as a individual subplot
         separate: plot the whole graph with partitions separated
         connectedComponents: find all connected components and plot them spatially separated
-        node_color: sequence of color values in [0, 1], same length as number of nodes
         node_position: sequence of (x, y) values indicating the position of each node
         font_size: font size (default: 8)
     """
 
-    weights = [l[2] for l in list(G.edges_iter(data='weight'))]
-    color = [l[2] for l in list(G.edges_iter(data='color'))]
+    weights = 1.0
+    color = 'r'
+    if G.edges():
+        if 'weight' in G.edges(data=True)[0][2]:
+            weights = [l[2] for l in list(G.edges_iter(data='weight'))]
+        if 'color' in G.edges(data=True)[0][2]:
+            color = [l[2] for l in list(G.edges_iter(data='color'))]
+    node_color = 'r'
+    hasNodeColor = False
+    if G.nodes() and 'color' in G.nodes(data=True)[0][1]:
+        hasNodeColor = True
+        node_color = [l[1]['color'] for l in list(G.nodes_iter(data='color'))]
 
     if not nparts and not connectedComponents and not node_position:
         nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=weights, edge_color=color)
@@ -356,7 +386,8 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
                 partition_color = partition_color == partition
             else:
                 partition_color = np.array(partition_color)/float(nparts)
-            nx.draw_networkx(G, node_color=partition_color, node_size=300, font_size=font_size, width=weights, edge_color=color)
+            current_node_color = node_color if hasNodeColor else partition_color
+            nx.draw_networkx(G, node_color=current_node_color, node_size=300, font_size=font_size, width=weights, edge_color=color)
         elif grid:
             fig = plt.figure(figsize=(6, 3*nparts))
             # initial positioning
@@ -366,7 +397,8 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
                 ax.append(fig.add_subplot(int(0.5 * nparts), 2, i + 1))
                 partition_color = np.array(p[1])
                 partition_color_i = partition_color == i
-                nx.draw_networkx(G, node_color=partition_color_i, node_size=300, ax=ax[i], pos=init_pos, font_size=font_size, width=weights, edge_color=color)
+                current_node_color = node_color if hasNodeColor else partition_color_i
+                nx.draw_networkx(G, node_color=current_node_color, node_size=300, ax=ax[i], pos=init_pos, font_size=font_size, width=weights, edge_color=color)
         elif separate:
             graphs = getPartitions(G, p[1])
             partition_color = np.array(p[1])
@@ -384,7 +416,8 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
                 ypos = scale * (n - n % nrows) / nrows
                 d = nx.circular_layout(graphs[n], center=(xpos, ypos), scale=1.0)
                 layout = dict(layout.items() + d.items())
-            nx.draw_networkx(G, node_size=300, pos=layout, node_color=partition_color, font_size=font_size, width=weights, edge_color=color)
+            current_node_color = node_color if hasNodeColor else partition_color
+            nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=weights, edge_color=color)
     elif connectedComponents:
         compgen = nx.connected_components(G)
         NNodes = len(G.nodes())
@@ -402,8 +435,6 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
         nparts = ipart
         partition_color = np.array(partition)
         partition_color = partition_color == ipart_max
-        if type(node_color) != str:
-            partition_color = node_color
         layout = {}
         nrow = 3
         ncol = 5
@@ -416,9 +447,10 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
             ypos = scale * (n - n % nrows) / nrows
             d = nx.spring_layout(graphs[n], center=(xpos, ypos))
             layout = dict(layout.items() + d.items())
-        nx.draw_networkx(G, node_size=300, pos=layout, node_color=partition_color, font_size=font_size, width=weights, edge_color=color)
+        current_node_color = node_color if hasNodeColor else partition_color
+        nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=weights, edge_color=color)
     else:
-        nx.draw_networkx(G, node_size=300, pos=node_position, node_color=node_color, font_size=font_size, width=weights, edge_color=color)
+        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=weights, edge_color=color)
 
 def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plot=True):
     """ Calculate the partition of a given graph with maximal cluster coefficient
@@ -585,7 +617,8 @@ def main():
         else:
             pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
             multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
-            plotMultiConflictGraph(multiConflicts, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component, NPointConflicts=len(pointConflicts))
+            G = getMultiConflictGraph(multiConflicts)
+            plotGraph(G, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component)
         plt.show()
 
     if args.mode == 'subset':

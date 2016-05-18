@@ -670,6 +670,14 @@ def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
     # calculate multi conflicts
     cdef vector[int] multiConflictsFirst
     cdef vector[int] multiConflictsSecond
+    cdef vector[bool] conflict11
+    cdef vector[bool] conflict12
+    cdef vector[bool] conflict21
+    cdef vector[bool] conflict22
+    cdef vector[float] deltaTMinVec
+    cdef vector[float] conflictType
+    cdef vector[float] conflictTypeFirst
+    cdef vector[float] conflictTypeSecond
     print "Calculate conflict involving more than two flights"
     pbar = progressbar.ProgressBar().start()
     pbar.maxval = N
@@ -678,6 +686,8 @@ def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
     cdef bool isConflict12
     cdef bool isConflict21
     cdef bool isConflict22
+    cdef float deltaTMin
+    cdef float deltaT
     for i in range(N):
         for j in range(N):
             if i % 100 == 0:
@@ -699,12 +709,59 @@ def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
                     # check if one of the raw point conflicts is a parallel conflict
                     multiConflictsFirst.push_back(conflictIndex[i])
                     multiConflictsSecond.push_back(conflictIndex[j])
+                    conflictTypeFirst.push_back(conflictIndex[i] >= N1)
+                    conflictTypeSecond.push_back(conflictIndex[j] >= N1)
+                    conflict11.push_back(isConflict11)
+                    conflict12.push_back(isConflict12)
+                    conflict21.push_back(isConflict21)
+                    conflict22.push_back(isConflict22)
+                    # get minimum time difference
+                    deltaTMin = 1E6
+                    if isConflict11:
+                        deltaT = np.abs(time1[i] - time1[j])
+                        if deltaT < deltaTMin:
+                            deltaTMin = deltaT
+                    if isConflict12:
+                        deltaT = np.abs(time1[i] - time2[j])
+                        if deltaT < deltaTMin:
+                            deltaTMin = deltaT
+                    if isConflict21:
+                        deltaT = np.abs(time2[i] - time1[j])
+                        if deltaT < deltaTMin:
+                            deltaTMin = deltaT
+                    if isConflict22:
+                        deltaT = np.abs(time2[i] - time2[j])
+                        if deltaT < deltaTMin:
+                            deltaTMin = deltaT
+                    deltaTMinVec.push_back(deltaTMin)
+                    # check if the multi conflict is build out of point or parallel conflicts
+                    if conflictIndex[i] < N1 and conflictIndex[j] < N1:
+                        conflictType.push_back(0);
+                    elif conflictIndex[i] >= N1 and conflictIndex[j] >= N1:
+                        conflictType.push_back(1);
+                    else:
+                        conflictType.push_back(0.5);
     pbar.finish()
 
     multiConflicts = pd.DataFrame({'conflict1': np.array(multiConflictsFirst),
-                                   'conflict2': np.array(multiConflictsSecond)
+                                   'conflict2': np.array(multiConflictsSecond),
+                                   'conflictType1': np.array(conflictTypeFirst),
+                                   'conflictType2': np.array(conflictTypeSecond),
+                                   'isConflict11': np.array(conflict11),
+                                   'isConflict12': np.array(conflict12),
+                                   'isConflict21': np.array(conflict21),
+                                   'isConflict22': np.array(conflict22),
+                                   'deltaTMin': np.array(deltaTMinVec),
+                                   'multiConflictType': np.array(conflictType)
                                    })
+
+    # enforce conflict1 < conflict2 and remove duplicated
+    mc1 = multiConflicts[multiConflicts['conflict1'] > multiConflicts['conflict2']]
+    mc1.columns = ['conflict2', 'conflict1', 'conflictType2', 'conflictType1', 'isConflict11', 'isConflict21', 'isConflict12', 'isConflict22', 'deltaTMin', 'multiConflictType']
+    mc2 = multiConflicts[multiConflicts['conflict1'] <= multiConflicts['conflict2']]
+    multiConflicts = pd.concat([mc1, mc2])
     multiConflicts.drop_duplicates(inplace=True)
+    multiConflicts.sort_values(by=['conflict1', 'conflict2'], inplace=True)
     multiConflicts.index.name = 'multiConflictIndex'
 
     return multiConflicts
