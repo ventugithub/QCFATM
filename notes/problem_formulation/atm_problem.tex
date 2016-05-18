@@ -28,7 +28,7 @@ We consider local spatial deviations, which consist of a set of
 maneuvers that change relatively small parts of the spatial trajectory
 \footnote{ There could also be global 
 spatial deviations, which change the entire trajectory, such as are
-used in Olg's thesis.
+used in Olga's thesis.
 For example, one parameterization of global spatial deviations treats each
 trajectory as an arc in a plane perpendicular to the ground and considers
 smooth one-parameter curves to the projection of the trajectory onto the
@@ -258,10 +258,9 @@ We parameterize this curve by the scalar $a_{k} \in [0, 1]$.
 More generally, there is a ``delay surface'' when various values of $\Delta_{k}$ are considered.
 Discretizing $a_k$ into only two values $\{0, 1\}$ is equivalent to requiring that exactly one flight maneuvers around the other, whose trajectory remains unchanged.
 
-All of the above forms invite straightforward QUBO formulations.
-Discretize and introduce bits for each discrete value for the variables $d_i$, $d_{ik}$, $\Delta_k = D_{lk} - D_{jk}$, and $a_k$:
+In order to formulate the problem as a QUBO, we discretize and introduce bits for each discrete value for the variables $d_i$, $d_{ik}$, $\Delta_k = D_{lk} - D_{jk}$, and $a_k$:
 \begin{equation*}
-    C = D + x C^{\mathrm{one}} + y C^{\mathrm{equal}},
+    C = D + p_1 C^{\mathrm{one}} + p_2 C^{\mathrm{equal}},
 \end{equation*}
 where 
 \begin{equation*}
@@ -287,9 +286,9 @@ is the penalty function ensuring that each variable has a well defined value enc
 C^{\mathrm{equal}}
 &=
 \sum_{k} \left[
-\left(\sum_{\alpha} d_{l\alpha} + \sum_{p \in K^<_{lk}} \sum_{\beta} \beta d_{lp\beta}\right)
+\left(\sum_{\alpha} \alpha d_{l\alpha} + \sum_{p \in K^<_{lk}} \sum_{\beta} \beta d_{lp\beta}\right)
 -
-\left(\sum_{\alpha} d_{j\alpha} + \sum_{q \in K^<_{jk}} \sum_{\beta} \beta d_{jq\beta}\right)
+\left(\sum_{\alpha} \alpha d_{j\alpha} + \sum_{q \in K^<_{jk}} \sum_{\beta} \beta d_{jq\beta}\right)
 -
 \left(\sum_{\gamma} \gamma \Delta_{k\gamma}\right)\right]_{(l, j) \in I_k }^2
 + \\
@@ -299,9 +298,11 @@ C^{\mathrm{equal}}
 \left(\sum_{\gamma \delta} d_{ik} (\gamma, \delta) \Delta_{k\gamma} a_{k\delta}\right)\right]^2
 \end{align*}
 is the penalty function ensuring that $\Delta_k = D_{ik} - D_{jk}$ and $d_{ik} = d_{ik}(\Delta_k, a_k)$, 
-the Greek indices represent the discrete values that the corresponding quantities can assume, and $x$ and $y$ are penalty weights.\footnote{In practice we could have varying penalty weights for the various penalties.}
+the Greek indices represent the discrete values that the corresponding quantities can assume, and $p_1$ and $p_2$ are penalty weights.\footnote{In practice we could have varying penalty weights for the various penalties.}
+Note, that the last term introduces cubic and quartic terms.
 
 We could make a further approximation and for each conflict pick some optimal-in-expectation $a_k$, thereby removing that variable from the formulation.
+This would decrease the degree of the above cost function resulting in a QUBO.
 Alternatively, we could allow the delays $(d_{ik}, d_{jk})$ to take on any value at or beyond the delay frontier (i.e. somewhere in between the independent delays and delay frontier cases).
 We could also suitably parameterize the ``delay surface'' so that the cost function could be written in a functional form.
 
