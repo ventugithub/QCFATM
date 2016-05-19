@@ -169,6 +169,7 @@ here, and hard to imagine relaxing.
 \end{itemize}
 
 \section{Models}
+\label{sec:models}
 The arrival time of flight $i$ at a potential conflict $k$ reads 
 \begin{equation*}
     T_{ik} = t_{ik} + d_i + \sum_{p \in K^<_{ik}} d_{ip}
@@ -322,6 +323,34 @@ An appropriate QUBO for that problem is relatively straightforward, and can be w
 General instances fall into neither of the above extremes.
 One potential solution is to use some sort of master-slave subproblem decomposition to combine solvers for each extremal case into a general solution.
 
+\section{Mapping to Job Shop Scheduling}
+We can map the ATM problem to job shop scheduling by imagining the space at a potential conflict $k$ as a resource, the flights $I_k$ have to compete for.
+\begin{equation*}
+    R_k = \text{spatial trajectory points of the flights } i \in I_k \text{which are in (spatial) conflict with each other}
+\end{equation*}
+In the language of job shop scheduling, we have a ordered set of tasks for each flight $i \in I_k$:
+\begin{equation*}
+    \mathcal{T}_i = \left(R^{t_0}_i, \dots, R^{t_M}_i\right)
+\end{equation*}
+where $t_0$ and $t_M$ are the earliest and the latest time in the whole trajectory data set.
+$R^t_i$ is the resource assigned to flight $i$ at time $t$.
+If a flight $i$ at time $t'$ occupies a spatial trajectory point which is not in spatial conflict with any other flight, it is viewed as using the resource $R_i$, i.e.\ $R^{t'}_i = R_i$.
+The role of conflict avoiding maneuvers is replaced by the a task waiting for a resource occupied by a conflicting flight to free up.
+\subsection{Example}
+Assume three flights and two potential conflicts between flight $1$ and $2$ as well as between $2$ and $3$ (see figure \ref{fig:jobshop_example}).
+Let the set of tasks for each flights read
+\begin{align*}
+    \mathcal{T}_1 &= \left(R_1, R_1, R_{k_1}, R_1, R_1\;\,, R_{k_2}, R_1\right) \\
+    \mathcal{T}_2 &= \left(R_2, R_2, R_{k_1}, R_2, R_2\;\,, R_2\;\,, R_2 \right) \\
+    \mathcal{T}_2 &= \left(R_3, R_3, R_3\;\,, R_3, R_{k_2}, R_3\;\,, R_3 \right) 
+\end{align*}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{pics/jobshop_example}
+    \caption{Example for mapping to job shop scheduling}
+    \label{fig:jobshop_example}
+\end{figure}
 
 \newpage
 \appendix
