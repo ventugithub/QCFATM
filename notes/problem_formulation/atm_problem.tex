@@ -337,6 +337,7 @@ where $t_0$ and $t_M$ are the earliest and the latest time in the whole trajecto
 $R^t_i$ is the resource assigned to flight $i$ at time $t$.
 If a flight $i$ at time $t'$ occupies a spatial trajectory point which is not in spatial conflict with any other flight, it is viewed as using the resource $R_i$, i.e.\ $R^{t'}_i = R_i$.
 The role of conflict avoiding maneuvers is replaced by the a task waiting for a resource occupied by a conflicting flight to free up.
+In contrast to the above models where the cost function was the sum of all delays, the cost function of this approach is the maximal delay among all flights.
 \subsection{Example}
 Assume three flights and two potential conflicts between flight $1$ and $2$ as well as between $2$ and $3$ (see figure \ref{fig:jobshop_example}).
 Let the set of tasks for each flights read
