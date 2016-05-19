@@ -249,9 +249,10 @@ In this model we assume that the delay introduced by a conflict-avoiding
 maneuver is independent of the other flight. 
 % There are no spatial maneuvers, but each flight $i$ is allowed to slow down by
 % some delay $d_{ik}$ before conflict $k$ (and after the its previous one).  
-In the above formalism, this is equivalent to $\mathbf a_k = (d_{ik}, d_{jk})$.
-In this case, there is no need for $\left(d_i\right)_{i=1}^n$ because for each flight the origination delay $d_i$ can just be subsumed into the delay $d_{ik}$ of the first conflict.
+%In the above formalism, this is equivalent to $\mathbf a_k = (d_{ik}, d_{jk})$.
+%In this case, there is no need for $\left(d_i\right)_{i=1}^n$ because for each flight the origination delay $d_i$ can just be subsumed into the delay $d_{ik}$ of the first conflict.
 Each potential conflict $k$ is an actual conflict when the difference between the total delays of the constituent flights are in some range $\left[\Delta_k^{\mathrm{min}}, \Delta_k^{\mathrm{max}}\right]$.
+However, it is not clear how to penalize real conflicts.
 
 \subsubsection{Delay Frontier Model}
 For a given $\Delta_{k}$ and $(l, k) \in I_k$ we assume that there is a minimal delay of each flight $d_{lk}^*$ and $d_{jk}^*$ assuming that the other is unchanged, and there is (presumably) a concave ``delay frontier'' in the region $[0, d_{lk}^*] \times [0, d_{jk}^*]$ connecting $(d_{lk}^*, 0)$ and $(0, d_{jk}^*)$ that gives the possible delays $(d_{lk}, d_{jk})$. 
