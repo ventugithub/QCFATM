@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.lines
 import pandas as pd
 import numpy as np
 import tools
@@ -285,12 +287,18 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     # extract nodes from graph
     nodes = np.unique(np.array([n1 for n1, n2 in l] + [n2 for n1, n2 in l]))
     # edge weights
-    deltaTMax = np.max(conflicts['deltaT'].values) + 1
-    weights = (3.0/deltaTMax * (deltaTMax - conflicts['deltaT'].values)).tolist()
+    weights = conflicts['deltaT'].values.tolist()
     # edge colors
     conflictType = conflicts['isParallelConflict'].values.tolist()
+    # graph info
+    info = {}
+    info['nodeColorName'] = 'flights'
+    info['edgeColorName'] = 'conflict type'
+    info['edgeColorValues'] = {0.0: 'point', 0.5: 'mixed', 1.0: 'parallel'}
+    info['edgeWeightName'] = 'time difference'
+    info['edgeWeightValues'] = list(set(weights))
     # create networkx graph
-    G = nx.Graph()
+    G = nx.Graph(**info)
     # add nodes
     for node in nodes:
         G.add_node(node)
@@ -308,9 +316,9 @@ def getMultiConflictGraph(multiConflicts):
     """
     # get edge tuples defining a graph
     def getConflictType(arr):
-        if all(arr == 2):
+        if all(arr == 1):
             return 1.0
-        elif not any(arr):
+        elif all(arr == 0):
             return 0.0
         else:
             return 0.5
@@ -327,12 +335,19 @@ def getMultiConflictGraph(multiConflicts):
     pairConflictTypes = conflicts.loc[:, ['conflictType1', 'conflictType2']].values.tolist()
     nodecolor = np.array([n1 for n1, n2 in pairConflictTypes] + [n2 for n1, n2 in pairConflictTypes])
     # edge weights
-    deltaTMax = np.max(conflicts['deltaTMin'].values) + 1
-    weights = (3.0/deltaTMax * (deltaTMax - conflicts['deltaTMin'].values)).tolist()
+    weights = conflicts['deltaTMin'].values.tolist()
     # edge colors
     conflictType = conflicts['multiConflictType'].values.tolist()
+    # graph info
+    info = {}
+    info['nodeColorName'] = 'conflict type'
+    info['nodeColorValues'] = {0.0: 'point', 0.5: 'mixed', 1.0: 'parallel'}
+    info['edgeColorName'] = 'multi conflict type'
+    info['edgeColorValues'] = {0.0: 'point', 0.5: 'mixed', 1.0: 'parallel'}
+    info['edgeWeightName'] = 'time difference'
+    info['edgeWeightValues'] = list(set(weights))
     # create networkx graph
-    G = nx.Graph()
+    G = nx.Graph(**info)
     # add nodes
     for i in range(len(nodes)):
         G.add_node(nodes[i], color=nodecolor[i])
@@ -342,7 +357,7 @@ def getMultiConflictGraph(multiConflicts):
         G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
     return G
 
-def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, node_position=False, font_size=8):
+def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, font_size=8):
     """ Plot the a graph
 
     Arguments:
@@ -352,26 +367,34 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
         grid: plot each partition as highlighted region in the whole graph as a individual subplot
         separate: plot the whole graph with partitions separated
         connectedComponents: find all connected components and plot them spatially separated
-        node_position: sequence of (x, y) values indicating the position of each node
         font_size: font size (default: 8)
     """
 
-    weights = 1.0
+    # extract weights and color for edges and nodes
+    # default values
+    width = 1.0
     color = 'r'
+    node_color = 'r'
+    width_max = 3.0
+    width_min = 0.5
+
     if G.edges():
         if 'weight' in G.edges(data=True)[0][2]:
             weights = [l[2] for l in list(G.edges_iter(data='weight'))]
+            # normalize
+            width = np.array(weights)
+            width = (width_max - width_min) * ((np.max(weights) - weights) / (np.max(weights) - np.min(weights))) + width_min
         if 'color' in G.edges(data=True)[0][2]:
             color = [l[2] for l in list(G.edges_iter(data='color'))]
-    node_color = 'r'
     hasNodeColor = False
     if G.nodes() and 'color' in G.nodes(data=True)[0][1]:
         hasNodeColor = True
         node_color = [l[1]['color'] for l in list(G.nodes_iter(data='color'))]
 
-    if not nparts and not connectedComponents and not node_position:
-        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=weights, edge_color=color)
-    elif not connectedComponents and not node_position:
+    partition_colors = []
+    if not nparts and not connectedComponents:
+        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=width, edge_color=color)
+    elif nparts:
         try:
             import metis
         except:
@@ -387,24 +410,29 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
             else:
                 partition_color = np.array(partition_color)/float(nparts)
             current_node_color = node_color if hasNodeColor else partition_color
-            nx.draw_networkx(G, node_color=current_node_color, node_size=300, font_size=font_size, width=weights, edge_color=color)
+            partition_colors = partition_color
+            nx.draw_networkx(G, node_color=current_node_color, node_size=300, font_size=font_size, width=width, edge_color=color)
         elif grid:
             fig = plt.figure(figsize=(6, 3*nparts))
             # initial positioning
             init_pos = nx.spring_layout(G)
             ax = []
+            npartsEven = (nparts % 2 == 1) + nparts
             for i in range(nparts):
-                ax.append(fig.add_subplot(int(0.5 * nparts), 2, i + 1))
+                ax.append(fig.add_subplot(int(0.5 * npartsEven), 2, i + 1))
                 partition_color = np.array(p[1])
                 partition_color_i = partition_color == i
                 current_node_color = node_color if hasNodeColor else partition_color_i
-                nx.draw_networkx(G, node_color=current_node_color, node_size=300, ax=ax[i], pos=init_pos, font_size=font_size, width=weights, edge_color=color)
+                partition_colors.append(partition_color_i)
+                nx.draw_networkx(G, node_color=current_node_color, node_size=300, ax=ax[i], pos=init_pos, font_size=font_size, width=width, edge_color=color)
         elif separate:
             graphs = getPartitions(G, p[1])
             partition_color = np.array(p[1])
             # partition_color = np.array(partition_color)/float(nparts)
             perm = np.random.permutation(nparts)
             partition_color = np.apply_along_axis(lambda x: perm[x], axis=0, arr=partition_color)
+            colormax = np.max(np.array(partition_color))
+            partition_color = np.array(partition_color) / float(colormax)
             layout = {}
             nrow = 3
             ncol = 5
@@ -417,11 +445,12 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
                 d = nx.circular_layout(graphs[n], center=(xpos, ypos), scale=1.0)
                 layout = dict(layout.items() + d.items())
             current_node_color = node_color if hasNodeColor else partition_color
-            nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=weights, edge_color=color)
+            partition_colors = partition_color
+            nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=width, edge_color=color)
     elif connectedComponents:
         compgen = nx.connected_components(G)
         NNodes = len(G.nodes())
-        partition = np.empty((NNodes), dtype=int)
+        partitionList = np.empty((NNodes), dtype=int)
         ipart = 0
         ipart_max = 0
         max_comp = 0
@@ -430,10 +459,10 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
                 max_comp = len(c)
                 ipart_max = ipart
             for node in c:
-                partition[list(G.nodes()).index(int(node))] = ipart
+                partitionList[list(G.nodes()).index(int(node))] = ipart
             ipart = ipart + 1
         nparts = ipart
-        partition_color = np.array(partition)
+        partition_color = np.array(partitionList)
         partition_color = partition_color == ipart_max
         layout = {}
         nrow = 3
@@ -441,16 +470,95 @@ def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connec
         nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
         nrows = nmulti * nrow
         scale = 2
-        graphs = getPartitions(G, partition)
+        graphs = getPartitions(G, partitionList)
         for n in range(nparts):
             xpos = scale * (n % nrows)
             ypos = scale * (n - n % nrows) / nrows
             d = nx.spring_layout(graphs[n], center=(xpos, ypos))
             layout = dict(layout.items() + d.items())
         current_node_color = node_color if hasNodeColor else partition_color
-        nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=weights, edge_color=color)
+        partition_colors = partition_color
+        nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=width, edge_color=color)
     else:
-        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=weights, edge_color=color)
+        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=width, edge_color=color)
+
+    ###################################################################################
+    # Add legend
+    ###################################################################################
+    # container for legend entries
+    labels = []
+
+    # get graph information
+    info = G.graph
+    hasNodeColorInfo = 'nodeColorName' in info and 'nodeColorValues' in info
+    hasEdgeColorInfo = 'edgeColorName' in info and 'edgeColorValues' in info
+    hasEdgeWeightInfo = 'edgeWeightName' in info and 'edgeWeightValues' in info
+    if hasNodeColorInfo:
+        nodeColorName = info['nodeColorName']
+        nodeColorValues = info['nodeColorValues']
+        # create legend entry
+        sm = matplotlib.cm.ScalarMappable()
+        rgb_nodecolor = sm.to_rgba(np.unique(np.array(node_color)))
+        label_nodecolor = ["%s = %s" % (nodeColorName, nodeColorValues[c]) for c in set(node_color)]
+        for i in range(len(rgb_nodecolor)):
+            labels.append(matplotlib.lines.Line2D([], [], color=rgb_nodecolor[i], marker='o', markersize=15, linewidth=0, label=label_nodecolor[i]))
+    elif len(partition_colors):
+        partition_colors = list(np.unique(np.array(partition_colors)))
+        sm = matplotlib.cm.ScalarMappable()
+        rgb_color = sm.to_rgba(partition_colors)
+        if grid or partition or connectedComponents:
+            if grid:
+                labelname1 = 'other partitions'
+                labelname2 = 'highlighted partition'
+            elif partition:
+                labelname1 = 'other partitions'
+                labelname2 = 'partition %i' % partition
+            elif connectedComponents:
+                labelname1 = 'other partitions'
+                labelname2 = 'most connected partition'
+            if 'nodeColorName' in info:
+                labelname1 = "%s,  %s" % (info['nodeColorName'], labelname1)
+                labelname2 = "%s,  %s" % (info['nodeColorName'], labelname2)
+            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[0], marker='o', markersize=15, linewidth=0, label=labelname1))
+            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[1], marker='o', markersize=15, linewidth=0, label=labelname2))
+        else:
+            for i in range(len(partition_colors)):
+                if 'nodeColorName' in info:
+                    labelname = "%s, partition %i" % (info['nodeColorName'], i)
+                else:
+                    labelname = "partition %i" % i
+                labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[i], marker='o', markersize=15, linewidth=0, label=labelname))
+    elif 'nodeColorName' in info:
+        nodeColorName = info['nodeColorName']
+        labels.append(matplotlib.lines.Line2D([], [], color=node_color, marker='o', markersize=15, linewidth=0, label=nodeColorName))
+    if hasEdgeColorInfo:
+        edgeColorName = info['edgeColorName']
+        edgeColorValues = info['edgeColorValues']
+        # create legend entry
+        colorValues = np.sort(np.unique(np.array(color)))
+        sm = matplotlib.cm.ScalarMappable()
+        rgb_color = sm.to_rgba(colorValues)
+        label_color = ["%s = %s" % (edgeColorName, edgeColorValues[c]) for c in colorValues]
+        for i in range(len(rgb_color)):
+            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[i], linewidth=5, label=label_color[i]))
+    if hasEdgeWeightInfo:
+        edgeWeightName = info['edgeWeightName']
+        edgeWeightValuesFull = info['edgeWeightValues']
+        # reduce to 3 values to keep legend small
+        edgeWeightValuesMax = np.max(np.array(edgeWeightValuesFull))
+        edgeWeightValuesMin = np.min(np.array(edgeWeightValuesFull))
+        edgeWeightValues = []
+        edgeWeightValues.append(edgeWeightValuesMin)
+        edgeWeightValues.append(0.5 * (edgeWeightValuesMax - edgeWeightValuesMin))
+        edgeWeightValues.append(edgeWeightValuesMax)
+        edgeWeightLineWidths = [width_max, 0.5 * (width_min + width_max), width_min]
+
+        # create legend entry
+        label_weight = ["%s = %s" % (edgeWeightName, c) for c in set(edgeWeightValues)]
+        for i in range(len(edgeWeightValues)):
+            labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=edgeWeightLineWidths[i], label=label_weight[i]))
+
+    plt.legend(handles=labels)
 
 def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plot=True):
     """ Calculate the partition of a given graph with maximal cluster coefficient
