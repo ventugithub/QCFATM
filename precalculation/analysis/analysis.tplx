@@ -1,0 +1,31 @@
+% jupyter nbconvert --to pdf HW0.ipynb --template clean_report.tplx
+((*- extends 'article.tplx' -*))
+
+% Author info
+((* block title *))
+    \title{
+        Data Analysis of Potential Conflicts in Flight Trajectories
+    }
+((* endblock title *))
+((* block author *))
+    \author{
+        Tobias Stollenwerk
+    }
+((* endblock author *))
+
+    % Disable input cells
+    ((* block input_group *))
+    ((* endblock input_group *))
+
+    % Adding some LaTeX magic in abstract block to hide the stuff like "Chapter 1"
+    % http://nbconvert.readthedocs.org/en/latest/customizing.html
+    ((* block abstract *))
+    \makeatletter
+    \def\@makechapterhead#1{
+          {\parindent \z@ \raggedright \normalfont
+                  \interlinepenalty\@M
+                          \Huge \bfseries #1\par\nobreak
+                            }
+    }
+\makeatother
+((* endblock abstract *))
