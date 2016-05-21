@@ -37,7 +37,7 @@ $y_{i, l, i', j', l'}$ only for $i \in N(i', j')$ and $l \in Q(i', j', l', i)$
 
 $\forall i, l$: 
 \begin{equation}
-\sum_j \left(x_{i, j, l} + \sum_{i', j', l'}  y_{i, l, i', j', l'}\right) \leq b(i, l)
+\sum_j x_{i, j, l} + \sum_{i', j', l'}  y_{i, l, i', j', l'} \leq b(i, l)
 \end{equation}
 
 $\forall i$:
@@ -62,7 +62,7 @@ h(l) < C(i, j, l) \Rightarrow x_{i, j, l} = 0
 
 $\forall i, j, l$:
 \begin{equation}
-\sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R_{i, j, l} x_{i, j, l}
+\sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R_{i, j, l}
 \end{equation}
 
 \section{Instance ensembles}
