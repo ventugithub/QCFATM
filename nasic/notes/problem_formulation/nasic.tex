@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
 \usepackage[margin=1in]{geometry}
 
@@ -66,21 +67,21 @@ The sum of $l$-type primary and cover aircrafts dispatched from all airfield can
 \item
 \textbf{Tasks must be fulfilled:}
 The sum of contributions of all aircrafts dispatched to fulfill task $j$ must exceed the resource needed by that task
-\begin{equation}
+\begin{equation} \label{eqn:constraint_task_fulfilled}
     \sum_{i, l} m(j, l) x_{i, j, l} \geq M(j)  \qquad \forall j
 \end{equation}
 
 \item
 \textbf{Aircraft range is limited:}
 We can not dispatch aircrafts for tasks $j$ if the necessary range is beyond the maximum range of these aircrafts
-\begin{equation}
+\begin{equation} \label{eqn:constraint_range}
     h(l) < C(i, j, l) \Rightarrow x_{i, j, l} = 0 \qquad \forall i, j, l 
 \end{equation}
 
 \item
 \textbf{Cover must be provided:}
 The sum of cover contributions to must exceed the cover needed.
-\begin{equation}
+\begin{equation} \label{eqn:constraint_cover}
     \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R(i, j, l) \qquad \forall i, j, l
 \end{equation}
 \end{itemize}
@@ -123,11 +124,13 @@ Remaining:
 Reduced problem:
 $\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
 \begin{itemize}
-\item $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq b(i,l)$
-\item $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq B(i)$
-\item \eqref{eqn:constraint_type_total_resource} implies \eqref{eqn:constraint_airfield_type_resource}
-\item $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
-\item $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq 1$
+    \item Constraint \eqref{eqn:constraint_cover_availability} always fulfilled
+    \item Constraint \eqref{eqn:constraint_airfield_type_resource} $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'}  \leq b(i,l)$
+    \item Constraint \eqref{eqn:constraint_airfield_total_resource} $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq B(i)$
+    \item \eqref{eqn:constraint_type_total_resource} implies \eqref{eqn:constraint_airfield_type_resource}
+    \item Constraint \eqref{eqn:constraint_task_fulfilled} $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
+    \item Constraint \eqref{eqn:constraint_range} always fulfilled
+    \item Constraint \eqref{eqn:constraint_cover} $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq 1$
 \end{itemize}
 (For all sums, $j \in [J]$, $i \in [I]$.)
 
@@ -140,6 +143,47 @@ $\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
 Is this hard?
 
 \section{QUBO}
+\subsection{Reduced problem}
+Variables
+\begin{itemize}
+    \item $x_{i, j} \in \{0, 1, \dots, b(i)\}$
+    \item $y_{i, i', j'} \{0, 1, \dots, b(i)\}$
+\end{itemize}
+\begin{enumerate}
+    \item 
+    Binary representation of $x_{i, j}$ and $y_{i, i', j'}$:
+    \begin{align*}
+        x_{i, j} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha x_{i, j, \alpha} + (b(i) - 2^D_i + 1) \sum_{\alpha=0}^{b(i) - 2^D_i + 1} \frac{\alpha x_{i, j, D_i + \alpha}}{(b(i) - 2^D_i + 1)} \\
+        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i} 2^\alpha y_{i, i', j', \alpha} + (b(i) - 2^D_i + 1) \sum_{\alpha=0}^{b(i) - 2^D_i + 1} \frac{\alpha y_{i, i', j', D_i + \alpha}}{(b(i) - 2^D_i + 1)}
+    \end{align*}
+    with $D_i = \log_2 b(i) \in \mathbb{N}$.
+    \item 
+    Unary representation of $x_{i, j}$ and $y_{i, i', j'}$:
+    \begin{align*}
+        x_{i, j} & = \sum_{\alpha = 0}^{b(i)} \alpha x_{i, j, \alpha} \\
+        y_{i, j} & = \sum_{\alpha = 0}^{b(i)} \alpha y_{i, i', j, \alpha} \\
+    \end{align*}
+    \noindent
+    QUBO contribution to ensure a single value of each variable
+    \begin{equation*}
+        C_\text{one} = \sum_{ij} \left( \sum_{\alpha = 0}^{b(i)} x_{i, j, \alpha} - 1 \right)^2
+                     + \sum_{ii'j} \left( \sum_{\alpha = 0}^{b(i)} y_{i, i', j, \alpha} - 1 \right)^2
+    \end{equation*}
+\end{enumerate}
+\begin{itemize}
+\item Incorporation of constraint \eqref{eqn:constraint_airfield_type_resource}:
+\begin{equation*}
+    0 \leq \underbrace{b(i) - \sum_j x_{i,j} - \sum_{i', j'} y_{i, i', j'}}_{=:z^1_i} \leq b(i)
+\end{equation*}
+Binary representation of the slack variable $z^1_i$:
+\begin{equation*}
+    z^1_{i} = \sum_{\alpha = 0}^{D_i} 2^\alpha z_{i, \alpha}
+\end{equation*}
+QUBO contribution
+\begin{equation*}
+    C_2 = \sum_i \left( b(i) - \sum_j x_{i,j} - \sum_{i', j'} y_{i, i', j'} - z^1_i \right)^2
+\end{equation*}
+\end{itemize}
 
 
 \end{document}
