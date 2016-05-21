@@ -1,0 +1,122 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage[margin=1in]{geometry}
+
+\title{NASIC problem specification}
+\author{Bryan O'Gorman}
+\date{May 2016}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Notation:
+\begin{itemize}
+    \item $I$: num. airfields
+    \item $J$: num. tasks
+    \item $L$: num. aircraft types
+    \item $b(i, l)$: num. $l$-type aircraft available at airfield $i$
+    \item $B(i)$: max. num. aircraft able to be dispatched from airfield $i$
+    \item $A(l)$: total num. $l$-type aircraft available
+    \item $m(j, l)$: how much $l$-type aircraft contribute to task $j$
+    \item $M(j)$: how much task $j$ needs
+    \item $r(l, l', j)$: how much coverage $l'$-type aircraft provide for $l$-type aircraft executing task $j$
+    \item $R(i, j, l)$: how much coverage each $l$-type aircraft from airfield $i$ executing task $j$ needs
+    \item $C(i, j, l)$: Range of $l$-type aircraft from airfield $i$ executing task $l$
+    \item $h(l)$: Range of $l$-type aircraft
+    \item $N(i, j)$: set of airfields from which an aircraft can cover another aircraft executing task $j$ from airfield $i$  
+    \item $Q(i, j, l, i')$: set of aircraft types in airfield $i'$ that can cover an $l$-type aircraft from airfield $i$ executing task $j$
+\end{itemize}
+
+
+\section{Constraints}
+
+$y_{i, l, i', j', l'}$ only for $i \in N(i', j')$ and $l \in Q(i', j', l', i)$
+
+$\forall i, l$: 
+\begin{equation}
+\sum_j \left(x_{i, j, l} + \sum_{i', j', l'}  y_{i, l, i', j', l'}\right) \leq b(i, l)
+\end{equation}
+
+$\forall i$:
+\begin{equation}
+\sum_{j, l} x_{i,j,l} + \sum_{l, i', j', l'} y_{i, l, i', j', l'} \leq B(i)
+\end{equation}
+
+$\forall l$:
+\begin{equation}
+\sum_{i, j} x_{i, j, l} + \sum_{i, i', j', l'} y_{i, l, i', j', l'} \leq A(l)
+\end{equation}
+
+$ \forall j$:
+\begin{equation}
+\sum_{i, l} m_{j, l} x_{i, j, l} \geq M(j) 
+\end{equation}
+
+$\forall i, j, l$:
+\begin{equation}
+h(l) < C(i, j, l) \Rightarrow x_{i, j, l} = 0
+\end{equation}
+
+$\forall i, j, l$:
+\begin{equation}
+\sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R_{i, j, l} x_{i, j, l}
+\end{equation}
+
+\section{Instance ensembles}
+Simplifications:
+\begin{itemize}
+    \item Set $A(l) = \sum_{i} b(i, l)$
+    \item Set $B(i) = \sum_{l} b(i, l)$
+    \item Have $y_{i,l,i',j',l'}$ only when $(i, l) \in K_2(i', j', l')$
+    \item Have $x_{i, j, l}$ only when $l \in K_1(i, j)$
+    \item $r(l, l', j) = r(j) = 1$
+    \item $R(i, j, l) = R(i, j) = 1$
+\end{itemize}
+
+\noindent
+Oversimplifications:
+\begin{itemize}
+\item $L = 1$
+\item $I$ small
+\item $J$ small
+\item $m(j, l) = 1$
+\item $M(j)$ small 
+\item $b(i, l) = b(i)$
+\item (Maybe) $K_2(i', j', l') = I \times L = I \times \{1\}$
+\item (Maybe) $K_1(i, j) = L$
+\end{itemize}
+
+\noindent
+Remaining:
+\begin{itemize}
+\item $I$, $J$, $L$
+\item $b(i, l)$
+\item $m(j, l)$, $M(j)$
+\item $r(l, l', j)$, $R(i, j, l)$
+\item $N(i, j)$, $C(i, j, l)$, $h(l)$, $Q(i, j, l, i') \Rightarrow K_1, K_2$
+\end{itemize}
+
+\noindent 
+Reduced problem:
+$\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
+\begin{itemize}
+\item $\forall i$: $\sum_j \left(x_{i,j} + \sum_{i', j'} y_{i, i', j'} \right) \leq b(i,l)$
+\item $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq B(i)$
+\item (3) implies (1)
+\item $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
+\item $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq x_{i, j}$
+\end{itemize}
+(For all sums, $j \in [J]$, $i \in [I]$.)
+
+\begin{itemize}
+\item $I$ = 2, 3, 4
+\item $J$ = $I$, $2I$, $3I$
+\item $M(j)$ = 1, 2, 3
+\item $b(i) = 1, 2, \ldots, 5$
+\end{itemize}
+Is this hard?
+
+\end{document}
