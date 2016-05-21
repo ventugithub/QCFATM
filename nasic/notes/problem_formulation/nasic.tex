@@ -123,11 +123,11 @@ Remaining:
 Reduced problem:
 $\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
 \begin{itemize}
-\item $\forall i$: $\sum_j \left(x_{i,j} + \sum_{i', j'} y_{i, i', j'} \right) \leq b(i,l)$
+\item $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq b(i,l)$
 \item $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'} \leq B(i)$
 \item \eqref{eqn:constraint_type_total_resource} implies \eqref{eqn:constraint_airfield_type_resource}
 \item $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
-\item $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq x_{i, j}$
+\item $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq 1$
 \end{itemize}
 (For all sums, $j \in [J]$, $i \in [I]$.)
 
