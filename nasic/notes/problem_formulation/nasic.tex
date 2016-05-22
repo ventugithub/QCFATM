@@ -153,10 +153,15 @@ Variables
     \item 
     Binary representation of $x_{i, j}$ and $y_{i, i', j'}$:
     \begin{align*}
-        x_{i, j} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha x_{i, j, \alpha} + (b(i) - 2^D_i + 1) \sum_{\alpha=0}^{b(i) - 2^D_i + 1} \frac{\alpha x_{i, j, D_i + \alpha}}{(b(i) - 2^D_i + 1)} \\
-        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha y_{i, i', j', \alpha} + (b(i) - 2^D_i + 1) \sum_{\alpha=0}^{b(i) - 2^D_i + 1} \frac{\alpha y_{i, i', j', D_i + \alpha}}{(b(i) - 2^D_i + 1)}
+        x_{i, j} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha x_{i, j, \alpha} +  \sum_{\alpha=1}^{b(i) - 2^{D_i} + 1}\alpha x_{i, j, D_i - 1 + \alpha} \\
+        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha y_{i, i', j', \alpha} + \sum_{\alpha=1}^{b(i) - 2^{D_i} + 1} \alpha y_{i, i', j', D_i - 1 + \alpha}
     \end{align*}
     with $D_i = \log_2 b(i) \in \mathbb{N}$.
+    QUBO contribution due to the unary representation of the second term
+    \begin{equation*}
+        C_\text{one} = \sum_{ij} \left( \sum_{\alpha = 1}^{b(i) - 2^{D_i} + 1} x_{i, j, D_i -1 + \alpha} - 1 \right)^2
+        + \sum_{ii'j} \left( \sum_{\alpha = 1}^{b(i) - 2^{D_i} + 1} y_{i, i', j, D_i -1 + \alpha} - 1 \right)^2
+    \end{equation*}
     \item 
     Unary representation of $x_{i, j}$ and $y_{i, i', j'}$:
     \begin{align*}
@@ -179,7 +184,11 @@ Variables
         \item 
         Binary representation of the slack variable $z^1_i$:
         \begin{equation*}
-            z^1_{i} = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha z^1_{i, \alpha} + (b(i) - 2^D_i + 1) \sum_{\alpha=0}^{b(i) - 2^D_i + 1} \frac{\alpha z^1_{i,  D_i + \alpha}}{(b(i) - 2^D_i + 1)} 
+            z^1_{i} = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha z^1_{i, \alpha} + \sum_{\alpha=1}^{b(i) - 2^{D_i} + 1} \alpha z^1_{i,  D_i - 1+ \alpha}
+        \end{equation*}
+        QUBO contribution due to the unary representation of the second term
+        \begin{equation*}
+            C_{2, \text{one}} = \sum_{i} \left( \sum_{\alpha = 1}^{b(i) - 2^{D_i} + 1} z^1_{i, D_i -1 + \alpha} - 1 \right)^2
         \end{equation*}
         \item 
         Unary representation of the slack variable $z^1_i$:
@@ -203,9 +212,13 @@ Variables
         \item 
         Binary representation of the slack variable $z^2_j$:
         \begin{equation*}
-            z^2_{j} = \sum_{\alpha = 0}^{D_j - 1} 2^\alpha z^2_{j, \alpha} + (M(j) - 2^D_j + 1) \sum_{\alpha=0}^{M(j) - 2^D_j + 1} \frac{\alpha z^2_{j,  D_j + \alpha}}{(M(j) - 2^D_j + 1)} 
+            z^2_{j} = \sum_{\alpha = 0}^{D_j - 1} 2^\alpha z^2_{j, \alpha} + \sum_{\alpha=1}^{M(j) - 2^D_j + 1} \alpha z^2_{j,  D_j -1 + \alpha}
         \end{equation*}
         with $D_j = \log_2 M(j) \in \mathbb{N}$.
+        QUBO contribution due to the unary representation of the second term
+        \begin{equation*}
+            C_{5, \text{one}} = \sum_{j} \left( \sum_{\alpha = 1}^{M(j) - 2^{D_j} + 1} z^2_{j, D_i -1 + \alpha} - 1 \right)^2
+        \end{equation*}
         \item 
         Unary representation of the slack variable $z^2_j$:
         \begin{equation*}
@@ -228,9 +241,13 @@ Variables
         \item 
         Binary representation of the slack variable $z^3_{i, j}$:
         \begin{equation*}
-            z^3_{i, j} = \sum_{\alpha = 0}^{D - 1} 2^\alpha z^3_{i, j, \alpha} + (Z^3 - 2^D + 1) \sum_{\alpha=0}^{Z^3 - 2^D_j + 1} \frac{\alpha z^3_{i, j,  D + \alpha}}{(Z^3 - 2^D + 1)} 
+            z^3_{i, j} = \sum_{\alpha = 0}^{D - 1} 2^\alpha z^3_{i, j, \alpha} + \sum_{\alpha=1}^{Z^3 - 2^D + 1} \alpha z^3_{i, j,  D -1 + \alpha} 
         \end{equation*}
         with $D = \log_2 Z^3 \in \mathbb{N}$.
+        QUBO contribution due to the unary representation of the second term
+        \begin{equation*}
+            C_{7, \text{one}} = \sum_{ij} \left( \sum_{\alpha = 1}^{Z^3 - 2^{D} + 1} z^3_{i, j, D - 1 + \alpha} - 1 \right)^2
+        \end{equation*}
         \item 
         Unary representation of the slack variable $z^2_j$:
         \begin{equation*}
