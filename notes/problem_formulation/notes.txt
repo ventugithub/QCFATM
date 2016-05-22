@@ -1,0 +1,6 @@
+* Function arguments should be of bit variables (e.g. x_{i\alpha} rather than x_i)
+* Properly distinguish between d, d_0, d_i, d_k, D_i, d_k, etc.
+* Check for careful use of terms "conflict", "potential conflict", "avoided conflict".
+* Decide whether {k} indexes all conflicts universally or individually for each flight, then check for consistent and clear usage
+* figure out why "\partial" compiling strangly
+* figure out if independent delays model can incorporate maneuvers indirectly (maybe by generalizing forbidden value of Delta_k to more than simply fixed segment, and/or reinterpreting semantics of D_ik to something besides delay introduced between the conflict before k and conflict k
