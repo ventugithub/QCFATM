@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
 
 \usepackage[margin=1in]{geometry}
 
@@ -292,6 +293,13 @@ Variables
                                        & = 3 \sum_i \left(b(i)\right) + \sum_j M(j) + I J \left(\sum_{i'} b(i') - 1\right)
     \end{align*}
 \end{enumerate}
+$\Rightarrow$ For small problems, the unary representation is favorable (see figure \ref{fig:problem_size}).
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{pics/problem_size}
+    \caption{Scaling of the problem size with $I$ by setting $J=2I$ and using $1000$ random samples for $M(j)\in\{1,2,3\}$ and $b(i)\in\{1,\dots, 5\}$}
+    \label{fig:problem_size}
+\end{figure}
 
 
 \end{document}
