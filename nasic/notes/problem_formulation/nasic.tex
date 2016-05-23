@@ -163,10 +163,10 @@ Variables
     \item 
     Binary representation of $x_{i, j}$ and $y_{i, i', j'}$:
     \begin{align*}
-        x_{i, j} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha x_{i, j, \alpha} \\
-        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha y_{i, i', j', \alpha}
+        x_{i, j} & = \sum_{\alpha = 0}^{D_i} 2^\alpha x_{i, j, \alpha} \\
+        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i} 2^\alpha y_{i, i', j', \alpha}
     \end{align*}
-    with $D_i = \lfloor \log_2 b(i) \rfloor \in \mathbb{N}$.
+    with $D_i = \lceil \log_2 b(i) \rceil \in \mathbb{N}$.
     \item 
     Unary representation of $x_{i, j}$ and $y_{i, i', j'}$:
     \begin{align*}
@@ -183,7 +183,7 @@ Variables
         \item 
         Binary representation of the slack variable $u_i$:
         \begin{equation*}
-            u_{i} = \sum_{\alpha = 0}^{D_i - 1} 2^\alpha u_{i, \alpha}
+            u_{i} = \sum_{\alpha = 0}^{D_i} 2^\alpha u_{i, \alpha}
         \end{equation*}
         \item 
         Unary representation of the slack variable $u_i$:
@@ -203,9 +203,9 @@ Variables
         \item 
         Binary representation of the slack variable $v_j$:
         \begin{equation*}
-            v_{j} = \sum_{\alpha = 0}^{D_j - 1} 2^\alpha v_{j, \alpha} 
+            v_{j} = \sum_{\alpha = 0}^{D_j} 2^\alpha v_{j, \alpha} 
         \end{equation*}
-        with $D_j = \lfloor \log_2 M(j) \rfloor \in \mathbb{N}$.
+        with $D_j = \lceil \log_2 M(j) \rceil \in \mathbb{N}$.
         \item 
         Unary representation of the slack variable $v_j$:
         \begin{equation*}
@@ -224,9 +224,9 @@ Variables
         \item 
         Binary representation of the slack variable $w_{i, j}$:
         \begin{equation*}
-            w_{i, j} = \sum_{\alpha = 0}^{D - 1} 2^\alpha w_{i, j, \alpha}
+            w_{i, j} = \sum_{\alpha = 0}^{D} 2^\alpha w_{i, j, \alpha}
         \end{equation*}
-        with $D = \lfloor \log_2 W \rfloor \in \mathbb{N}$.
+        with $D = \lceil \log_2 W \rceil \in \mathbb{N}$.
         \item 
         Unary representation of the slack variable $w_j$:
         \begin{equation*}
@@ -243,22 +243,20 @@ Variables
 \begin{enumerate}
     \item \textbf{Binary representation}
     For the binary representation of $x_{i, j}$, we have following number of binary variables
-    \begin{align*}
-        N_x(i) & = \log_2 b(i) + \underbrace{b(i)}_{< 2^{D_i + 1}} - 2^{D_i} + 2 \\
-               & < \log_2 b(i) + 2^{D_i + 1} - 2^{D_i} + 2 \\
-               & = \log_2 b(i) + 2^{D_i} + 2 
-    \end{align*}
+    \begin{equation*}
+        N_x(i) = \lceil \log_2 b(i) \rceil 
+    \end{equation*}
     Analogously we get 
     \begin{align*}
-        N_y(i) &< \log_2 b(i) + 2^{D_i} + 2 \\
-        N_{z}^1(i) &< \log_2 b(i) + 2^{D_i} + 2 \\
-        N_{z}^2(j) &< \log_2 M(j) + 2^{D_j} + 2 \\
-        N_{z}^3 &< \log_2\left(\sum_i b(i) - 1\right) + 2^D + 2
+        N_y(i) &= \lceil \log_2 b(i) \rceil \\
+        N_u(i) &= \lceil \log_2 b(i) \rceil \\
+        N_v(j) &= \lceil \log_2 M(j) \rceil \\
+        N_w(j) &= \left \lceil \log_2\left(\sum_i b(i) - 1\right) \right \rceil 
     \end{align*}
     Hence, the total number of variables reads
     \begin{align*}
-        N_\text{total}^\text{bin. rep.} & = \sum_i \left( N_x(i) + N_y(i) + N_{z}^1(i) \right) + \sum_j N_{z}^2(j) + \sum_{ij} N_{z}^3 \\
-                                        & < 3 \sum_i \left(\log_2 b(i) + 2^{D_i}\right) + \sum_j \left(\log_2 M(j) + 2^{D_j} \right) + I J \log_2 \left( \sum_i b(i) - 1 \right) + I J 2^D  +  2 I J  + 8 
+        N_\text{total}^\text{bin. rep.} & = \sum_i \left( N_x(i) + N_y(i) + N_u(i) \right) + \sum_j N_v(j) + \sum_{ij} N_w \\
+                                        & = 3 \sum_i \lceil \log_2 b(i) \rceil + \sum_j \lceil \log_2 M(j) \rceil+ I J \left \lceil \log_2 \left( \sum_i b(i) - 1 \right) \right \rceil 
     \end{align*}
     \item \textbf{Unary representation}
     For the unary representation of all variables, the total number of variables reads
@@ -267,10 +265,11 @@ Variables
                                        & = 3 \sum_i \left(b(i)\right) + \sum_j M(j) + I J \left(\sum_{i'} b(i') - 1\right)
     \end{align*}
 \end{enumerate}
-$\Rightarrow$ For small problems, the unary representation is favorable (see figure \ref{fig:problem_size}).
+$\Rightarrow$ The binary representation is favorable (see figure \ref{fig:problem_size}).
 \begin{figure}[htpb]
     \centering
-    \includegraphics[width=0.6\linewidth]{pics/problem_size}
+    \includegraphics[width=0.4\linewidth]{pics/problem_size}
+    \includegraphics[width=0.4\linewidth]{pics/problem_size_binary}
     \caption{Scaling of the problem size with $I$ by setting $J=2I$ and using $1000$ random samples for $M(j)\in\{1,2,3\}$ and $b(i)\in\{1,\dots, 5\}$}
     \label{fig:problem_size}
 \end{figure}
