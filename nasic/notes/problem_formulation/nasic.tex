@@ -76,9 +76,10 @@ The sum of $l$-type primary and cover aircrafts dispatched from all airfield can
 \item
 \textbf{Tasks must be fulfilled:}
 The sum of contributions of all aircrafts dispatched to fulfill task $j$ must exceed the resource needed by that task
-\begin{equation} \label{eqn:constraint_task_fulfilled}
-    \sum_{i, l} m(j, l) x_{i, j, l} \geq M(j)  \qquad \forall j
-\end{equation}
+\begin{align}
+    \sum_{i, l} m(j, l) x_{i, j, l} & \geq M(j)  \qquad \forall j  \notag \\
+    \Leftrightarrow \sum_{i, l} \frac{x_{i, j, l}}{\tilde M(j, l)}  & \geq 1  \qquad \forall j \label{eqn:constraint_task_fulfilled} 
+\end{align}
 
 \item
 \textbf{Aircraft range is limited:}
@@ -92,7 +93,7 @@ We can not dispatch aircrafts for tasks $j$ if the necessary range is beyond the
 The sum of cover contributions to must exceed the cover needed.
 \begin{align}
     \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} & \geq R(j, l) x_{i, j, l} \qquad \forall i, j, l \notag \\
-    \sum_{i', l'} \frac{y_{i', l', i, j, l}}{\tilde r(l, l', j)} & \geq x_{i, j, l} \qquad \forall i, j, l \label{eqn:constraint_cover}
+    \Leftrightarrow \sum_{i', l'} \frac{y_{i', l', i, j, l}}{\tilde r(l, l', j)} & \geq x_{i, j, l} \qquad \forall i, j, l \label{eqn:constraint_cover}
 \end{align}
 \end{itemize}
 
