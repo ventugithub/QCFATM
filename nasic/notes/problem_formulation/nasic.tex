@@ -26,13 +26,21 @@ Notation:
     \item $m(j, l)$: how much $l$-type aircraft contribute to task $j$
     \item $M(j)$: how much task $j$ needs
     \item $r(l, l', j)$: how much coverage $l'$-type aircraft provide for $l$-type aircraft executing task $j$
-    \item $R(i, j, l)$: how much coverage each $l$-type aircraft from airfield $i$ executing task $j$ needs
+    \item $R(j, l)$: how much coverage each $l$-type aircraft executing task $j$ needs
     \item $C(i, j, l)$: Range of $l$-type aircraft from airfield $i$ executing task $l$
     \item $h(l)$: Range of $l$-type aircraft
     \item $N(i, j)$: set of airfields from which an aircraft can cover another aircraft executing task $j$ from airfield $i$  
     \item $Q(i, j, l, i')$: set of aircraft types in airfield $i'$ that can cover an $l$-type aircraft from airfield $i$ executing task $j$
 \end{itemize}
 
+\noindent
+Useful definitions: 
+\begin{equation*}
+    \tilde M(j, l) = \frac{M(j)}{m(j, l)}
+\end{equation*}
+\begin{equation*}
+    \tilde r(l, l', j) = \frac{1}{r(l, l', j) R(j, l)}
+\end{equation*}
 
 \section{Constraints}
 
@@ -82,9 +90,10 @@ We can not dispatch aircrafts for tasks $j$ if the necessary range is beyond the
 \item
 \textbf{Cover must be provided:}
 The sum of cover contributions to must exceed the cover needed.
-\begin{equation} \label{eqn:constraint_cover}
-    \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R(i, j, l) x_{i, j, l} \qquad \forall i, j, l
-\end{equation}
+\begin{align}
+    \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} & \geq R(j, l) x_{i, j, l} \qquad \forall i, j, l \notag \\
+    \sum_{i', l'} \frac{y_{i', l', i, j, l}}{\tilde r(l, l', j)} & \geq x_{i, j, l} \qquad \forall i, j, l \label{eqn:constraint_cover}
+\end{align}
 \end{itemize}
 
 \section{Instance ensembles}
@@ -95,7 +104,7 @@ Simplifications:
     \item Have $y_{i,l,i',j',l'}$ only when $(i, l) \in K_2(i', j', l')$
     \item Have $x_{i, j, l}$ only when $l \in K_1(i, j)$
     \item $r(l, l', j) = r(j) = 1$
-    \item $R(i, j, l) = R(i, j) = 1$
+    \item $R(j, l) = R(j) = 1$
 \end{itemize}
 
 \noindent
@@ -117,7 +126,7 @@ Remaining:
 \item $I$, $J$, $L$
 \item $b(i, l)$
 \item $m(j, l)$, $M(j)$
-\item $r(l, l', j)$, $R(i, j, l)$
+\item $r(l, l', j)$, $R(j, l)$
 \item $N(i, j)$, $C(i, j, l)$, $h(l)$, $Q(i, j, l, i') \Rightarrow K_1, K_2$
 \end{itemize}
 
@@ -127,8 +136,7 @@ $\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
 \begin{itemize}
     \item Constraint \eqref{eqn:constraint_cover_availability} always fulfilled
     \item Constraint \eqref{eqn:constraint_airfield_type_resource} $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'}  \leq b(i,l)$
-    \item \eqref{eqn:constraint_airfield_total_resource} $\Leftrightarrow$ \eqref{eqn:constraint_airfield_type_resource}
-    \item \eqref{eqn:constraint_type_total_resource} implies \eqref{eqn:constraint_airfield_type_resource}
+    \item \eqref{eqn:constraint_airfield_type_resource} implies \eqref{eqn:constraint_airfield_total_resource} and \eqref{eqn:constraint_type_total_resource}
     \item Constraint \eqref{eqn:constraint_task_fulfilled} $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
     \item Constraint \eqref{eqn:constraint_range} always fulfilled
     \item Constraint \eqref{eqn:constraint_cover} $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq x_{i, j}$
