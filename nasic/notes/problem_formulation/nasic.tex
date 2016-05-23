@@ -83,7 +83,7 @@ We can not dispatch aircrafts for tasks $j$ if the necessary range is beyond the
 \textbf{Cover must be provided:}
 The sum of cover contributions to must exceed the cover needed.
 \begin{equation} \label{eqn:constraint_cover}
-    \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R(i, j, l) \qquad \forall i, j, l
+    \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} \geq R(i, j, l) x_{i, j, l} \qquad \forall i, j, l
 \end{equation}
 \end{itemize}
 
@@ -131,7 +131,7 @@ $\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
     \item \eqref{eqn:constraint_type_total_resource} implies \eqref{eqn:constraint_airfield_type_resource}
     \item Constraint \eqref{eqn:constraint_task_fulfilled} $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
     \item Constraint \eqref{eqn:constraint_range} always fulfilled
-    \item Constraint \eqref{eqn:constraint_cover} $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq 1$
+    \item Constraint \eqref{eqn:constraint_cover} $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq x_{i, j}$
 \end{itemize}
 (For all sums, $j \in [J]$, $i \in [I]$.)
 
@@ -236,7 +236,7 @@ Variables
     \end{equation*}
 \item Incorporation of constraint \eqref{eqn:constraint_cover}:
     \begin{equation*}
-        0 \leq \underbrace{\sum_{i'} y_{i', i, j} - 1}_{=:z^3_{i, j}} \leq \underbrace{\sum_i b(i) - 1}_{=:Z^3}
+        0 \leq \underbrace{\sum_{i'} y_{i', i, j} - x_{i, j}}_{=:z^3_{i, j}} \leq \underbrace{\sum_i b(i) - 1}_{=:Z^3}
     \end{equation*}
     \begin{enumerate}
         \item 
@@ -261,7 +261,7 @@ Variables
     \end{enumerate}
     QUBO contribution
     \begin{equation*}
-        C_7 = \sum_{ij} \left(\sum_{i'} y_{i', i, j} - 1 -  z^3_{ij} \right)^2
+        C_7 = \sum_{ij} \left(\sum_{i'} y_{i', i, j} - x_{i, j} -  z^3_{ij} \right)^2
     \end{equation*}
 \end{itemize}
 
