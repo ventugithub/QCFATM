@@ -197,7 +197,7 @@ Variables
     \end{equation*}
 \item Incorporation of constraint \eqref{eqn:constraint_task_fulfilled}:
     \begin{equation*}
-        0 \leq \underbrace{M(j) - \sum_i x_{i,j}}_{=:v_j} \leq M(j)
+        0 \leq \underbrace{\sum_i x_{i,j} - M(j)}_{=:v_j} \leq \sum_i b(i) - M(j)
     \end{equation*}
     \begin{enumerate}
         \item 
@@ -205,7 +205,7 @@ Variables
         \begin{equation*}
             v_{j} = \sum_{\alpha = 0}^{D_j} 2^\alpha v_{j, \alpha} 
         \end{equation*}
-        with $D_j = \lceil \log_2 M(j) \rceil \in \mathbb{N}$.
+        with $D_j = \lceil \log_2 \left( \sum_i b(i) - M(j) \right) \rceil \in \mathbb{N}$.
         \item 
         Unary representation of the slack variable $v_j$:
         \begin{equation*}
@@ -214,7 +214,7 @@ Variables
     \end{enumerate}
     QUBO contribution
     \begin{equation*}
-        C_5 = \sum_j \left( M(j) - \sum_i x_{i,j} -  v_j \right)^2
+        C_5 = \sum_j \left( \sum_i x_{i,j} - M(j) -  v_j \right)^2
     \end{equation*}
 \item Incorporation of constraint \eqref{eqn:constraint_cover}:
     \begin{equation*}
@@ -250,13 +250,13 @@ Variables
     \begin{align*}
         N_y(i) &= \lceil \log_2 b(i) \rceil \\
         N_u(i) &= \lceil \log_2 b(i) \rceil \\
-        N_v(j) &= \lceil \log_2 M(j) \rceil \\
+        N_v(j) &= \left \lceil \log_2 \left( \sum_i b(i) - M(j) \right) \right \rceil  \\
         N_w(j) &= \left \lceil \log_2\left(\sum_i b(i) - 1\right) \right \rceil 
     \end{align*}
     Hence, the total number of variables reads
     \begin{align*}
         N_\text{total}^\text{bin. rep.} & = \sum_i \left( N_x(i) + N_y(i) + N_u(i) \right) + \sum_j N_v(j) + \sum_{ij} N_w \\
-                                        & = 3 \sum_i \lceil \log_2 b(i) \rceil + \sum_j \lceil \log_2 M(j) \rceil+ I J \left \lceil \log_2 \left( \sum_i b(i) - 1 \right) \right \rceil 
+                                        & = 3 \sum_i \lceil \log_2 b(i) \rceil + \sum_j \left \lceil \log_2 \left(\sum_i b(i) - M(j)\right) \right \rceil+ I J \left \lceil \log_2 \left( \sum_i b(i) - 1 \right) \right \rceil 
     \end{align*}
     \item \textbf{Unary representation}
     For the unary representation of all variables, the total number of variables reads
@@ -268,8 +268,7 @@ Variables
 $\Rightarrow$ The binary representation is favorable (see figure \ref{fig:problem_size}).
 \begin{figure}[htpb]
     \centering
-    \includegraphics[width=0.4\linewidth]{pics/problem_size}
-    \includegraphics[width=0.4\linewidth]{pics/problem_size_binary}
+    \includegraphics[width=0.6\linewidth]{pics/problem_size}
     \caption{Scaling of the problem size with $I$ by setting $J=2I$ and using $1000$ random samples for $M(j)\in\{1,2,3\}$ and $b(i)\in\{1,\dots, 5\}$}
     \label{fig:problem_size}
 \end{figure}
