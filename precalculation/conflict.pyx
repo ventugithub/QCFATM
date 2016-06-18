@@ -511,9 +511,10 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
         to the conflicts (in temporal order)
         first dimension: flight indices
         second and third dimension: Pandas DataFrame with columns
-            1. consecutive conflict index
-            2. arrival time
+            1. arrival time
+            2. arrival time of the partner flight
             3. partner flight
+            4. consecutive conflict index
     """
     pointConflictIndex = np.array(pointConflicts.index, dtype=int)
     flight1 = np.array(pointConflicts['flight1'], dtype=int)
@@ -545,32 +546,32 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
         conflicts[flight1[i]][0].push_back(pointConflictIndex[i])
         conflicts[flight1[i]][1].push_back(time1[i])
         conflicts[flight1[i]][2].push_back(flight2[i])
-        conflicts[flight1[i]][3].push_back(False)
+        conflicts[flight1[i]][3].push_back(time2[i])
         conflicts[flight2[i]][0].push_back(pointConflictIndex[i])
         conflicts[flight2[i]][1].push_back(time2[i])
         conflicts[flight2[i]][2].push_back(flight1[i])
-        conflicts[flight2[i]][3].push_back(False)
+        conflicts[flight2[i]][3].push_back(time1[i])
 
     print 'Calculate mapping from flight index to parallel conflicts ...'
     if N2 > 0:
-        conflicts[pflight1[0]][0].push_back(parallelConflictIndex[0])
-        conflicts[pflight1[0]][1].push_back(time1[0])
-        conflicts[pflight1[0]][2].push_back(flight2[0])
-        conflicts[pflight1[0]][3].push_back(True)
-        conflicts[pflight2[0]][0].push_back(parallelConflictIndex[0])
-        conflicts[pflight2[0]][1].push_back(time2[0])
-        conflicts[pflight2[0]][2].push_back(flight1[0])
-        conflicts[pflight2[0]][3].push_back(True)
+        conflicts[pflight1[0]][0].push_back(parallelConflictIndex[0] + N1)
+        conflicts[pflight1[0]][1].push_back(ptime1[0])
+        conflicts[pflight1[0]][2].push_back(pflight2[0])
+        conflicts[pflight1[0]][3].push_back(ptime2[0])
+        conflicts[pflight2[0]][0].push_back(parallelConflictIndex[0] + N1)
+        conflicts[pflight2[0]][1].push_back(ptime2[0])
+        conflicts[pflight2[0]][2].push_back(pflight1[0])
+        conflicts[pflight2[0]][3].push_back(ptime1[0])
     for i in range(1, N2):
         if (parallelConflictIndex[i] != parallelConflictIndex[i - 1]):
-            conflicts[pflight1[i]][0].push_back(parallelConflictIndex[i])
+            conflicts[pflight1[i]][0].push_back(parallelConflictIndex[i] + N1)
             conflicts[pflight1[i]][1].push_back(ptime1[i])
             conflicts[pflight1[i]][2].push_back(pflight2[i])
-            conflicts[pflight1[i]][3].push_back(True)
-            conflicts[pflight2[i]][0].push_back(parallelConflictIndex[i])
+            conflicts[pflight1[i]][3].push_back(ptime2[i])
+            conflicts[pflight2[i]][0].push_back(parallelConflictIndex[i] + N1)
             conflicts[pflight2[i]][1].push_back(ptime2[i])
             conflicts[pflight2[i]][2].push_back(pflight1[i])
-            conflicts[pflight2[i]][3].push_back(True)
+            conflicts[pflight2[i]][3].push_back(ptime1[i])
 
     print 'Convert mapping from flight index to parallel conflicts to data frame ...'
     pbar = progressbar.ProgressBar().start()
@@ -580,17 +581,132 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
     for flight in flightsUnique:
         pbar.update(n)
         n = n + 1
-        con = pd.DataFrame({'conflictIndex': np.array(conflicts[flight][0], dtype=int) + np.array(conflicts[flight][3], dtype=int) * N1,
-                            'arrivalTime': np.array(conflicts[flight][1], dtype=int),
+        con = pd.DataFrame({'arrivalTime': np.array(conflicts[flight][1], dtype=int),
+                            'arrivalTimePartner': np.array(conflicts[flight][3], dtype=int),
+                            'conflictIndex': np.array(conflicts[flight][0], dtype=int),
                             'partnerFlight': np.array(conflicts[flight][2], dtype=int)},
-                             columns=('conflictIndex', 'arrivalTime', 'partnerFlight'),
+                             columns=('arrivalTime', 'arrivalTimePartner', 'conflictIndex', 'partnerFlight'),
                             dtype=int
                            )
+        con.sort_values(by=['arrivalTime', 'arrivalTimePartner'], inplace=True)
+        con.reset_index(drop=True, inplace=True)
         flight2Conflict[flight] = con
     pbar.finish()
 
     f2c = pd.Panel.from_dict(flight2Conflict)
     return f2c
+
+def reindexParallelConflicts(p):
+    """ reset index after dropping rows from the parallel
+    conflicts data frame. e.g.
+
+    0 0 2 2 2 4 4 5 5 6 6 6
+    ->
+    0 0 1 1 1 2 2 3 3 4 4 4
+    """
+    pac = p.copy()
+    pac['index'] = pac.index
+    g =pac['index'].groupby(pac['index'])
+    counts = g.count()
+    newindex = np.zeros(len(pac.index), dtype=int)
+    n = 0
+    index = 0
+    for i in counts:
+        for j in range(i):
+            newindex[n] = index
+            n += 1
+        index += 1
+    pac['newindex'] = newindex
+    pac.set_index('newindex', inplace=True)
+    pac.drop('index', axis=1, inplace=True)
+    pac.index.name = p.index.name
+    return pac
+
+def reduceConflicts(flight2Conflict, pointConflicts, parallelConflicts, daverage=3, dthreshold=3, maxDepartDelay = 10):
+    """ Reduce the number of conflicts by considering the maximal delay of
+    each flight, when it reaches a certain conflict.
+
+    Arguments:
+        pointConflicts: Pandas DataFrame with columns:
+            1. conflictIndex
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+            10. alt1
+            11. alt2
+
+        parallelConflicts: Pandas DataFrame with columns:
+            1. parallelConflict index
+            2. flight1
+            3. flight2
+            4. latitude1
+            5. latitude2
+            6. longitude1
+            7. longitude2
+            8. time1
+            9. time2
+            10. alt1
+            11. alt2
+        flight2Conflict:
+            Pandas panel containing the mapping from the flight index
+            to the conflicts (in temporal order)
+            first dimension: flight indices
+            second and third dimension: Pandas DataFrame with columns
+                1. arrival time
+                2. arrival time of the partner flight
+                3. partner flight
+                4. consecutive conflict index
+    Returns:
+        pointConflicts and parallelConflicts with dropped conflicts
+    """
+    cdef int N1 = len(pointConflicts)
+
+    print 'Reduce potential conflicts by considering maximal delay ...'
+    pbar = progressbar.ProgressBar().start()
+    pbar.maxval = len(flight2Conflict)
+    cdef int n = 0
+    dropPointConflicts = []
+    dropParallelConflicts = []
+    for flight, f2c in flight2Conflict.iteritems():
+        pbar.update(n)
+        n = n + 1
+        df = f2c.dropna()
+        for i, row in df.iterrows():
+            arrivalTime = row['arrivalTime']
+            arrivalTimePartner = row['arrivalTimePartner']
+            partnerFlight = row['partnerFlight']
+            conflictIndex = row['conflictIndex']
+            dfp = flight2Conflict.loc[partnerFlight,:,:].dropna()
+            indexList = dfp.loc[dfp['conflictIndex']==conflictIndex].index.tolist()
+            assert len(indexList) == 1
+            NConflictsBeforePartner = indexList[0]
+            NConflictsBefore = i
+            keep = False
+            if arrivalTime >= arrivalTimePartner:
+                if arrivalTime - arrivalTimePartner - daverage * NConflictsBeforePartner - maxDepartDelay < dthreshold:
+                    keep = True
+            else:
+                if arrivalTimePartner - arrivalTime - daverage * NConflictsBefore -maxDepartDelay < dthreshold:
+                    keep = True
+            if not keep:
+                if conflictIndex < N1:
+                    dropPointConflicts.append(conflictIndex)
+                else:
+                    dropParallelConflicts.append(conflictIndex - N1)
+    pbar.finish()
+    # drop conflicts
+    poc = pointConflicts.drop(dropPointConflicts)
+    pac = parallelConflicts.drop(dropParallelConflicts)
+    poc.reset_index(drop=True, inplace=True)
+    poc.index.rename('conflictIndex', inplace=True)
+    pac = reindexParallelConflicts(pac)
+
+    return poc, pac
 
 def getMultiConflicts(pointConflicts, parallelConflicts, mindistance, mintime):
     """ Calculate all non-pairwise conflicts. This is done in the folllowing way:
