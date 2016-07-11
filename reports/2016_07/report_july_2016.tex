@@ -1,4 +1,4 @@
-\documentclass[prl,twocolumn,superscriptaddress,showpacs,floatfix,nofootinbib]{revtex4-1}
+\documentclass[9pt]{extarticle}
 
 \usepackage{blindtext}
 
@@ -8,7 +8,25 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{microtype}
-\usepackage{times}
+
+% Set Helvetica as main font
+\usepackage{helvet}
+\renewcommand\familydefault{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% Set Helvetica as main font for equations
+%\usepackage[helvet]{sfmath}
+%\everymath={\sf}
+
+% Set Helvetica as main font for equations (alternative)
+\usepackage{eulervm}
+
+% Change geometry of the page
+\usepackage[left=2cm,top=2cm,right=1.5cm,bottom=1.5cm]{geometry}
+
+% Change spacing
+\usepackage{setspace}
+\onehalfspacing
 
 \usepackage[svgnames]{xcolor}
 \usepackage[pdftex]{hyperref}
@@ -25,20 +43,22 @@
 \renewcommand{\figurename}{Figure}
 \renewcommand{\tablename}{Table}
 
+% Adjust section titles
+\usepackage{titlesec}
+\titleformat{\section}{\bfseries\normalsize}{\thesection.}{0.5em}{}
+
+\pagenumbering{gobble}
+
 \begin{document}
 
-\title{Exploration of the Potential of Quantum Annealing for Hard Scheduling Problems in Air Traffic Management: Report, July 2016}
-
-\author{Salvatore Mandr{\`a}}
-\email{salvatore.mandra@nasa.gov}
-
-\date{\today}
-
-\maketitle
+\begin{center}\Large
+\textbf{Exploration of the Potential of Quantum Annealing for Hard Scheduling
+Problems in Air Traffic Management: Report, July 2016}
+\end{center}
 
 \section{Introduction}
 
-\Blindtext
+\blindmathpaper
 
 \section{Current approach}
 
