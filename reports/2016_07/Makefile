@@ -3,5 +3,5 @@ ${PROJECT_NAME}: ${PROJECT_NAME}*.tex
 	latexmk -pdf ${PROJECT_NAME}.tex
 
 clean:
-	rm -f *.out *.aux *.log *.bak *.backup *.toc *~ *.ps *.dvi *.bbl *.blg *.idx *.ilg *.ind *.fls *.fdb_latexmk *Notes.bib *.synctex.gz
+	rm -f *.out *.aux *.log *.bak *.backup *.toc *~ *.ps *.dvi *.bbl *.blg *.idx *.ilg *.ind *.fls *.fdb_latexmk *Notes.bib *.synctex.gz *.xml *-blx.bib
 
