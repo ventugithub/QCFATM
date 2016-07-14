@@ -1,5 +1,8 @@
 PROJECT_NAME=report_july_2016
-${PROJECT_NAME}: ${PROJECT_NAME}*.tex
+
+main: ${PROJECT_NAME}
+
+${PROJECT_NAME}: ${PROJECT_NAME}.tex
 	latexmk -pdf ${PROJECT_NAME}.tex
 
 clean:
