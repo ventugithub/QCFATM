@@ -85,7 +85,7 @@
 \begin{document}
 
 \begin{center}\Large
-\textbf{Exploration of the Potential of Quantum Annealing for Hard Scheduling
+\textbf{\note[Feel free to shuffle the order of the authors]{Exploration} of the Potential of Quantum Annealing for Hard Scheduling
 Problems in Air Traffic Management: Report, April-July 2016 (3.5 months)}
 \end{center}
 
@@ -121,8 +121,8 @@ of the project.
 
 \begin{itemize}[leftmargin=0.5cm]
 \itemsep-0.5em
-\item Devised code to analysis of wind-optimal trajectories.
-\item Identified of all the potential conflicts within \note[Check]{1 hour} of delay.
+\item Devised code to analyze wind-optimal trajectories.
+\item Identified all the potential conflicts within \note[Check]{1 hour maximum} of delay.
 \item Devised a ``delay model'' which uses delays as variables to optimize.
 \item Delay model has been discretized to be expressed in terms of binary variables (PUBO).
 \item Delay model has been reduced from PUBO to QUBO (partially completed).
@@ -164,14 +164,15 @@ Given the fixed architecture and the limited amount of physical resources of the
 on quantum annealers. For this reason, we have designed a series of transformation of the original ATM formulation 
 to be able to optimize ATM problems on state-of-art quantum optimizers like the \DW quantum chip. \figurename~\ref{fig:scheme} summarizes the transformation 
 we developed in this project (green/light-green and orange/dark-green represent respectively the completed and partially completed tasks).
-Here follows a detailed description of the work has been completed in the period April-June 2016 (3.5 months):
+Here follows a detailed description of the work that has been completed in the period April-June 2016 (3.5 months):
 
 \begin{changemargin}{0.5cm}{0cm}
 \textbullet~\textbf{Identify potential conflict.} In principle, any conflict is a potential conflict: indeed, flights can accumulate delay
 and therefore arrive at the same to a spatial conflict. Nevertheless, the number of spatial conflicts is prohibitive. To limit the number
-of potential conflicts, we pre-processed the wind-optimal trajectories assuming a \emph{time} delay of at most \note[Check this]{$1$ hour} and
-eliminating all the potential conflict that do not respect the bound. This process reduce the number of potential conflicts from
-\note[Please add some numbers.]{XXX to XXX}. The code to pre-process the wind-optimal trajectories to identify potential conflicts has
+of potential conflicts, we pre-processed the wind-optimal trajectories assuming that flights cannot have a delay
+which exceed \note[Check this]{$1$ hour} and then eliminated all the potential conflicts that do not respect the bound. 
+This process drastically reduced the number of potential conflicts from
+\note[Please add some numbers.]{XXX to XXX}. The code to pre-process the wind-optimal trajectories has
 been developed by Tobias Stollenwerk.
 \end{changemargin}
 
@@ -186,19 +187,19 @@ with $t_{ik}$ the wind-optimal time to reach the conflict $k$, $d_i$ the delay a
 $\mathcal{P}^{<k}_{i}$ the set of potential conflicts $p$ that antecede the conflict $k$ and $d_{ip}$ the delay
 of flight $i$ at the potential conflict $p$. In the above formulation, it is assumed that all the maneuvers to avoid potential conflicts
 consist in small and local changes of the wind-optimal trajectories that do not create a cascade of new potential conflicts and do not
-change the location of the existing potential conflicts. Therefore, we can express the cost function to minimize can be then expressed as
+change the location of the existing potential conflicts. Therefore, we can express the cost function to optimize as
 \begin{equation}\label{eq:f}
 	f(\left\{d_i\right\},\,\left\{d_{ip}\right\})= \sum_{i} d_i + \sum_{ip} d_{ip},
 \end{equation}
-where all the $\left\{d_i\right\}$ and $\left\{d_{ip}\right\}$ are constrained so that two flights $i$ ($j$) have a different arrival time
+where all the $\left\{d_i\right\}$ and $\left\{d_{ip}\right\}$ are constrained so that two flights $i$ ($j$) must have a different arrival time
 $T_{ik}$ ($T_{jk}$) to the same potential conflict $k$, namely
 \begin{equation}\label{eq:theta}
 	\Theta_{a_{ijk}}(\left|T_{ik} - T_{jk}\right|) = 0,
 \end{equation}
-with $\Theta$ a certain function which ensure that the two flights are far apart to complete their maneuvers. Here, $a_{ijk}$ represent
-some extra-parameters that can be added to the model to have more control on the maneuvers. 
+with $\Theta$ a certain function which ensure that the two flights are sufficiently far apart to complete their maneuvers. Here, $a_{ijk}$ represent
+some extra-parameters that can be added to the model to have more control on the maneuvers.\\
 
-The delay model is completely defined by the \equationname{s}~(\ref{eq:T})-(\ref{eq:theta}). The successive step
+\hspace{0.4cm}The delay model is completely defined by the \equationname{s}~(\ref{eq:T})-(\ref{eq:theta}). The successive step
 consists in the discretization of the variables involved in the delay model. The discretization is achieved by expressing each variable $x$ in terms 
 of a discrete set of values $\left\{x_\alpha\right\}$
 \begin{equation}\label{eq:discr}
@@ -213,21 +214,23 @@ in collaboration with Tobias Stollenwerk, Salvatore Mandr\`a, Davide Venturelli 
 \end{changemargin}
 
 \begin{changemargin}{0.5cm}{0cm}
-\textbullet~\textbf{Map to PUBO/QUBO.} The delay model, as expressed in \equationname~(\ref{eq:f}, is a polynomial unconstrained binary optimization (PUBO)
-because some of the terms are polynomials of order higher than $2$.
+\textbullet~\textbf{Map to PUBO/QUBO.} The delay model, as expressed in \equationname~(\ref{eq:f}), is a polynomial unconstrained binary optimization (PUBO)
+because some of the terms involved are polynomials of order higher than $2$.
 However, most of the quantum annealers, including the \DW quantum chip, can only natively solve quadratic unconstrained binary optimization (QUBO) problems,
 where only quadratic terms are present.
 In order to reduce the PUBO formulation of the delay model to a QUBO formulation, we are devising two different approaches.
-The first approach is to use gadgets to reduce higher order polynomials to quadratic terms \cite{babbush:13}. The second approach consists in using Lagrange multipliers \cite{ronagh:15} to enforce constraints as in \equationname~(\ref{eq:constr}) and then reduce the number of higher order polynomials. The two approaches can be used
-either used independently or mixed together. Salvatore Mandr\`a, Davide Venturelli and Eleanor G. Rieffel are working in finding a suitable reduction for ATM problems.
+The first approach is to use gadgets to reduce higher order polynomials to quadratic terms \cite{babbush:13}. The second approach consists in using Lagrange multipliers \cite{ronagh:15} to enforce constraints as in \equationname~(\ref{eq:constr}) and then reduce the number of higher order polynomials. The two approaches can be
+either used independently or mixed together. Salvatore Mandr\`a, Davide Venturelli, Bryan O'Gorman and Eleanor G. Rieffel 
+are working in finding a suitable reduction for ATM problems.
 \end{changemargin}
 
 \begin{changemargin}{0.5cm}{0cm}
 \textbullet~\textbf{Define benchmark.} Given the limited amount of resources of the current quantum technology, it is necessary to identify benchmark problems to
-explore the potentiality of quantum annealing. The benchmark ensemble must be small enough to be optimized by the current quantum hardware, like the \DW quantum chip,
-but it must be representative of the hardness of a typical size ATM problem. We are devising benchmark instances by using two different approaches. On one
+explore the potentiality of quantum annealing. Instances in 
+the benchmark ensemble must be small enough to be optimized by the current quantum hardware, like the \DW quantum chip,
+but they must be still representative of the hardness of typical size ATM problems. We are devising benchmark instances by using two different approaches. On one
 hand, we are looking at ATM-like instances with a reduced number of potential conflicts (e.g. considering only a subset of the total wind-optimal trajectories),
-so that the instances can be optimized by the current architecture of quantum chips. On the other hand, we are looking at archetypal spin glass problem \cite{venturelli:15a}
+so that the instances can be optimized by the current architecture of quantum chips. On the other hand, we are looking at archetypal spin glass problems \cite{venturelli:15a}
 which are not ATM problems but share with them common structures and hardness. The benchmark analysis 
 is conducted by Salvatore Mandr\`a, Davide Venturelli and Eleanor G. Rieffel.
 \end{changemargin}
@@ -252,7 +255,7 @@ For a complete overview of completed tasks and future milestones, see \tablename
 
 \begin{itemize}
 	\item Code to analyze the wind-optimal trajectories and identify potential conflicts within given a maximum delay time.
-	\item Set of potential conflicts within \note[Check]{1 hour maximum}.
+	\item Set of potential conflicts within \note[Check]{1 hour of maximum delay}.
 	\item Mapping of the ATM problem to PUBO.
 	\item Reduction from PUBO to QUBO.
 \end{itemize}
