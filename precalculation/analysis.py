@@ -297,8 +297,8 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
         arrowplot(ax, x, y)
         # point conflict
         col = 'r' if red else 'g'
-        addPoints(map, conflictTrajectoryPoints, color=col, markersize=6, linewidth=6, marker='>', linestyle='-', latitude='lat1', longitude='lon1')
-        addPoints(map, conflictTrajectoryPoints, color='r', markersize=6, linewidth=6, marker='<', linestyle='-', latitude='lat2', longitude='lon2')
+        addPoints(map, conflictTrajectoryPoints, color=col, markersize=10, linewidth=6, marker='o', linestyle='-', latitude='lat1', longitude='lon1')
+        addPoints(map, conflictTrajectoryPoints, color='r', markersize=10, linewidth=6, marker='s', linestyle='-', latitude='lat2', longitude='lon2')
 
 def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=False, red=False):
     """ Given a flight index, plot the trajectories of the involved flights and the conflicting trajectory points
@@ -750,7 +750,10 @@ def main():
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict', type=int)
+    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
+    parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
+    parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
     parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
     parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
     parser.add_argument('--multiConflictFile', help='input file containing the conflicts between pairwise conflicts (overwrites -t and -d)')
@@ -788,10 +791,10 @@ def main():
     trajectories = pd.read_csv(trajectoryFile, index_col='flightIndex')
     name = "mindist%05.1f_mintime%03i" % (args.mindistance, args.mintime)
     rawPointConflictFile = '%s.%s.rawPointConflicts.csv' % (args.input, name)
-    pointConflictFile = '%s.%s.pointConflicts.csv' % (args.input, name)
-    parallelConflictFile = '%s.%s.parallelConflicts.csv' % (args.input, name)
-    multiConflictFile = '%s.%s.multiConflicts.csv' % (args.input, name)
-    flights2ConflictsFile = '%s.%s.flights2Conflicts.h5' % (args.input, name)
+    flights2ConflictsFile = "%s.%s.flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    pointConflictFile = "%s.%s.reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    parallelConflictFile = "%s.%s.reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    multiConflictFile = "%s.%s.multiConflicts_delay%03i_thres%03i_depart%03i.h5" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
     if args.rawPointConflictFile:
         rawPointConflictFile = args.rawPointConflictFile
     if args.pointConflictFile:
