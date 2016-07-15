@@ -122,7 +122,7 @@ of the project.
 \begin{itemize}[leftmargin=0.5cm]
 \itemsep-0.5em
 \item Devised code to analyze wind-optimal trajectories.
-\item Identified all the potential conflicts within \note[Check]{1 hour maximum} of delay.
+\item Identified all the potential conflicts.
 \item Devised a ``delay model'' which uses delays as variables to optimize.
 \item Delay model has been discretized to be expressed in terms of binary variables (PUBO).
 \item Delay model has been reduced from PUBO to QUBO (partially completed).
@@ -156,7 +156,7 @@ of the project.
 respectively completed and partially completed tasks.}
 \end{wrapfigure}
 %
-NAT dataset consists in \note[What is the number of trajectories?]{XXX} wind-optimal trajectories in (3+1)-dimensions. Since wind-optimal
+NAT dataset consists in 984 wind-optimal trajectories in (3+1)-dimensions. Since wind-optimal
 trajectories have been computed independently from each others, two or more trajectories can intersect in space creating a ``conflict''. 
 A conflict becomes ``potential'' if two or more flights can reach at the \emph{same} time the spatial conflict. The ATM problem consists
 in finding minimal changes of the wind-optimal trajectories to avoid all the potential conflicts. 
@@ -170,9 +170,12 @@ Here follows a detailed description of the work that has been completed in the p
 \textbullet~\textbf{Identify potential conflict.} In principle, any conflict is a potential conflict: indeed, flights can accumulate delay
 and therefore arrive at the same to a spatial conflict. Nevertheless, the number of spatial conflicts is prohibitive. To limit the number
 of potential conflicts, we pre-processed the wind-optimal trajectories assuming that flights cannot have a delay
-which exceed \note[Check this]{$1$ hour} and then eliminated all the potential conflicts that do not respect the bound. 
+which exceed a certain upper bound and then eliminated all the potential conflicts that do not respect the bound.
+The bound is given by the number of previous potential conflicts times the maximal delay of a conflict avoiding maneuver.  
+Moreover, we pool together potential conflicts which are subsequent in time and space.
 This process drastically reduced the number of potential conflicts from
-\note[Please add some numbers.]{XXX to XXX}. The code to pre-process the wind-optimal trajectories has
+33878 to 4168.
+The code to pre-process the wind-optimal trajectories has
 been developed by Tobias Stollenwerk.
 \end{changemargin}
 
@@ -255,7 +258,6 @@ For a complete overview of completed tasks and future milestones, see \tablename
 
 \begin{itemize}
 	\item Code to analyze the wind-optimal trajectories and identify potential conflicts within given a maximum delay time.
-	\item Set of potential conflicts within \note[Check]{1 hour of maximum delay}.
 	\item Mapping of the ATM problem to PUBO.
 	\item Reduction from PUBO to QUBO.
 \end{itemize}
@@ -271,7 +273,7 @@ For a complete overview of completed tasks and future milestones, see \tablename
 				Largest set of trajectories that the code can analyze. Overall performance of the code. & 1.5 month \\
 		\hline
 		\rowcolor{green!30}
-			Analyze the wind-optimal NAT trajectories to identify potential conflicts  within \note[Check this]{1 hour} of maximum delay. 
+			Analyze the wind-optimal NAT trajectories to identify potential conflicts.
 			& Number of potential conflicts. & 2 month \\
 		\hline
 		\rowcolor{green!30}
