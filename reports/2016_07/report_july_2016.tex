@@ -169,10 +169,19 @@ Here follows a detailed description of the work that has been completed in the p
 \begin{changemargin}{0.5cm}{0cm}
 \textbullet~\textbf{Identify potential conflict.} In principle, any conflict is a potential conflict: indeed, flights can accumulate delay
 and therefore arrive at the same to a spatial conflict. Nevertheless, the number of spatial conflicts is prohibitive. To limit the number
-of potential conflicts, we pre-processed the wind-optimal trajectories assuming that flights cannot have a delay
-which exceed a certain upper bound and then eliminated all the potential conflicts that do not respect the bound.
-The bound is given by the number of previous potential conflicts times the maximal delay of a conflict avoiding maneuver.  
-Moreover, we pool together potential conflicts which are subsequent in time and space.
+of potential conflicts, we pre-processed the wind-optimal trajectories in the following way:
+\begin{enumerate}
+    \item Pool together potential conflicts which are subsequent in time and space.
+    \item Assume that the flights can not have a delay which exceeds 1 hour and then eliminate all the potential conflicts that do not respect the bound.
+    \item Reduce the number of of potential conflict even further by the following self-consistent algorithm:
+    \begin{enumerate}
+        \item \label{itm:algo_order}For each flight, order the potential conflicts in time.
+        \item \label{itm:algo_maxDelay} For each flight, calculate the maximal delay which can be picked up due to anteceding conflict avoiding maneuvers.
+        \item \label{itm:algo_potConf}For each potential conflict, check if a real conflict is possible considering the maximal delays of the involved flights calculated in step \ref{itm:algo_maxDelay}.
+        \item \label{itm:algo_removePotConf}Remove the potential conflicts which can not become real.
+        \item Repeat the above steps \ref{itm:algo_order} to \ref{itm:algo_removePotConf} until convergence (i.e.\ the number of potential conflicts is invariant).
+    \end{enumerate}
+\end{enumerate}
 This process drastically reduced the number of potential conflicts from
 33878 to 4168.
 The code to pre-process the wind-optimal trajectories has
