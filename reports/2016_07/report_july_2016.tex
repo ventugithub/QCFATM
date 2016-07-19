@@ -152,7 +152,7 @@ of the project.
 \begin{wrapfigure}[18]{r}{0.35\textwidth}
 \centering
 \includegraphics[width=0.25\textwidth]{scheme}
-\caption{\label{fig:scheme}Schematic flow diagram to map ATM problems onto the \DW quantum chip. Green/light-gray and orange/dark-gray boxes represent
+\caption{\label{fig:scheme}Schematic flow diagram to optimize ATM problems using quantum optimizers. Green/light-gray and orange/dark-gray boxes represent
 respectively completed and partially completed tasks.}
 \end{wrapfigure}
 %
@@ -160,8 +160,8 @@ NAT dataset consists in 984 wind-optimal trajectories in (3+1)-dimensions. Since
 trajectories have been computed independently from each others, two or more trajectories can intersect in space creating a ``conflict''. 
 A conflict becomes ``potential'' if two or more flights can reach at the \emph{same} time the spatial conflict. The ATM problem consists
 in finding minimal changes of the wind-optimal trajectories to avoid all the potential conflicts. 
-Given the fixed architecture and the limited amount of physical resources of the current quantum hardware, it is impossible to directly solve ATMs problems
-on quantum annealers. For this reason, we have designed a series of transformation of the original ATM formulation 
+Given the fixed architecture and the limited amount of physical resources of the current quantum hardware, it is impossible to directly solve ATM problems
+on current quantum annealers. For this reason, we have designed a series of transformation of the original ATM formulation 
 to be able to optimize ATM problems on state-of-art quantum optimizers like the \DW quantum chip. \figurename~\ref{fig:scheme} summarizes the transformation 
 we developed in this project (green/light-green and orange/dark-green represent respectively the completed and partially completed tasks).
 Here follows a detailed description of the work that has been completed in the period April-June 2016 (3.5 months):
@@ -172,21 +172,22 @@ and therefore arrive at the same to a spatial conflict. Nevertheless, the number
 of potential conflicts, we pre-processed the wind-optimal trajectories in the following way:
 \begin{enumerate}
     \item Pool together potential conflicts which are subsequent in time and space.
-    \item Assume that the flights can not have a delay which exceeds 1 hour and then eliminate all the potential conflicts that do not respect the bound.
-    \item Reduce the number of of potential conflict even further by the following self-consistent algorithm:
+    \item Assuming that the flights can not have a delay which exceeds 1 hour, eliminate all the potential conflicts that do not respect the bound.
+    \item Number of potential conflicts can be even further reduced by using the following self-consistent procedure:
     \begin{enumerate}
         \item \label{itm:algo_order}For each flight, order the potential conflicts in time.
-        \item \label{itm:algo_maxDelay} For each flight, calculate the maximal delay which can be picked up due to anteceding conflict avoiding maneuvers.
-        \item \label{itm:algo_potConf}For each potential conflict, check if a real conflict is possible considering the maximal delays of the involved flights calculated in step \ref{itm:algo_maxDelay}.
-        \item \label{itm:algo_removePotConf}Remove the potential conflicts which can not become real.
-        \item Repeat the above steps \ref{itm:algo_order} to \ref{itm:algo_removePotConf} until convergence (i.e.\ the number of potential conflicts is invariant).
+        \item \label{itm:algo_maxDelay}For each flight, calculate the maximal delay that can be accumulated due to preceding conflict avoiding maneuvers.
+        \item \label{itm:algo_potConf}For each potential conflict, check if conflict can become a potential conflict within the maximum
+       		delay computed in step \ref{itm:algo_maxDelay}.
+        \item \label{itm:algo_removePotConf}Remove all the conflicts that cannot become potential conflicts.
+        \item Repeat the steps \ref{itm:algo_order} to \ref{itm:algo_removePotConf} until the number of potential conflicts does not change anymore.
     \end{enumerate}
 \end{enumerate}
+\end{changemargin}
 This process drastically reduced the number of potential conflicts from
 33878 to 4168.
 The code to pre-process the wind-optimal trajectories has
 been developed by Tobias Stollenwerk.
-\end{changemargin}
 
 \begin{changemargin}{0.5cm}{0cm}
 \textbullet~\textbf{Avoid/resolve potential conflicts by optimizing delays/Discretize delays.} Even after the reduction of potential conflicts, it would be impossible to directly
@@ -267,6 +268,7 @@ For a complete overview of completed tasks and future milestones, see \tablename
 
 \begin{itemize}
 	\item Code to analyze the wind-optimal trajectories and identify potential conflicts within given a maximum delay time.
+	\item Set of 4168 potential conflicts we found after the pre-processing.
 	\item Mapping of the ATM problem to PUBO.
 	\item Reduction from PUBO to QUBO.
 \end{itemize}
