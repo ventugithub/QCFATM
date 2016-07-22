@@ -118,7 +118,7 @@ def main():
     print len(parallelConflicts.index.unique()), "reduced parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
     if args.multi:
-        multiConflictFile = filename + ".multiConflicts_delay%03i_thres%03i_depart%03i.h5" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+        multiConflictFile = filename + ".multiConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
         if not os.path.exists(multiConflictFile) or not args.use_snapshots:
             multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, flights2Conflicts, mindistance, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
             # save to csv file
