@@ -68,6 +68,8 @@ class Variable(object):
         data['delayValues'] = self.delayValues
         data['deltaValues'] = self.deltaValues
         data['num_qubits'] = self.num_qubits
+        data['I'] = self.I
+        data['K'] = self.K
         f = open(filename, 'w')
         yaml.dump(data, f)
         f.close()
@@ -86,6 +88,8 @@ class Variable(object):
         self.deltaValues = data['deltaValues']
         self.flat2Multi = data['flat2Multi']
         self.num_qubits = data['num_qubits']
+        self.I = data['I']
+        self.K = data['K']
 
     @abstractmethod
     def update(self, inst):
