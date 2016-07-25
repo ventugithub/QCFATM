@@ -227,11 +227,11 @@ class testSolver(unittest.TestCase):
         self.assertEqual(self.embeddings[3], self.solver.embeddings[3])
 
     def testSolution(self):
-        r = self.solver.solve(eIndex=3)
-        energy = self.qubo.evaluate(r['solution'])
-        self.assertEqual(r['energy'], energy)
-        self.assertEqual(r['energy'], -8.0)
-        self.assertEqual(r['solution'], [1, 1, 0, 0, 1, 0])
+        physRawResult, logRawResult, energies, numOccurrences = self.solver.solve(num_reads=1, eIndex=3)
+        energy = self.qubo.evaluate(logRawResult[0])
+        self.assertEqual(energies[0], energy)
+        self.assertEqual(energies[0], -8.0)
+        self.assertEqual(logRawResult[0], [1, 1, 0, 0, 1, 0])
 
     def testExactSolution(self):
         r = self.solver.solve_exact()
