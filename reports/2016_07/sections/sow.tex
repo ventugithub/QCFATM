@@ -1,43 +1,50 @@
 \begin{table}[h!]\centering
-  \begin{tabular}{|m{7cm}|m{7cm}|K{2.8cm}|}
+%\tiny 
+\small
+  %\begin{tabular}{|m{7cm}|m{7cm}|K{2.8cm}|}
+  \begin{tabular}{|m{6.3cm}|m{6.3cm}|K{2.8cm}|}
     \rowcolor{gray!30}
     \hline
     \multicolumn{1}{|c|}{\textbf{Task/Milestone}} & \multicolumn{1}{c|}{\textbf{Performance Metric}} & \textbf{Expected completion from start of project}\\
     \hline
     \rowcolor{green!30}
-    Implement code to identify potential conflicts for different thresholds. &
-        Largest set of trajectories that the code can analyze. Overall performance of the code. & 1.5 month \\
+    Implement code to identify, characterize, and visualize potential conflicts for different thresholds &
+%        Largest set of trajectories that the code can analyze. Overall performance of the code. & 1.5 months \\
+%    \hline
+%    \rowcolor{green!30}
+%    Implement a toolkit to visualize and analyze the structure of potential conflicts.
+      Correct and efficient characterization of potential conflicts. Usefulness in formulating a model of potential maneuvers & 2 months \\
     \hline
     \rowcolor{green!30}
-    Implement a toolkit to visualize and analyze the structure of potential conflicts.
-      & Usefulness in formulating a model of potential maneuvers. & 2 month \\
-    \hline
-    \rowcolor{green!30}
-      Map the ATM problem without maneuvers to QUBO\. & 
-    Quality and diversity of solutions resulting from QUBO\.
-    Physical resource requirements (number of qubits, connectivity of logical graph, embeddability into hardware). & 3 months\\
+      Mappings of ATM problem, with origination delays only, to QUBO & 
+    %Quality and diversity of solutions resulting from QUBO\.
+    Resources required (number of physical qubits) 
+%connectivity of logical graph, embeddability into hardware). 
+& 3 months\\
     \hline
     \rowcolor{orange!50}
-    Map the ATM problem with maneuvers to QUBO\. & 
-    Quality and diversity of solutions resulting from QUBO\.
-    Physical resource requirements (number of qubits, connectivity of logical graph, embeddability into hardware). & 5 months\\
+    Mappings of ATM problem to QUBO, incorporating maneuvers & 
+    Resources required (number of physical qubits) & 5 months\\
     \hline
     \rowcolor{orange!50}
-      Identify a set of benchmark ATM problems. & Hardness as a function of size. & 6.5 month\\
+      Design a set of benchmark ATM problems derived from NAT dataset & Extent 
+problems capture of most challenging aspects in small problems & 6.5 months\\
     \hline
-    Analyze the solutions from the QUBO formulation with prior work. &
-    Quality and diversity of solutions. & 8 month\\
+    \rowcolor{yellow!50}
+      Initial runs and analysis of performance of \DW\ on benchmark ensemble &
+        Quality and diversity of solutions. Scaling of expected time to solution vs.\ size &8 months\\
     \hline
-      Compile the ATM benchmark ensemble for the \DW chip at NASA Ames. & 
-        Scaling of expected time to solution vs.\ size compared to classical code. Variety of different acceptable solutions. &10 month\\
+	Iterating on QUBO design and QA parameaters, an peform further runs and analysis of performance  &
+        Quality and diversity of solutions. Scaling of expected time to solution vs.\ size &10 months\\
     \hline
-      Compare solutions from \DW chip with those from classical solvers & Potential quantum enhancement & 11 month\\
+    Written report comparing the approaches developed, providing an initial
+assessment of the potential of quantum annealing for attacking ATM problems 
+based on the case study, and
+making recommendations for future work & Thoroughness of case study and
+grounding of recommendations  & 12 months\\
     \hline
-    Assess scalability of ATM problems for different hardware (sizes, connectivity) and parameters (annealing strategy, etc.). &
-        Potential quantum enhancement. & 12 month\\
-    \hline
-  \end{tabular}\caption{\label{table:milestone}Breakdown of the project effort into milestones, including suggested performance metric and completion
-    dates; green and orange indicate completed and partially completed tasks, respectively.}
+  \end{tabular}
+%\caption{\label{table:milestone}Breakdown of the project effort into milestones, including suggested performance metric and completion dates; green and orange indicate completed and partially completed tasks, respectively.}
 \end{table}
 
 

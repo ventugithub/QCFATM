@@ -1,0 +1,30 @@
+\subsection*{Proposed next steps (4 months)}\label{sec:ass}
+
+We need to finalize the mappings to QUBO for the full problem,
+supporting both origination delays and in-flight manoevers.
+We will design benchmark small instances, either well-chosen subsets of 
+% the NAT dataset
+or constructed instances based on NAT dataset structures. 
+Before analyzing the performance of quantum annealing on our
+formulation of the problem, we first analyze the formulation itself by
+comparing solutions from classical QUBO solvers to those from extant methods.
+Then, we run these benchmark instances on the \DW, a
+state-of-the-art quantum annealer, and also 
+run classical annealing methods on the Pleiades supercomputer 
+to support larger size problem, enabling an assessment of 
+the scalability of our methods.  
+We compare the diversity of solutions returned,
+as well as the quality of solutions 
+returned,
+since in a wide range of settings, practitioners are interested in 
+a \emph{diversity} of
+solutions from which a human can select based on unformalized criteria.
+
+% This work will put is in a good position to iterate on our parameterizations and encodings in the final 4 months of the year-long project, and to explore the resource requirements of the mappings for realistic data. This final stage will enable us to make an initial assessment of the potential of quantum annealing for this domain, to direct future quantum annealing  hardware designs, establish quantum annealing best practice in this domain.  
+% These last steps encompass the motivating premise of this work: that by formulating computational problems of interest to NASA in a way that is amenable to quantum annealing, we can set the stage for both directing and utilizing the development larger-scale quantum annealers.  
+\input{sections/nextStepsList}
+
+Request: 150K for \~ 1.5 WYE for 4 months
+
+% For a complete overview of completed tasks and future milestones, see \tablename~\ref{table:milestone}.
+% \figurename~\ref{fig:scheme} summarizes the steps involved in applying quantum annealing to the ATM problem.
