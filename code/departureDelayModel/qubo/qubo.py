@@ -31,12 +31,13 @@ def get_qubo(input, unary=False):
     NDelta = len(deltaValues)
 
     penalty_weights = {
-        'departure': 1.0/delayValues[-1],
-        'conflict': 7,
-        'boundary-condition': 10,
-        'departure-unique': 10,
-        'conflict-unique': 10
+        'departure': 0.1,
+        'conflict': 0.5,
+        'boundary-condition': 2,
+        'departure-unique': 2,
+        'conflict-unique': 2
     }
+    print penalty_weights
 
     if unary:
         var = variable.Unary(inst)
@@ -107,7 +108,7 @@ def get_qubo(input, unary=False):
     qubo += penalty_weights['departure-unique'] * subqubos['departure-unique']
     pbar.finish()
 
-    print "Calculate conflict delay uniqueness contribution"
+    print "Calculate arrival time difference uniqueness contribution"
     pbar = progressbar.ProgressBar().start()
     pbar.maxval = K
     count = 0
