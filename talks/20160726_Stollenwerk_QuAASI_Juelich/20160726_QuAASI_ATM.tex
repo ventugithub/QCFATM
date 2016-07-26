@@ -58,13 +58,13 @@ NASA Aviation Systems Division
 \begin{frame}[t]{Content}
     \begin{itemize}
         \vspace{1.0cm}
-        \item Optimizing flight trajectories
+        \item The problem of optimizing flight trajectories
         \vspace{0.3cm}
         \item Classical preprocessing
         \vspace{0.3cm}
         \item Mapping to Quadratic Unconstrained Binary Optimization (QUBO)
         \vspace{0.3cm}
-        \item {\color{dlrgrey} Quantum annealing experiments}
+        \item {\color{dlrgrey} Quantum annealing experiments (Work in progress)}
     \end{itemize}
 \end{frame}
 
@@ -219,7 +219,7 @@ NASA Aviation Systems Division
             \end{equation*}
         \item Optimization problem 
             \begin{equation*}
-                \underset{d_i, d_{ik}, a_k}{\text{minimize}} \; \sum_i d_i + \sum_{ik} \mathcal{D}_{ik}(\Delta_{k}, a_k)
+                \underset{d_i, d_{ik}, a_k}{\text{minimize}} \; \sum_i d_i + \sum_{ik} d_{ik}
             \end{equation*}
             \begin{align*}
                 \text{subject to} \qquad
@@ -308,7 +308,7 @@ NASA Aviation Systems Division
 
 \begin{frame}[t]{Potential Conflicts}
     \begin{itemize}
-        \item How to reduce the huge number of potential conflicts: $N_\text{spatial} = 43251$?
+        \item How to reduce the huge number of potential conflicts: $N_\text{conflict} = 43251$?
     \end{itemize}
     \includegraphics[width=1.0\textwidth]{images/spatial_conflicts_data.png}
 \end{frame}
@@ -333,7 +333,7 @@ NASA Aviation Systems Division
         \item For each flight, order conflicts in time
         \item For each potential conflict, calculate the maximal delay of both flights
         \item Remove potential conflicts which can not become real conflicts
-        \item Repeat the above steps until convergence ($N_\text{spatial}$ invariant) 
+        \item Repeat the above steps until convergence ($N_\text{conflict}$ invariant) 
     \end{itemize}
     \begin{center}
         \includegraphics[width=0.8\textwidth]{images/potential_conflict_detection.pdf}
@@ -480,7 +480,7 @@ NASA Aviation Systems Division
         \item Different sets of penalty weights $p_i$
     \end{itemize}
     \begin{block}
-        {Preliminary quantum annealing results (Work in progress)}
+        {Preliminary quantum annealing results from D-Wave 2X at NASA Ames (Work in progress)}
         \begin{itemize}
             \item So far, no valid solutions
             \item Possible reason: Precision issue
