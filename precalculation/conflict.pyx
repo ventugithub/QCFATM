@@ -780,6 +780,14 @@ def getMultiConflicts(pointConflicts, parallelConflicts, flight2Conflict, mindis
         1. multiConflictIndex : consecutive index for the non-pairwise conflicts
         2. conflict1: first conflict index
         3. conflict2: second conflict index
+        4. conflictType1: True for parallel conflict, false for point conflict
+        5. conflictType2: True for parallel conflict, false for point conflict
+        6. isConflict11: True if there is a point conflict between the 1st flight of the 1st conflict and the 1st flight of the 2nd conflict
+        7. isConflict12: True if there is a point conflict between the 1st flight of the 1st conflict and the 2nd flight of the 2nd conflict
+        8. isConflict21: True if there is a point conflict between the 2nd flight of the 1st conflict and the 1st flight of the 2nd conflict
+        9. isConflict22: True if there is a point conflict between the 2nd flight of the 1st conflict and the 2nd flight of the 2nd conflict
+        10. deltaTMin': Minimum time difference of all contributing point conflicts
+        11. multiConflictType': 0 if both conflicts are point conflicts, 1 if both conflicts are parallel conflicts, 0.5 otherwise
     """
 
     #######################################################
