@@ -31,13 +31,14 @@ def main():
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--retry_embedding', default=0, help='Number of retrys after embedding failed', type=int)
     parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
-    parser.add_argument('--unary', action='store_true', help='Use unary representation of integer variables instead of binary representation')
+    parser.add_argument('--binary', action='store_true', help='Use binary representation of integer variables instead of unary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
     parser.add_argument('--chimera_m', default=None, help='Number of rows in Chimera', type=int)
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
+    parser.add_argument('--inventory', default='data/inventory.csv', help='Inventory file')
 
     parser.add_argument('-p', '--np', default=1, help='number of parallel processes', type=int)
     args = parser.parse_args()
@@ -50,6 +51,8 @@ def main():
         chimera = {}
     else:
         chimera = {'m': args.chimera_m, 'n': args.chimera_n, 't': args.chimera_t}
+    if (args.np != 1 and not args.embedding_only):
+        parser.error('You can run in parallel only if the --embedding_only option is set')
 
     # create output folders
     if not os.path.exists(args.output):
@@ -75,11 +78,12 @@ def main():
                 embedding_only=args.embedding_only,
                 retry_embedding=args.retry_embedding,
                 retry_embedding_desperate=args.retry_embedding_desperate,
-                unary=args.unary,
+                unary=not args.binary,
                 verbose=args.verbose,
                 timeout=args.timeout,
                 chimera=chimera,
-                exact=args.exact)
+                exact=args.exact,
+                inventoryfile=args.inventory)
 
     else:
         pool = multiprocessing.Pool(processes=args.np)
@@ -93,11 +97,12 @@ def main():
                         'embedding_only': args.embedding_only,
                         'retry_embedding': args.retry_embedding,
                         'retry_embedding_desperate': args.retry_embedding_desperate,
-                        'unary': args.unary,
+                        'unary': not args.binary,
                         'verbose': args.verbose,
                         'timeout': args.timeout,
                         'chimera': chimera,
-                        'exact': args.exact}
+                        'exact': args.exact,
+                        'inventory': args.inventory}
             pool.apply_async(atm,  kwds=atm_args)
 
         pool.close()

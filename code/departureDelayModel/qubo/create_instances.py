@@ -67,10 +67,11 @@ def create_instances(output='data/',
     random.seed(0)
 
     filenames = []
-    print 'Calculate instances'
     # init progress bar
     pbar = progressbar.ProgressBar().start()
-    pbar.maxval = len(FValues) * len(CValues) * len(TValues) * len(tValues) * len(DValues) * len(dValues) * Nr
+    NInstances = len(FValues) * len(CValues) * len(TValues) * len(tValues) * len(DValues) * len(dValues) * Nr
+    pbar.maxval = NInstances
+    print 'Calculate %i instances' % NInstances
     count = 0
     for F, C, TRangeMax, TRangeDelta, delayMax, delayDelta in it.product(FValues, CValues, TValues, tValues, DValues, dValues):
         for n in range(Nr):
