@@ -229,9 +229,8 @@ class testSolver(unittest.TestCase):
     def testSolution(self):
         physRawResult, logRawResult, energies, numOccurrences = self.solver.solve(num_reads=1, eIndex=3)
         energy = self.qubo.evaluate(logRawResult[0])
-        self.assertEqual(energies[0], energy)
-        self.assertEqual(energies[0], -8.0)
-        self.assertEqual(logRawResult[0], [1, 1, 0, 0, 1, 0])
+        self.assertEqual(energy, -8.0)
+        self.assertTrue((logRawResult[0] == [1, 1, 0, 0, 1, 0]).all())
 
     def testExactSolution(self):
         r = self.solver.solve_exact()
