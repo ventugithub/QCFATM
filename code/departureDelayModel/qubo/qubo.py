@@ -31,11 +31,11 @@ def get_qubo(input, unary=False):
     NDelta = len(deltaValues)
 
     penalty_weights = {
-        'departure': 0.1,
-        'conflict': 0.5,
-        'boundary-condition': 2,
-        'departure-unique': 2,
-        'conflict-unique': 2
+        'departure': 1,
+        'conflict': 1,
+        'boundary-condition': 1,
+        'departure-unique': 1,
+        'conflict-unique': 1
     }
     print penalty_weights
 
