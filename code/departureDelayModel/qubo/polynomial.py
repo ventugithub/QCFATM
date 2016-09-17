@@ -1,6 +1,7 @@
 import itertools as it
 import re
 import yaml
+import sys
 
 class Polynomial:
     """A polynomial of binary variables defined as
@@ -123,6 +124,28 @@ class Polynomial:
             else:
                 raise ValueError('Unable to return DWave format for this polynomial. It is not a QUBO')
         return Q, offset
+
+    def getCoefficientRange(self):
+        maxLinear = 0
+        minLinear = sys.maxint
+        maxQuadratic = 0
+        minQuadratic = sys.maxint
+        for k, v in self.poly.items():
+            if len(k) == 2:
+                if abs(v) > maxQuadratic:
+                    maxQuadratic = abs(v)
+                if abs(v) < minQuadratic and v != 0:
+                    minQuadratic = abs(v)
+            elif len(k) == 1:
+                if abs(v) > maxLinear:
+                    maxLinear = abs(v)
+                if abs(v) < minLinear and v != 0:
+                    minLinear = abs(v)
+            elif len(k) == 0:
+                pass
+            else:
+                raise ValueError('Unable to linear and quadratic cooefictions for this polynomial. It is not a QUBO')
+        return maxLinear/minLinear, maxQuadratic/minQuadratic
 
     def getNVariables(self):
         """Return the number of variable"""

@@ -31,13 +31,13 @@ def get_qubo(input, unary=False):
     NDelta = len(deltaValues)
 
     penalty_weights = {
-        'departure': 1,
+        'departure': 1.0 / delayValues[-1],
         'conflict': 1,
-        'boundary-condition': 1,
+        'boundary-condition': 1.0 / (2 * pow(delayValues[-1], 2)),
         'departure-unique': 1,
         'conflict-unique': 1
     }
-    print penalty_weights
+    print "Penalty weights: ", penalty_weights
 
     if unary:
         var = variable.Unary(inst)

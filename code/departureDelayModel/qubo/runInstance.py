@@ -83,6 +83,9 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
         else:
             var = variable.Binary(variablefile, instancefile)
 
+    print "Coefficient range ratio of QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", q.getCoefficientRange()
+    for k in subqubofiles.keys():
+        print "Coefficient range ratio of Sub-QUBO %s: (maxLinear/minLinear, maxQuadratic/minQuadratic) = " % k, subqubos[k].getCoefficientRange()
     N = 0
     for k in q.poly.keys():
         if len(k) == 1:
