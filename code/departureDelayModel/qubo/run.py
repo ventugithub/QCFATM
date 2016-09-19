@@ -31,7 +31,7 @@ def main():
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--retry_embedding', default=0, help='Number of retrys after embedding failed', type=int)
     parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
-    parser.add_argument('--unary', action='store_true', help='Use unary representation of integer variables instead of binary representation')
+    parser.add_argument('--binary', action='store_true', help='Use binary representation of integer variables instead of unary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
     parser.add_argument('--chimera_m', default=None, help='Number of rows in Chimera', type=int)
@@ -75,7 +75,7 @@ def main():
                 embedding_only=args.embedding_only,
                 retry_embedding=args.retry_embedding,
                 retry_embedding_desperate=args.retry_embedding_desperate,
-                unary=args.unary,
+                unary=not args.binary,
                 verbose=args.verbose,
                 timeout=args.timeout,
                 chimera=chimera,
@@ -93,7 +93,7 @@ def main():
                         'embedding_only': args.embedding_only,
                         'retry_embedding': args.retry_embedding,
                         'retry_embedding_desperate': args.retry_embedding_desperate,
-                        'unary': args.unary,
+                        'unary': not args.binary,
                         'verbose': args.verbose,
                         'timeout': args.timeout,
                         'chimera': chimera,

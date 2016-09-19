@@ -57,6 +57,11 @@ class testPolynomial(unittest.TestCase):
         if os.path.exists(self.filename):
             os.remove(self.filename)
 
+    def testEqual(self):
+        Q = self.Q1
+        Q = polynomial.Polynomial({(1,): 7, (2,): 2, (3,): 3, (4,): 1})
+        self.assertFalse(Q == self.Q1)
+
     def testSum(self):
         Q = self.Q1 + self.Q2
         expectedQ = polynomial.Polynomial({(): 3, (1,): 5, (2,): 7, (4,): 1, (5,): 7, (1, 3): 3, (2, 4): 4, (3, 4): 3})
@@ -84,6 +89,10 @@ class testPolynomial(unittest.TestCase):
                        3. x3 x4^2 + 9. x2 x3 x4^2 + 21. x5 + 35. x1 x5 + 42. x2 x5 +
                        21. x1 x3 x5 + 7. x4 x5 + 21. x2 x4 x5""")
         self.assertEqual(Q, expectedQ)
+        Q = self.Q1 * self.Q1
+        Q2 = self.Q1
+        Q2 *= self.Q1
+        self.assertEqual(Q, Q2)
 
     def testScalarProduct(self):
         Q = 3 * self.Q1
@@ -133,14 +142,14 @@ class testVariable(unittest.TestCase):
         np.random.seed(0)
         random.seed(0)
         self.filenameUnary = "test_unary.yml"
-        # self.filenameBinary = "test_binary.yml"
+        self.filenameBinary = "test_binary.yml"
         self.filenameIntVar = "test_integerVariable.yml"
         self.instancefile = "testdata/test_instance.yml"
         self.inst = instance.Instance(self.instancefile)
         self.varUnary = variable.Unary(self.inst)
-        # self.varBinary = variable.Binary(self.inst)
+        self.varBinary = variable.Binary(self.inst)
         self.assertEqual(self.varUnary.representation, 'unary')
-        # self.assertEqual(self.varBinary.representation, 'binary')
+        self.assertEqual(self.varBinary.representation, 'binary')
 
         # fill integer variables randomly
         I = len(self.inst.flights)
@@ -161,9 +170,9 @@ class testVariable(unittest.TestCase):
         N1 = self.varUnary.calculateNumberOfVariables()
         N2 = self.varUnary.num_qubits
         self.assertEqual(N1, N2)
-        # N1 = self.varBinary.calculateNumberOfVariables()
-        # N2 = self.varBinary.num_qubits
-        # self.assertEqual(N1, N2)
+        N1 = self.varBinary.calculateNumberOfVariables()
+        N2 = self.varBinary.num_qubits
+        self.assertEqual(N1, N2)
 
     def testIntegerVariable(self):
         self.intVar.save(self.filenameIntVar)
@@ -176,10 +185,10 @@ class testVariable(unittest.TestCase):
         var2 = variable.Unary(self.filenameUnary, self.instancefile)
         self.assertEqual(self.varUnary, var2)
 
-    # def testIOBinary(self):
-        # self.varBinary.save(self.filenameBinary)
-        # varBinary2 = variable.Binary(self.filenameBinary, self.instancefile)
-        # self.assertEqual(self.varBinary, varBinary2)
+    def testIOBinary(self):
+        self.varBinary.save(self.filenameBinary)
+        varBinary2 = variable.Binary(self.filenameBinary, self.instancefile)
+        self.assertEqual(self.varBinary, varBinary2)
 
     def testBackAndForthVariablesUnary(self):
         # project to binary string
@@ -190,20 +199,20 @@ class testVariable(unittest.TestCase):
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
         self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
-    # def testBackAndForthVariablesBinary(self):
-        # # project to binary string
-        # bitstring = self.varBinary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
-        # # back project
-        # intVar2 = self.varBinary.getIntegerVariables(bitstring)
-        # # check
-        # self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        # self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
+    def testBackAndForthVariablesBinary(self):
+        # project to binary string
+        bitstring = self.varBinary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
+        # back project
+        intVar2 = self.varBinary.getIntegerVariables(bitstring)
+        # check
+        self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
+        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
     def tearDown(self):
         if os.path.exists(self.filenameUnary):
             os.remove(self.filenameUnary)
-        # if os.path.exists(self.filenameBinary):
-            # os.remove(self.filenameBinary)
+        if os.path.exists(self.filenameBinary):
+            os.remove(self.filenameBinary)
         if os.path.exists(self.filenameIntVar):
             os.remove(self.filenameIntVar)
 

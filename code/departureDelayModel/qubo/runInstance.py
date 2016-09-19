@@ -53,15 +53,21 @@ def main():
         exact=args.exact)
 
 def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}):
+    if not unary:
+        raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
+    representation = 'binary'
+    if unary:
+        representation = 'unary'
     # read in instance and calculate QUBO and index mapping
-    qubofile = "%s.qubo.yaml" % instancefile
+    qubofile = "%s.%s.qubo.yaml" % (instancefile, representation)
     subqubofiles = {}
-    subqubofiles['departure'] = "%s.subqubo-departure.yaml" % instancefile
-    subqubofiles['conflict'] = "%s.subqubo-conflict.yaml" % instancefile
-    subqubofiles['boundary-condition'] = "%s.subqubo-boundary-condition.yaml" % instancefile
-    subqubofiles['departure-unique'] = "%s.subqubo-departure-unique.yaml" % instancefile
-    subqubofiles['conflict-unique'] = "%s.subqubo-conflict-unique.yaml" % instancefile
-    variablefile = "%s.variable.yaml" % instancefile
+    subqubofiles['departure'] = "%s.%s.subqubo-departure.yaml" % (instancefile, representation)
+    subqubofiles['conflict'] = "%s.%s.subqubo-conflict.yaml" % (instancefile, representation)
+    subqubofiles['boundary-condition'] = "%s.%s.subqubo-boundary-condition.yaml" % (instancefile, representation)
+    if unary:
+        subqubofiles['departure-unique'] = "%s.%s.subqubo-departure-unique.yaml" % (instancefile, representation)
+        subqubofiles['conflict-unique'] = "%s.%s.subqubo-conflict-unique.yaml" % (instancefile, representation)
+    variablefile = "%s.%s.variable.yaml" % (instancefile, representation)
     if not os.path.exists(qubofile) or not any([os.path.exists(f) for f in subqubofiles.values()]) or not os.path.exists(variablefile) or not use_snapshots:
         print "Calculate QUBO ..."
         q, subqubos, var = qubo.get_qubo(instancefile, unary)
@@ -115,9 +121,9 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     embedparams = {}
     for e in range(num_embed):
         print "Embedding %i" % e
-        name = "%s.embedding%05i" % (instancefile, e)
+        name = "%s.%s.embedding%05i" % (instancefile, representation, e)
         if (chimera):
-            name = "%s.embedding%05i_chimera%03i_%03i_%03i" % (instancefile, e, chimera['m'], chimera['n'], chimera['t'])
+            name = "%s.%s.embedding%05i_chimera%03i_%03i_%03i" % (instancefile, representation, e, chimera['m'], chimera['n'], chimera['t'])
         embedfile = "%s.yaml" % name
         if not os.path.exists(embedfile) or not use_snapshots:
             print "Calculate embedding ..."
