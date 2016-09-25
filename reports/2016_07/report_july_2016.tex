@@ -1,0 +1,84 @@
+\documentclass[10pt]{article}
+%\documentclass[9pt]{extarticle}
+
+% Handle enumeration list
+\usepackage{enumitem}
+
+% Citations as footnotes
+% \usepackage[style=verbose,backend=bibtex]{biblatex}
+% \bibliography{refs.bib}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{microtype}
+
+% Directory for images
+\graphicspath{{images/}}
+
+% To wrap text around figures
+\usepackage{wrapfig}
+\usepackage{caption}
+
+% Define new type of columns
+\usepackage{array}
+\usepackage{tabulary}
+\newcolumntype{K}[1]{>{\centering\arraybackslash}m{#1}}
+
+% Stretch the dimension of the rows in tables
+\renewcommand{\arraystretch}{1.6}
+
+% Add colors to table
+\usepackage{colortbl}
+
+% Set Helvetica as main font
+\usepackage{helvet}
+\renewcommand\familydefault{\sfdefault}
+\usepackage[T1]{fontenc}
+
+% Set Helvetica as main font for equations
+\usepackage[helvet]{sfmath}
+
+% Change geometry of the page
+\usepackage[margin=1in]{geometry}
+
+\usepackage[svgnames]{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{multicol}
+
+% Redefine names
+\newcommand{\sectionname}{Section}
+\renewcommand{\appendixname}{Appendix}
+\newcommand{\equationname}{Equation}
+\newcommand{\referencename}{Ref.}
+\renewcommand{\figurename}{Figure}
+\renewcommand{\tablename}{Table}
+
+% Some useful definition
+\newcommand{\DW}{D-Wave 2X}
+
+\begin{document}
+
+\begin{center}\Large
+\textbf{Quantum Annealing for Air Traffic Management\\Interim Report, July 2016\\Quantum AI Lab, NASA Ames}
+\end{center}
+
+\begin{multicols}{2}
+%\input{sections/milestones}
+%\input{sections/intro}
+\input{sections/projectAims}
+\input{sections/resultsAt3Months}
+% \input{sections/problem_formulation}
+%\input{sections/implementation}
+%\input{sections/outlook}
+\input{sections/nextSteps}
+\input{sections/sow}
+\end{multicols}
+\input{sections/sow}
+
+\small
+\bibliographystyle{unsrt}
+\bibliography{refs.bib}
+
+\end{document}

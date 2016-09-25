@@ -9,7 +9,7 @@ import argparse
 from mpl_toolkits.basemap import Basemap
 import networkx as nx
 
-def prepareWorldMapPlot():
+def prepareWorldMapPlot(llcrnrlon=None, llcrnrlat=None, urcrnrlon=None, urcrnrlat=None, centerLat=0.0, centerLon=0.0):
     # Create a figure of size (i.e. pretty big)
     fig = plt.figure(figsize=(20, 10))
     fig.add_subplot(1, 1, 1)
@@ -20,8 +20,14 @@ def prepareWorldMapPlot():
                   resolution='l',
                   # And threshold 100000
                   area_thresh=100000.0,
-                  # Centered at 0,0 (i.e null island)
-                  lat_0=0, lon_0=0)
+                  # Center
+                  lat_0=centerLat, lon_0=centerLon,
+                  # corners
+                  llcrnrlon=llcrnrlon,
+                  llcrnrlat=llcrnrlat,
+                  urcrnrlon=urcrnrlon,
+                  urcrnrlat=urcrnrlat
+                  )
 
     # Draw the coastlines on the map
     map.drawcoastlines()
@@ -120,7 +126,7 @@ def arrowplot(axes, x, y, narrs=30, dspace=0.5, direc='pos', hl=0.3, hw=6, c='bl
 
         axes.annotate('', xy=(ax0, ay0), xycoords='data',
                       xytext=(ax1, ay1), textcoords='data',
-                      arrowprops=dict(headwidth=hw, frac=1., ec=c, fc=c))
+                      arrowprops=dict(headwidth=hw, ec=c, fc=c))
 
     axes.plot(x, y, color=c)
     axes.set_xlim(x.min() * .9, x.max() * 1.1)
@@ -180,6 +186,119 @@ def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelCo
     col = 'r' if red else 'g'
     addPoints(map, conflictTrajectoryPoints, color=col, markersize=6, linewidth=6, marker='>', linestyle='-', latitude='lat1', longitude='lon1')
     addPoints(map, conflictTrajectoryPoints, color='r', markersize=6, linewidth=6, marker='<', linestyle='-', latitude='lat2', longitude='lon2')
+
+def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflicts, red=False):
+    """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
+    around the conflict region
+
+    Arguments:
+        conflictIndices: sequence of conflict indices
+        trajectories: Pandas Dataframe containing all trajectories
+        pointConflicts: Pandas Dataframe containing the point conflicts
+        parallelConflicts: Pandas Dataframe containing the parallel conflicts
+        red: plot all conflict points in red (default false)
+    """
+    flights1 = []
+    flights2 = []
+    conflictTrajectoryPointsContainer = []
+    minlons = []
+    minlats = []
+    maxlons = []
+    maxlats = []
+    centerLons = []
+    centerLats = []
+    for conflictIndex in conflictIndices:
+        flight1, flight2, conflictTrajectoryPoints = tools.getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts)
+        if isinstance(conflictTrajectoryPoints, pd.core.series.Series):
+            minlon = min(conflictTrajectoryPoints.lon1, conflictTrajectoryPoints.lon2) - 1.0
+            minlat = min(conflictTrajectoryPoints.lat1, conflictTrajectoryPoints.lat2) - 1.0
+            maxlon = max(conflictTrajectoryPoints.lon1, conflictTrajectoryPoints.lon2) + 1.0
+            maxlat = max(conflictTrajectoryPoints.lat1, conflictTrajectoryPoints.lat2) + 1.0
+            centerLon = 0.5 * (conflictTrajectoryPoints.lon1 + conflictTrajectoryPoints.lon2)
+            centerLat = 0.5 * (conflictTrajectoryPoints.lat1 + conflictTrajectoryPoints.lat2)
+
+        elif isinstance(conflictTrajectoryPoints, pd.core.frame.DataFrame):
+            minlon = min(conflictTrajectoryPoints.lon1.min(), conflictTrajectoryPoints.lon2.min()) - 1.0
+            minlat = min(conflictTrajectoryPoints.lat1.min(), conflictTrajectoryPoints.lat2.min()) - 1.0
+            maxlon = max(conflictTrajectoryPoints.lon1.max(), conflictTrajectoryPoints.lon2.max()) + 1.0
+            maxlat = max(conflictTrajectoryPoints.lat1.max(), conflictTrajectoryPoints.lat2.max()) + 1.0
+            centerLon = 0.5 * (conflictTrajectoryPoints.lon1.mean() + conflictTrajectoryPoints.lon2.mean())
+            centerLat = 0.5 * (conflictTrajectoryPoints.lat1.mean() + conflictTrajectoryPoints.lat2.mean())
+
+        else:
+            raise ValueError('plotConflict: conflictTrajectoryPoints is neither pandas series nor dataframe')
+        flights1.append(flight1)
+        flights2.append(flight2)
+        conflictTrajectoryPointsContainer.append(conflictTrajectoryPoints)
+        minlons.append(minlon)
+        minlats.append(minlat)
+        maxlons.append(maxlon)
+        maxlats.append(maxlat)
+        centerLons.append(centerLon)
+        centerLats.append(centerLat)
+    minlon = np.array(minlons).min()
+    minlat = np.array(minlats).min()
+    maxlon = np.array(maxlons).max()
+    maxlat = np.array(maxlats).max()
+    if len(conflictIndices) > 1:
+        centerLon = np.array(centerLons).mean()
+        centerLat = np.array(centerLats).mean()
+
+    # Create a figure of size (i.e. pretty big)
+    fig = plt.figure(figsize=(20, 10))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Create a map, using the Gall-Peters projection,
+    map = Basemap(ax=ax, projection='gall',
+                  # with low resolution,
+                  resolution='l',
+                  # And threshold 100000
+                  area_thresh=100000.0,
+                  # Center
+                  lat_0=centerLat, lon_0=centerLon,
+                  # corners
+                  llcrnrlon=minlon,
+                  llcrnrlat=minlat,
+                  urcrnrlon=maxlon,
+                  urcrnrlat=maxlat
+                  )
+
+    # Draw the coastlines on the map
+    map.drawcoastlines()
+
+    # Draw country borders on the map
+    map.drawcountries()
+
+    # Fill the land with grey
+    map.fillcontinents(color='#888888')
+
+    # Draw the map boundaries
+    map.drawmapboundary(fill_color='#f4f4f4')
+
+    for i in range(len(conflictIndices)):
+        flight1 = flights1[i]
+        flight2 = flights2[i]
+        conflictTrajectoryPoints = conflictTrajectoryPointsContainer[i]
+
+        # plot involved flight trajectories
+        traj1 = trajectories.loc[flight1]
+        traj2 = trajectories.loc[flight2]
+        traj1 = traj1[traj1.longitude >= minlon]
+        traj1 = traj1[traj1.longitude <= maxlon]
+        traj1 = traj1[traj1.latitude >= minlat]
+        traj1 = traj1[traj1.latitude <= maxlat]
+        traj2 = traj2[traj2.longitude >= minlon]
+        traj2 = traj2[traj2.longitude <= maxlon]
+        traj2 = traj2[traj2.latitude >= minlat]
+        traj2 = traj2[traj2.latitude <= maxlat]
+        x, y = map(np.array(traj1['longitude']), np.array(traj1['latitude']))
+        arrowplot(ax, x, y)
+        x, y = map(np.array(traj2['longitude']), np.array(traj2['latitude']))
+        arrowplot(ax, x, y)
+        # point conflict
+        col = 'r' if red else 'g'
+        addPoints(map, conflictTrajectoryPoints, color=col, markersize=10, linewidth=6, marker='o', linestyle='-', latitude='lat1', longitude='lon1')
+        addPoints(map, conflictTrajectoryPoints, color='r', markersize=10, linewidth=6, marker='s', linestyle='-', latitude='lat2', longitude='lon2')
 
 def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=False, red=False):
     """ Given a flight index, plot the trajectories of the involved flights and the conflicting trajectory points
@@ -631,7 +750,10 @@ def main():
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a conflict', type=int)
+    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
+    parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
+    parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
     parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
     parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
     parser.add_argument('--multiConflictFile', help='input file containing the conflicts between pairwise conflicts (overwrites -t and -d)')
@@ -643,7 +765,7 @@ def main():
 
     conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     conflict_parser.add_argument('--info', action='store_true', help='Show info for all conflicts without plotting')
-    conflict_parser.add_argument('-k', '--conflictIndex', default=0, help='Conflict index to plot', type=int)
+    conflict_parser.add_argument('-k', '--conflictIndices', nargs='+', help='Conflict index to plot', type=int)
 
     flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     flight_parser.add_argument('-i', '--flightIndex', default=None, help='flight index to plot', type=int)
@@ -669,10 +791,10 @@ def main():
     trajectories = pd.read_csv(trajectoryFile, index_col='flightIndex')
     name = "mindist%05.1f_mintime%03i" % (args.mindistance, args.mintime)
     rawPointConflictFile = '%s.%s.rawPointConflicts.csv' % (args.input, name)
-    pointConflictFile = '%s.%s.pointConflicts.csv' % (args.input, name)
-    parallelConflictFile = '%s.%s.parallelConflicts.csv' % (args.input, name)
-    multiConflictFile = '%s.%s.multiConflicts.csv' % (args.input, name)
-    flights2ConflictsFile = '%s.%s.flights2Conflicts.h5' % (args.input, name)
+    flights2ConflictsFile = "%s.%s.flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    pointConflictFile = "%s.%s.reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    parallelConflictFile = "%s.%s.reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    multiConflictFile = "%s.%s.multiConflicts_delay%03i_thres%03i_depart%03i.h5" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
     if args.rawPointConflictFile:
         rawPointConflictFile = args.rawPointConflictFile
     if args.pointConflictFile:
@@ -702,8 +824,7 @@ def main():
             print "Point conflict indices range from 0 to", NPointConflicts - 1
             print "Parallel conflict indices range from", NPointConflicts, " to", NParallelConflicts
         else:
-            map = prepareWorldMapPlot()
-            addConflictPlot(map, args.conflictIndex, trajectories, pointConflicts, parallelConflicts)
+            plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts)
             plt.show()
 
     if args.mode == 'flight':

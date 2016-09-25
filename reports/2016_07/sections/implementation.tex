@@ -1,0 +1,17 @@
+\section*{Implementation and benchmarks}
+
+In order to optimize our formulation of the problem to realistic data, we focus
+on flight data in the North Atlantic oceanic airspace (NAT), for which we have
+wind-optimal trajectories for two consecutive days (July
+28\textsuperscript{th}-29\textsuperscript{th} 2012) for which state-of-the-art
+solutions exist.  The NAT dataset consists of wind-optimal trajectories in
+(3+1)-dimensions for 984 flights. 
+These trajectories, subsets thereof, and toy-instances based thereon will serve as our benchmark set.
+
+\indent We have already implemented the first step in processing the raw data
+into a useful form: given the trajectories, finding the set of potential
+conflicts.  Using additional tools also already developed, we are currently
+looking closely at these potential conflicts in order to devise
+parameterizations and encodings of possible maneuvers that are amenable to a
+QUBO formulation.
+Importantly, our ASD collaborators have already expressed interest in the visualization tools we have developed, an excellent example of how work such can have benefits beyond quantum annealing.

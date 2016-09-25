@@ -1,0 +1,13 @@
+\section*{Outlook and next steps}\label{sec:ass}
+
+Already we have formulated the ATM problem in a way that is amenable to pseudo-Boolean optimization.
+Our next step is to finalize the mappings to QUBO, and assess the quality of solutions from the resulting QUBO instances to those found by prior classical methods, based on ATM instances drawn from the NAT dataset.
+That is, before we analyze the performance of quantum annealing in solving our formulation of the problem, we will analyze the formulation itself, by comparing solutions from classical QUBO solvers to those from extant methods.
+We are interested not only in solutions that are at least as good in quality, but those that are of at least similar quality but sufficiently different from those produced by other methods; in computational models of real-world problems such as this, there is a wide-ranging interest in a \emph{diversity} of solutions from which a human can select based on unformalized criteria.
+
+We will also construct small instances, either derived directly from subsets of the NAT dataset or based on the structures therein, and run them both on a physical state-of-the-art D-Wave quantum annealer as well as a simulation of quantum annealer, which allows for larger sizes in order to asses the scalability of our methods.
+Finally, we will explore the resource requirements of various mappings for realistic data in order to direct future hardware designs.
+These last steps encompass the motivating premise of this work: that by formulating computational problems of interest to NASA in a way that is amenable to quantum annealing, we can set the stage for both directing and utilizing the development larger-scale quantum annealers.
+
+% For a complete overview of completed tasks and future milestones, see \tablename~\ref{table:milestone}.
+% \figurename~\ref{fig:scheme} summarizes the steps involved in applying quantum annealing to the ATM problem.
