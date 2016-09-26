@@ -370,15 +370,20 @@ One potential solution is to use some sort of master-slave subproblem decomposit
 In this simplification of the the delay frontier model we restrict ourselves to departure delays. 
 By encoding the departure delays in unary, we get the following QUBO
 \begin{align*}
-    C &= \sum_{i\alpha} \alpha d_{i\alpha}
-       + \sum_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \\
-      &+ \sum_k \left. \sum_{(\alpha, \beta) \in B_k} d_{i\alpha} d_{j\beta} \right|_{(i,j)\in I_k}
+    C &= \sum_i \lambda^\text{delay}_i \sum_\alpha \alpha d_{i\alpha}
+       + \sum_i \lambda^\text{unique}_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \\
+      &+ \sum_k \left. \lambda^\text{conflict}_{ij} \sum_{(\alpha, \beta) \in B_k} d_{i\alpha} d_{j\beta} \right|_{(i,j)\in I_k}
 \end{align*}
-where $I_k$ is the pair of flights $(i, j)$ involved in the conflict $k$ and $B_k$ is the set of $\alpha$ and $\beta$ which correspond to \emph{real} conflicts
-\begin{equation*}
-    B_k = \left\{(\alpha, \beta) : \left| \sum_\alpha \alpha d_{i\alpha} -\sum_\beta \beta d_{j\beta} + t_{ik} - t_{jk} \right|_{(i,j)\in I_k} < t_\text{thres} \right\}
-\end{equation*}
-$t_{ik}$ is the wind-optimal arrival time of flight $i$ at the conflict $k$.
+where
+\begin{itemize}
+    \item $I_k$ is the pair of flights $(i, j)$ involved in the conflict $k$ 
+    \item $B_k$ is the set of $\alpha$ and $\beta$ which correspond to \emph{real} conflicts
+        \begin{equation*}
+            B_k = \left\{(\alpha, \beta) : \left| \sum_\alpha \alpha d_{i\alpha} -\sum_\beta \beta d_{j\beta} + t_{ik} - t_{jk} \right|_{(i,j)\in I_k} < t_\text{thres} \right\}
+        \end{equation*}
+    \item $t_{ik}$ is the wind-optimal arrival time of flight $i$ at the conflict $k$.
+    \item $\lambda^\text{delay}_{i}, \lambda^\text{unique}_{i}$ and $\lambda^\text{conflict}_{ij}$ are the penalty weights for the different contributions to the cost function.
+\end{itemize}
 
 \newpage
 \appendix
