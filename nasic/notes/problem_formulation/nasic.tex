@@ -1,0 +1,277 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+
+\usepackage[margin=1in]{geometry}
+
+\title{NASIC problem specification}
+\author{Bryan O'Gorman}
+\date{May 2016}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Notation:
+\begin{itemize}
+    \item $I$: num. airfields
+    \item $J$: num. tasks
+    \item $L$: num. aircraft types
+    \item $b(i, l)$: num. $l$-type aircraft available at airfield $i$
+    \item $B(i)$: max. num. aircraft able to be dispatched from airfield $i$
+    \item $A(l)$: total num. $l$-type aircraft available
+    \item $m(j, l)$: how much $l$-type aircraft contribute to task $j$
+    \item $M(j)$: how much task $j$ needs
+    \item $r(l, l', j)$: how much coverage $l'$-type aircraft provide for $l$-type aircraft executing task $j$
+    \item $R(j, l)$: how much coverage each $l$-type aircraft executing task $j$ needs
+    \item $C(i, j, l)$: Range of $l$-type aircraft from airfield $i$ executing task $l$
+    \item $h(l)$: Range of $l$-type aircraft
+    \item $N(i, j)$: set of airfields from which an aircraft can cover another aircraft executing task $j$ from airfield $i$  
+    \item $Q(i, j, l, i')$: set of aircraft types in airfield $i'$ that can cover an $l$-type aircraft from airfield $i$ executing task $j$
+\end{itemize}
+
+\noindent
+Useful definitions: 
+\begin{equation*}
+    \tilde M(j, l) = \frac{M(j)}{m(j, l)}
+\end{equation*}
+\begin{equation*}
+    \tilde r(l, l', j) = \frac{1}{r(l, l', j) R(j, l)}
+\end{equation*}
+
+\section{Constraints}
+
+\begin{itemize}
+\item 
+\textbf{Limited cover availability:}
+Only certain aircrafts from certain airfields are available for cover
+\begin{equation} \label{eqn:constraint_cover_availability}
+    y_{i, l, i', j', l'} \text{ only for } i \in N(i', j') \text{ and } l \in Q(i', j', l', i)
+\end{equation}
+
+\item
+\textbf{Limited airfield and type resource:}
+The sum of $l$-type primary and cover aircrafts dispatched from a airfield $i$ cannot exceed the number of $l$-type aircrafts stationed there
+\begin{equation} \label{eqn:constraint_airfield_type_resource}
+    \sum_j x_{i, j, l} + \sum_{i', j', l'}  y_{i, l, i', j', l'} \leq b(i, l) \qquad  \forall i, l 
+\end{equation}
+
+\item
+\textbf{Limited airfield resource:}
+The sum of any type of primary and cover aircrafts dispatched from a airfield $i$ cannot exceed the total number aircrafts stationed there
+\begin{equation} \label{eqn:constraint_airfield_total_resource}
+    \sum_{j, l} x_{i,j,l} + \sum_{l, i', j', l'} y_{i, l, i', j', l'} \leq B(i) \qquad \forall i
+\end{equation}
+
+\item
+\textbf{Limited type resource:}
+The sum of $l$-type primary and cover aircrafts dispatched from all airfield cannot exceed the total number of $l$-type aircrafts
+\begin{equation} \label{eqn:constraint_type_total_resource}
+    \sum_{i, j} x_{i, j, l} + \sum_{i, i', j', l'} y_{i, l, i', j', l'} \leq A(l) \qquad \forall l
+\end{equation}
+
+\item
+\textbf{Tasks must be fulfilled:}
+The sum of contributions of all aircrafts dispatched to fulfill task $j$ must exceed the resource needed by that task
+\begin{align}
+    \sum_{i, l} m(j, l) x_{i, j, l} & \geq M(j)  \qquad \forall j  \notag \\
+    \Leftrightarrow \sum_{i, l} \frac{x_{i, j, l}}{\tilde M(j, l)}  & \geq 1  \qquad \forall j \label{eqn:constraint_task_fulfilled} 
+\end{align}
+
+\item
+\textbf{Aircraft range is limited:}
+We can not dispatch aircrafts for tasks $j$ if the necessary range is beyond the maximum range of these aircrafts
+\begin{equation} \label{eqn:constraint_range}
+    h(l) < C(i, j, l) \Rightarrow x_{i, j, l} = 0 \qquad \forall i, j, l 
+\end{equation}
+
+\item
+\textbf{Cover must be provided:}
+The sum of cover contributions to must exceed the cover needed.
+\begin{align}
+    \sum_{i', l'} r(l, l', j) y_{i', l', i, j, l} & \geq R(j, l) x_{i, j, l} \qquad \forall i, j, l \notag \\
+    \Leftrightarrow \sum_{i', l'} \frac{y_{i', l', i, j, l}}{\tilde r(l, l', j)} & \geq x_{i, j, l} \qquad \forall i, j, l \label{eqn:constraint_cover}
+\end{align}
+\end{itemize}
+
+\section{Instance ensembles}
+Simplifications:
+\begin{itemize}
+    \item Set $A(l) = \sum_{i} b(i, l)$
+    \item Set $B(i) = \sum_{l} b(i, l)$
+    \item Have $y_{i,l,i',j',l'}$ only when $(i, l) \in K_2(i', j', l')$
+    \item Have $x_{i, j, l}$ only when $l \in K_1(i, j)$
+    \item $r(l, l', j) = r(j) = 1$
+    \item $R(j, l) = R(j) = 1$
+\end{itemize}
+
+\noindent
+Oversimplifications:
+\begin{itemize}
+\item $L = 1$
+\item $I$ small
+\item $J$ small
+\item $m(j, l) = 1$
+\item $M(j)$ small 
+\item $b(i, l) = b(i)$
+\item (Maybe) $K_2(i', j', l') = I \times L = I \times \{1\}$
+\item (Maybe) $K_1(i, j) = L$
+\end{itemize}
+
+\noindent
+Remaining:
+\begin{itemize}
+\item $I$, $J$, $L$
+\item $b(i, l)$
+\item $m(j, l)$, $M(j)$
+\item $r(l, l', j)$, $R(j, l)$
+\item $N(i, j)$, $C(i, j, l)$, $h(l)$, $Q(i, j, l, i') \Rightarrow K_1, K_2$
+\end{itemize}
+
+\noindent 
+Reduced problem:
+$\mathbf x = \{x_{i, j}\}$, $\mathbf y = \{y_{i, i' ,j'}\}$
+\begin{itemize}
+    \item Constraint \eqref{eqn:constraint_cover_availability} always fulfilled
+    \item Constraint \eqref{eqn:constraint_airfield_type_resource} $\forall i$: $\sum_j x_{i,j} + \sum_{i', j'} y_{i, i', j'}  \leq b(i,l)$
+    \item \eqref{eqn:constraint_airfield_type_resource} implies \eqref{eqn:constraint_airfield_total_resource} and \eqref{eqn:constraint_type_total_resource}
+    \item Constraint \eqref{eqn:constraint_task_fulfilled} $\forall j$: $\sum_{i} x_{i, j} \geq M(j)$
+    \item Constraint \eqref{eqn:constraint_range} always fulfilled
+    \item Constraint \eqref{eqn:constraint_cover} $\forall i, j$: $\sum_{i'} y_{i', i, j} \geq x_{i, j}$
+\end{itemize}
+(For all sums, $j \in [J]$, $i \in [I]$.)
+
+\begin{itemize}
+\item $I$ = 2, 3, 4
+\item $J$ = $I$, $2I$, $3I$
+\item $M(j)$ = 1, 2, 3
+\item $b(i) = 1, 2, \ldots, 5$
+\end{itemize}
+Is this hard?
+
+\section{QUBO}
+\subsection{Reduced problem}
+Variables
+\begin{itemize}
+    \item $x_{i, j} \in \{0, 1, \dots, b(i)\}$
+    \item $y_{i, i', j'} \{0, 1, \dots, b(i)\}$
+\end{itemize}
+\begin{enumerate}
+    \item 
+    Binary representation of $x_{i, j}$ and $y_{i, i', j'}$:
+    \begin{align*}
+        x_{i, j} & = \sum_{\alpha = 0}^{D_i} 2^\alpha x_{i, j, \alpha} \\
+        y_{i, i', j'} & = \sum_{\alpha = 0}^{D_i} 2^\alpha y_{i, i', j', \alpha}
+    \end{align*}
+    with $D_i = \lceil \log_2 b(i) \rceil \in \mathbb{N}$.
+    \item 
+    Unary representation of $x_{i, j}$ and $y_{i, i', j'}$:
+    \begin{align*}
+        x_{i, j} & = \sum_{\alpha = 0}^{b(i)} x_{i, j, \alpha} \\
+        y_{i, j} & = \sum_{\alpha = 0}^{b(i)} y_{i, i', j, \alpha} \\
+    \end{align*}
+\end{enumerate}
+\begin{itemize}
+\item Incorporation of constraint \eqref{eqn:constraint_airfield_type_resource}:
+    \begin{equation*}
+        0 \leq \underbrace{b(i) - \sum_j x_{i,j} - \sum_{i', j'} y_{i, i', j'}}_{=:u_i} \leq b(i)
+    \end{equation*}
+    \begin{enumerate}
+        \item 
+        Binary representation of the slack variable $u_i$:
+        \begin{equation*}
+            u_{i} = \sum_{\alpha = 0}^{D_i} 2^\alpha u_{i, \alpha}
+        \end{equation*}
+        \item 
+        Unary representation of the slack variable $u_i$:
+        \begin{equation*}
+            u_{i} = \sum_{\alpha = 0}^{b(i)} u_{i, \alpha}
+        \end{equation*}
+    \end{enumerate}
+    QUBO contribution
+    \begin{equation*}
+        C_2 = \sum_i \left( b(i) - \sum_j x_{i,j} - \sum_{i', j'} y_{i, i', j'} - u_i \right)^2
+    \end{equation*}
+\item Incorporation of constraint \eqref{eqn:constraint_task_fulfilled}:
+    \begin{equation*}
+        0 \leq \underbrace{\sum_i x_{i,j} - M(j)}_{=:v_j} \leq \sum_i b(i) - M(j)
+    \end{equation*}
+    \begin{enumerate}
+        \item 
+        Binary representation of the slack variable $v_j$:
+        \begin{equation*}
+            v_{j} = \sum_{\alpha = 0}^{D_j} 2^\alpha v_{j, \alpha} 
+        \end{equation*}
+        with $D_j = \lceil \log_2 \left( \sum_i b(i) - M(j) \right) \rceil \in \mathbb{N}$.
+        \item 
+        Unary representation of the slack variable $v_j$:
+        \begin{equation*}
+            v_{j} = \sum_{\alpha = 0}^{M(j)} v_{j, \alpha}
+        \end{equation*}
+    \end{enumerate}
+    QUBO contribution
+    \begin{equation*}
+        C_5 = \sum_j \left( \sum_i x_{i,j} - M(j) -  v_j \right)^2
+    \end{equation*}
+\item Incorporation of constraint \eqref{eqn:constraint_cover}:
+    \begin{equation*}
+        0 \leq \underbrace{\sum_{i'} y_{i', i, j} - x_{i, j}}_{=:w_{i, j}} \leq \underbrace{\sum_i b(i) - 1}_{=:W}
+    \end{equation*}
+    \begin{enumerate}
+        \item 
+        Binary representation of the slack variable $w_{i, j}$:
+        \begin{equation*}
+            w_{i, j} = \sum_{\alpha = 0}^{D} 2^\alpha w_{i, j, \alpha}
+        \end{equation*}
+        with $D = \lceil \log_2 W \rceil \in \mathbb{N}$.
+        \item 
+        Unary representation of the slack variable $w_j$:
+        \begin{equation*}
+            w_{i, j} = \sum_{\alpha = 0}^{w} w_{i, j, \alpha}
+        \end{equation*}
+    \end{enumerate}
+    QUBO contribution
+    \begin{equation*}
+        C_7 = \sum_{ij} \left(\sum_{i'} y_{i', i, j} - x_{i, j} -  w_{ij} \right)^2
+    \end{equation*}
+\end{itemize}
+
+\subsubsection{Estimation of the number of binary variables}
+\begin{enumerate}
+    \item \textbf{Binary representation}
+    For the binary representation of $x_{i, j}$, we have following number of binary variables
+    \begin{equation*}
+        N_x(i) = \lceil \log_2 b(i) \rceil 
+    \end{equation*}
+    Analogously we get 
+    \begin{align*}
+        N_y(i) &= \lceil \log_2 b(i) \rceil \\
+        N_u(i) &= \lceil \log_2 b(i) \rceil \\
+        N_v(j) &= \left \lceil \log_2 \left( \sum_i b(i) - M(j) \right) \right \rceil  \\
+        N_w(j) &= \left \lceil \log_2\left(\sum_i b(i) - 1\right) \right \rceil 
+    \end{align*}
+    Hence, the total number of variables reads
+    \begin{align*}
+        N_\text{total}^\text{bin. rep.} & = \sum_i \left( N_x(i) + N_y(i) + N_u(i) \right) + \sum_j N_v(j) + \sum_{ij} N_w \\
+                                        & = 3 \sum_i \lceil \log_2 b(i) \rceil + \sum_j \left \lceil \log_2 \left(\sum_i b(i) - M(j)\right) \right \rceil+ I J \left \lceil \log_2 \left( \sum_i b(i) - 1 \right) \right \rceil 
+    \end{align*}
+    \item \textbf{Unary representation}
+    For the unary representation of all variables, the total number of variables reads
+    \begin{align*}
+        N_\text{total}^\text{un. rep.} & = \sum_i \left( b(i) + b(i) + b(i)\right) + \sum_j M(j) + \sum_{ij} \left(\sum_{i'} b(i') - 1\right) \\
+                                       & = 3 \sum_i \left(b(i)\right) + \sum_j M(j) + I J \left(\sum_{i'} b(i') - 1\right)
+    \end{align*}
+\end{enumerate}
+$\Rightarrow$ The binary representation is favorable (see figure \ref{fig:problem_size}).
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\linewidth]{pics/problem_size}
+    \caption{Scaling of the problem size with $I$ by setting $J=2I$ and using $1000$ random samples for $M(j)\in\{1,2,3\}$ and $b(i)\in\{1,\dots, 5\}$}
+    \label{fig:problem_size}
+\end{figure}
+
+
+\end{document}
