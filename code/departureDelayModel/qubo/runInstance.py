@@ -170,7 +170,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(logRawResult[0]))
             isValidFile = "%s.solutionIsValid.txt" % name
-            if any([subqubos[k].evaluate(logRawResult[0]['solution']) for k in hardConstraints]):
+            if any([subqubos[k].evaluate(logRawResult[0]) for k in hardConstraints]):
                 f = open(isValidFile, 'w')
                 f.write('not valid\n')
                 f.close()
