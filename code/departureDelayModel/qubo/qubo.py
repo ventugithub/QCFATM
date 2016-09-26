@@ -1,14 +1,11 @@
 import progressbar
-import numpy as np
 
 from polynomial import Polynomial as poly
 import instance
 import variable
 
-conflictPenalty = 5
-threshold = 3
-def penalizeConflict(delta, t1, t2, threshold):
-    diff = abs(delta + t1 - t2)
+def isRealConflict(delay1, delay2, t1, t2, threshold=3):
+    diff = abs(delay1 - delay2 + t1 - t2)
     if diff < threshold:
         return 1
     else:
@@ -26,22 +23,15 @@ def get_qubo(input, unary=False):
     K = len(conflicts)
 
     delayValues = list(delays)
-    deltaValues = np.concatenate((np.sort(-np.array(inst.delays[1:])), np.array(inst.delays))).tolist()
 
-    if unary:
-        var = variable.Unary(inst)
-    else:
-        var = variable.Binary(inst)
+    var = variable.Unary(inst)
 
     NDelay = var.NDelay
-    NDelta = var.NDelta
 
     penalty_weights = {
-        'departure': 1.0 / delayValues[1],
+        'departure': 1.0 / delayValues[-1],
         'conflict': 1,
-        'boundary-condition': 1.0 / pow(delayValues[1], 2),
-        'departure-unique': 1,
-        'conflict-unique': 1
+        'unique': 1,
     }
     if not unary:
         raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
@@ -69,68 +59,34 @@ def get_qubo(input, unary=False):
     count = 0
     subqubos['conflict'] = poly()
     for k in range(K):
-        for a in range(NDelta):
-            penalty = penalizeConflict(deltaValues[a], arrivalTimes[k][0], arrivalTimes[k][1], threshold)
-            subqubos['conflict'] += poly({(var.D[k, a],): penalty})
+        i, j = conflicts[k]
+        Q = poly()
+        for a in range(NDelay):
+            for b in range(NDelay):
+                if isRealConflict(delayValues[a], delayValues[b], arrivalTimes[k][0], arrivalTimes[k][1]):
+                    Q += poly({(var.d[i, a],): 1}) * poly({(var.d[j, b],): 1})
+        subqubos['conflict'] += Q
         pbar.update(count)
         count = count + 1
     qubo += penalty_weights['conflict'] * subqubos['conflict']
     pbar.finish()
 
-    print "Calculate boundary condition contribution"
+    print "Calculate departure delay uniqueness contribution"
     pbar = progressbar.ProgressBar().start()
-    pbar.maxval = K
+    pbar.maxval = I
     count = 0
-    subqubos['boundary-condition'] = poly()
-    for k in range(K):
+    subqubos['unique'] = poly()
+    for i in range(I):
         Q = poly()
-        Q += var.delta(k)
-        i, j = conflicts[k]
-        Q -= var.delay(i)
-        Q += var.delay(j)
-        subqubos['boundary-condition'] = Q * Q
+        for a in range(NDelay):
+            Q += poly({(var.d[i, a],): 1})
+        Q += poly({(): -1})
+        subqubos['unique'] += Q * Q
         pbar.update(count)
         count = count + 1
-    qubo += penalty_weights['boundary-condition'] * subqubos['boundary-condition']
+    qubo += penalty_weights['unique'] * subqubos['unique']
     pbar.finish()
 
-    if unary:
-        print "Calculate departure delay uniqueness contribution"
-        pbar = progressbar.ProgressBar().start()
-        pbar.maxval = I
-        count = 0
-        subqubos['departure-unique'] = poly()
-        for i in range(I):
-            Q = poly()
-            for a in range(NDelay):
-                Q += poly({(var.d[i, a],): 1})
-            Q += poly({(): -1})
-            subqubos['departure-unique'] += Q * Q
-            pbar.update(count)
-            count = count + 1
-        qubo += penalty_weights['departure-unique'] * subqubos['departure-unique']
-        pbar.finish()
-
-        print "Calculate arrival time difference uniqueness contribution"
-        pbar = progressbar.ProgressBar().start()
-        pbar.maxval = K
-        count = 0
-        subqubos['conflict-unique'] = poly()
-        for k in range(K):
-            Q = poly()
-            for a in range(NDelta):
-                Q += poly({(var.D[k, a],): 1})
-            Q += poly({(): -1})
-            subqubos['conflict-unique'] += Q * Q
-            pbar.update(count)
-            count = count + 1
-        qubo += penalty_weights['conflict-unique'] * subqubos['conflict-unique']
-        pbar.finish()
-
-    # save qubos
-    print "Save QUBO ..."
-    filename = "%s.qubo.yaml" % input
-    qubo.save(filename)
     if not qubo.isQUBO():
         print "WARNING: Cost function is not quadratic!"
 

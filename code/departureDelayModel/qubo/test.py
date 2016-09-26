@@ -142,77 +142,68 @@ class testVariable(unittest.TestCase):
         np.random.seed(0)
         random.seed(0)
         self.filenameUnary = "test_unary.yml"
-        self.filenameBinary = "test_binary.yml"
+        # self.filenameBinary = "test_binary.yml"
         self.filenameIntVar = "test_integerVariable.yml"
         self.instancefile = "testdata/test_instance.yml"
         self.inst = instance.Instance(self.instancefile)
         self.varUnary = variable.Unary(self.inst)
-        self.varBinary = variable.Binary(self.inst)
+        # self.varBinary = variable.Binary(self.inst)
         self.assertEqual(self.varUnary.representation, 'unary')
-        self.assertEqual(self.varBinary.representation, 'binary')
+        # self.assertEqual(self.varBinary.representation, 'binary')
 
         # fill integer variables randomly
         I = len(self.inst.flights)
-        K = len(self.inst.conflicts)
         delayValues = [int(d) for d in self.inst.delays]
         NDelay = len(delayValues)
-        deltaValues = [int(d) for d in np.concatenate((np.sort(-np.array(self.inst.delays[1:])), np.array(self.inst.delays)))]
-        NDelta = len(deltaValues)
         intDelay = np.zeros(I, dtype=int)
-        intDelta = np.zeros(K, dtype=int)
         for i in range(I):
             intDelay[i] = delayValues[random.randint(0, NDelay - 1)]
-        for k in range(K):
-            intDelta[k] = deltaValues[random.randint(0, NDelta - 1)]
-        self.intVar = variable.IntegerVariable(intDelay, intDelta)
+        self.intVar = variable.IntegerVariable(intDelay)
 
     def testNumberOfVariables(self):
         N1 = self.varUnary.calculateNumberOfVariables()
         N2 = self.varUnary.num_qubits
         self.assertEqual(N1, N2)
-        N1 = self.varBinary.calculateNumberOfVariables()
-        N2 = self.varBinary.num_qubits
-        self.assertEqual(N1, N2)
+        # N1 = self.varBinary.calculateNumberOfVariables()
+        # N2 = self.varBinary.num_qubits
+        # self.assertEqual(N1, N2)
 
     def testIntegerVariable(self):
         self.intVar.save(self.filenameIntVar)
         intVar2 = variable.IntegerVariable(self.filenameIntVar)
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
     def testIOUnary(self):
         self.varUnary.save(self.filenameUnary)
         var2 = variable.Unary(self.filenameUnary, self.instancefile)
         self.assertEqual(self.varUnary, var2)
 
-    def testIOBinary(self):
-        self.varBinary.save(self.filenameBinary)
-        varBinary2 = variable.Binary(self.filenameBinary, self.instancefile)
-        self.assertEqual(self.varBinary, varBinary2)
+    # def testIOBinary(self):
+        # self.varBinary.save(self.filenameBinary)
+        # varBinary2 = variable.Binary(self.filenameBinary, self.instancefile)
+        # self.assertEqual(self.varBinary, varBinary2)
 
     def testBackAndForthVariablesUnary(self):
         # project to binary string
-        bitstring = self.varUnary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
+        bitstring = self.varUnary.getBinaryVariables(self.intVar.delay)
         # back project
         intVar2 = self.varUnary.getIntegerVariables(bitstring)
         # check
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
-    def testBackAndForthVariablesBinary(self):
-        # project to binary string
-        bitstring = self.varBinary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
-        # back project
-        intVar2 = self.varBinary.getIntegerVariables(bitstring)
-        # check
-        self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
+    # def testBackAndForthVariablesBinary(self):
+        # # project to binary string
+        # bitstring = self.varBinary.getBinaryVariables(self.intVar.delay)
+        # # back project
+        # intVar2 = self.varBinary.getIntegerVariables(bitstring)
+        # # check
+        # self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
 
     def tearDown(self):
         if os.path.exists(self.filenameUnary):
             os.remove(self.filenameUnary)
-        if os.path.exists(self.filenameBinary):
-            os.remove(self.filenameBinary)
+        # if os.path.exists(self.filenameBinary):
+            # os.remove(self.filenameBinary)
         if os.path.exists(self.filenameIntVar):
             os.remove(self.filenameIntVar)
 

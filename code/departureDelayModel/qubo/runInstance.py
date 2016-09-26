@@ -63,11 +63,10 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     subqubofiles = {}
     subqubofiles['departure'] = "%s.%s.subqubo-departure.yaml" % (instancefile, representation)
     subqubofiles['conflict'] = "%s.%s.subqubo-conflict.yaml" % (instancefile, representation)
-    subqubofiles['boundary-condition'] = "%s.%s.subqubo-boundary-condition.yaml" % (instancefile, representation)
-    if unary:
-        subqubofiles['departure-unique'] = "%s.%s.subqubo-departure-unique.yaml" % (instancefile, representation)
-        subqubofiles['conflict-unique'] = "%s.%s.subqubo-conflict-unique.yaml" % (instancefile, representation)
+    subqubofiles['unique'] = "%s.%s.subqubo-unique.yaml" % (instancefile, representation)
     variablefile = "%s.%s.variable.yaml" % (instancefile, representation)
+    hardConstraints = ['conflict', 'unique']
+
     if not os.path.exists(qubofile) or not any([os.path.exists(f) for f in subqubofiles.values()]) or not os.path.exists(variablefile) or not use_snapshots:
         print "Calculate QUBO ..."
         q, subqubos, var = qubo.get_qubo(instancefile, unary)
@@ -170,6 +169,18 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             print "Solution has energy: %f" % q.evaluate(logRawResult[0])
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(logRawResult[0]))
+            isValidFile = "%s.solutionIsValid.txt" % name
+            if any([subqubos[k].evaluate(logRawResult[0]['solution']) for k in hardConstraints]):
+                f = open(isValidFile, 'w')
+                f.write('not valid\n')
+                f.close()
+                print "Solution is NOT VALID"
+            else:
+                f = open(isValidFile, 'w')
+                f.write('valid\n')
+                f.close()
+                print "Solution is VALID"
+
 
             ###################################
             # map solution vector back to
@@ -208,6 +219,18 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
         print "Exact solution has energy: %f" % rawresult['energy']
         for k, v in subqubos.items():
             print "Contribution of %s term: %f" % (k, v.evaluate(rawresult['solution']))
+
+        isValidFile = "%s.exactSolutionIsValid.txt" % name
+        if any([subqubos[k].evaluate(rawresult['solution']) for k in hardConstraints]):
+            f = open(isValidFile, 'w')
+            f.write('not valid\n')
+            f.close()
+            print "Exact solution is NOT VALID"
+        else:
+            f = open(isValidFile, 'w')
+            f.write('valid\n')
+            f.close()
+            print "Exact solution is VALID"
 
         ###################################
         # map solution vector back to
