@@ -38,6 +38,7 @@ def main():
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
+    parser.add_argument('--inventory', default='data/inventory.csv', help='Inventory file')
 
     parser.add_argument('-p', '--np', default=1, help='number of parallel processes', type=int)
     args = parser.parse_args()
@@ -50,6 +51,8 @@ def main():
         chimera = {}
     else:
         chimera = {'m': args.chimera_m, 'n': args.chimera_n, 't': args.chimera_t}
+    if (args.np != 1 and not args.embedding_only):
+        parser.error('You can run in parallel only if the --embedding_only option is set')
 
     # create output folders
     if not os.path.exists(args.output):
@@ -79,7 +82,8 @@ def main():
                 verbose=args.verbose,
                 timeout=args.timeout,
                 chimera=chimera,
-                exact=args.exact)
+                exact=args.exact,
+                inventoryfile=args.inventory)
 
     else:
         pool = multiprocessing.Pool(processes=args.np)
@@ -97,7 +101,8 @@ def main():
                         'verbose': args.verbose,
                         'timeout': args.timeout,
                         'chimera': chimera,
-                        'exact': args.exact}
+                        'exact': args.exact,
+                        'inventory': args.inventory}
             pool.apply_async(atm,  kwds=atm_args)
 
         pool.close()
