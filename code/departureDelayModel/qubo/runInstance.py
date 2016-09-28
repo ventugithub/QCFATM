@@ -304,11 +304,11 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                                   'SuccessProbability': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['successProbability'] for e in embeddings])), 5),
                                   'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5)
                                   })
-        inventory.set_index(['instance', 'embedding'], inplace=True)
+        inventory.set_index('instance', inplace=True)
 
         # read in inventory file if existent
         if os.path.exists(inventoryfile):
-            inventory_before = pd.read_csv(inventoryfile, index_col=['instance', 'embedding'])
+            inventory_before = pd.read_csv(inventoryfile, index_col='instance')
             inventory = pd.concat([inventory_before, inventory])
 
         inventory.drop_duplicates(inplace=True)
