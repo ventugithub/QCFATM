@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import numpy as np
 import dwave_sapi2.remote as remote
@@ -6,6 +7,7 @@ import dwave_sapi2.embedding as embedding
 import dwave_sapi2.util as util
 import dwave_sapi2.core as core
 import myToken
+import polynomial
 
 import libquail.exact_solvers.qubo_via_maxsat as qubo_via_maxsat
 
@@ -26,6 +28,12 @@ class Solver:
         self.hwa = None
         # embedding
         self.embeddings = None
+        # embedded ising local fields
+        self.h_embedded = {}
+        # embedded ising couplings
+        self.J_embedded = {}
+        # embedded qubo
+        self.qubo_embedded = {}
 
     def establishConnection(self):
         if not self.conn or not self.solver:
@@ -71,27 +79,65 @@ class Solver:
             self.embeddings = {}
         self.embeddings[eIndex] = embedding.find_embedding(self.J, self.hwa, **kwargs)
 
-    def solve(self, annealing_time=20, num_reads=10000, eIndex=0, **kwargs):
+    def getEmbeddedIsing(self, eIndex=0, **kwargs):
         if not self.embeddings or not self.embeddings[eIndex]:
             self.calculateEmbedding(eIndex=eIndex)
         if not self.hwa:
             self.getHardwareAdjacency(use_snapshots=True)
+        self.h_embedded[eIndex], j0, jc, new_embed = embedding.embed_problem(self.h, self.J, self.embeddings[eIndex], self.hwa, **kwargs)
+        self.J_embedded[eIndex] = jc
+        self.J_embedded[eIndex].update(j0)
+
+    def solve(self, annealing_time=20, num_reads=10000, eIndex=0, **kwargs):
+        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+            self.getEmbeddedIsing(eIndex, **kwargs)
         self.establishConnection()
-        h0, j0, jc, new_embed = embedding.embed_problem(self.h, self.J, self.embeddings[eIndex], self.hwa, **kwargs)
-        jtot = jc
-        jtot.update(j0)
+
         # print "Annealing ..."
-        result = core.solve_ising(self.solver, h0, jtot, annealing_time=annealing_time, num_reads=num_reads)
-        unembedded_result = embedding.unembed_answer(result['solutions'], new_embed, 'minimize_energy', self.h, self.J)
+        result = core.solve_ising(self.solver, self.h_embedded[eIndex], self.J_embedded[eIndex], annealing_time=annealing_time, num_reads=num_reads)
+        unembedded_result = embedding.unembed_answer(result['solutions'], self.embeddings[eIndex], 'minimize_energy', self.h, self.J)
 
         # take the lowest energy solution
         rawsolution_phys = (np.array(result['solutions']) + 1)/2
         rawsolution_log = (np.array(unembedded_result) + 1)/2
         return rawsolution_phys, rawsolution_log, np.array(result['energies']) + self.qubo_offset + self.ising_offset, np.array(result['num_occurrences'])
 
+    def getEmbeddedQUBO(self, eIndex=0, **kwargs):
+        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+            self.getEmbeddedIsing(eIndex, **kwargs)
+        Q, offset = util.ising_to_qubo(self.h_embedded[eIndex], self.J_embedded[eIndex])
+        self.qubo_embedded[eIndex] = polynomial.Polynomial(Q)
+        self.qubo_embedded[eIndex] += polynomial.Polynomial({(): offset})
+        return self.qubo_embedded[eIndex]
+
+    def solve_embedded_exact(self, eIndex=0, timeout=None, **kwargs):
+        if not self.qubo_embedded.has_key(eIndex):
+            self.getEmbeddedQUBO(eIndex, **kwargs)
+        Q, offset = util.ising_to_qubo(self.h_embedded[eIndex], self.J_embedded[eIndex])
+        qubo_embed = polynomial.Polynomial(Q)
+        r ={}
+        l = []
+        for k in Q.keys():
+            for i in k:
+                l.append(i)
+        v = list(set(l))
+        NVar = max(v) + 1
+        solution = qubo_via_maxsat.solve_qubo(Q, NVar, timeout=timeout)
+        if solution:
+            r['solution'] = solution
+            r['energy'] = qubo_embed.evaluate(r['solution']) + offset + self.qubo_offset + self.ising_offset
+            return r
+        else:
+            return None
+
     def solve_exact(self, timeout=None):
         r = {}
-        solution = qubo_via_maxsat.solve_qubo(self.qubo.getDWaveQUBO()[0], self.qubo.getNVariables(), timeout=timeout)
+        l = []
+        for k in self.Q.keys():
+            for i in k:
+                l.append(i)
+        N = max(l) + 1
+        solution = qubo_via_maxsat.solve_qubo(self.Q, N, timeout=timeout)
         if solution:
             r['solution'] = solution
             r['energy'] = self.qubo.evaluate(r['solution'])
