@@ -218,6 +218,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             ###################################
             num_reads = 10000
             quboEmbeddedFile = "%s.quboEmbedded.yaml" % name
+            isingEmbeddedFile = "%s.isingEmbedded.txt" % name
             physRawSolutionFile = "%s.physRawSolutions.npy" % name
             logRawSolutionFile = "%s.logRawSolutions.npy" % name
             energiesFile = "%s.energies.npy" % name
@@ -234,6 +235,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                         print "Warning: Annealer did not find the correct solution"
                 qubo_embedded = s.getEmbeddedQUBO(e)
                 qubo_embedded.save(quboEmbeddedFile)
+                s.saveEmbeddedIsing(isingEmbeddedFile, e)
 
                 np.save(physRawSolutionFile, physRawResult)
                 np.save(logRawSolutionFile, logRawResult)

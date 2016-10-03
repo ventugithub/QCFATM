@@ -87,6 +87,7 @@ class Solver:
         self.h_embedded[eIndex], j0, jc, new_embed = embedding.embed_problem(self.h, self.J, self.embeddings[eIndex], self.hwa, **kwargs)
         self.J_embedded[eIndex] = jc
         self.J_embedded[eIndex].update(j0)
+        self.embeddings[eIndex] = new_embed
 
     def solve(self, annealing_time=20, num_reads=10000, eIndex=0, **kwargs):
         if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
@@ -144,6 +145,20 @@ class Solver:
             return r
         else:
             return None
+
+    def saveEmbeddedIsing(self, filename, eIndex=0, **kwargs):
+        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+            self.getEmbeddedIsing(eIndex, **kwargs)
+        f = open(filename, 'w')
+        h = self.h_embedded[eIndex]
+        J = self.J_embedded[eIndex]
+        for i in range(len(h)):
+            if h[i]!=0:
+                f.write("%i %i %f\n" % (i, i, h[i]))
+        for k, j in J.items():
+            if j!=0:
+                f.write("%i %i %f\n" % (k[0], k[1], j))
+        f.close()
 
     def writeEmbedding(self, filename, eIndex=0):
         """Save embedding to yaml file"""
