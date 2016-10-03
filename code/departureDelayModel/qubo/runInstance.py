@@ -217,6 +217,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             # solve problem
             ###################################
             num_reads = 10000
+            quboEmbeddedFile = "%s.quboEmbedded.yaml" % name
+            isingEmbeddedFile = "%s.isingEmbedded.txt" % name
             physRawSolutionFile = "%s.physRawSolutions.npy" % name
             logRawSolutionFile = "%s.logRawSolutions.npy" % name
             energiesFile = "%s.energies.npy" % name
@@ -224,16 +226,30 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             if not os.path.exists(physRawSolutionFile) or not os.path.exists(logRawSolutionFile) or not os.path.exists(energiesFile) or not os.path.exists(numOccurrencesFile) or not use_snapshots:
                 print "Calculate solutions ..."
                 physRawResult, logRawResult, energies, numOccurrences = s.solve(num_reads=num_reads, eIndex=e)
+
+                if (verbose):
+                    r = s.solve_embedded_exact(e, timeout=timeout)
+                    if energies[0] == r['energy']:
+                        print "Annealer found the correct solution"
+                    else:
+                        print "Warning: Annealer did not find the correct solution"
+                qubo_embedded = s.getEmbeddedQUBO(e)
+                qubo_embedded.save(quboEmbeddedFile)
+                s.saveEmbeddedIsing(isingEmbeddedFile, e)
+
                 np.save(physRawSolutionFile, physRawResult)
                 np.save(logRawSolutionFile, logRawResult)
                 np.save(energiesFile, energies)
                 np.save(numOccurrencesFile, numOccurrences)
             else:
                 print "Read in solution ..."
+                qubo_embedded = polynomial.Polynomial()
+                qubo_embedded.load(quboEmbeddedFile)
                 physRawResult = np.load(physRawSolutionFile)
                 logRawResult = np.load(logRawSolutionFile)
                 energies = np.load(energiesFile)
                 numOccurrences = np.load(numOccurrencesFile)
+            print "Coefficient range ratio of embedded QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", qubo_embedded.getCoefficientRange()
             print "Solution has energy: %f" % q.evaluate(logRawResult[0])
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(logRawResult[0]))
