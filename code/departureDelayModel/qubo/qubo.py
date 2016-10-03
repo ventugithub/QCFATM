@@ -29,9 +29,9 @@ def get_qubo(input, unary=False):
     NDelay = var.NDelay
 
     penalty_weights = {
-        'departure': 1.0,
-        'conflict': delayValues[-1] * 1.0,
-        'unique': delayValues[-1] * 1.0,
+        'departure': 1.0/delayValues[-1],
+        'conflict': 1.0,
+        'unique': 1.0,
     }
     if not unary:
         raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
