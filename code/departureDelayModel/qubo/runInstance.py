@@ -327,7 +327,9 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             inventory_before = pd.read_csv(inventoryfile, index_col='instance')
             inventory = pd.concat([inventory_before, inventory])
 
+        inventory.reset_index(level=0, inplace=True)
         inventory.drop_duplicates(inplace=True)
+        inventory.set_index('instance', inplace=True)
         inventory.to_csv(inventoryfile, mode='w')
 
 if __name__ == "__main__":
