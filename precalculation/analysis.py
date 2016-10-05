@@ -804,7 +804,7 @@ def main():
     if args.multiConflictFile:
         multiConflictFile = args.multiConflictFile
     if args.flights2ConflictsFile:
-        flights2Conflicts = args.flights2ConflictsFile
+        flights2ConflictsFile = args.flights2ConflictsFile
 
     if args.mode == 'all':
         rawpointConflicts = pd.read_csv(rawPointConflictFile)
