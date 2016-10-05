@@ -58,8 +58,11 @@ def get_qubo(input, unary=False):
     pbar.maxval = K
     count = 0
     subqubos['conflict'] = poly()
+    flights = var.instance.flights
     for k in range(K):
-        i, j = conflicts[k]
+        f1, f2 = conflicts[k]
+        i = flights.index(f1)
+        j = flights.index(f2)
         Q = poly()
         for a in range(NDelay):
             for b in range(NDelay):

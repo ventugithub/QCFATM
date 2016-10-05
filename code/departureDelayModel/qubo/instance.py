@@ -11,6 +11,7 @@ class Instance:
             self.delays = args[3]
         else:
             raise ValueError('Error in instance creation: Wrong number of arguments')
+        self.check()
 
     def save(self, filename):
         data = {}
@@ -31,10 +32,17 @@ class Instance:
         self.conflicts = data['conflicts']
         self.arrivalTimes = data['arrivalTimes']
         self.delays = data['delays']
+        self.check()
 
-        # check array dimensions
-        try:
-            assert len(self.conflicts) == len(self.arrivalTimes)
-        except AssertionError:
-            print ('Dimension mismatch in input file %s' % filename)
-            raise
+    def check(self):
+        if len(set(self.flights)) != len(self.flights):
+            raise ValueError('Error in instance creation: Duplicates in flight numbers')
+        flights = []
+        for (i, j) in self.conflicts:
+            flights.append(i)
+            flights.append(j)
+        if set(flights) != set(self.flights):
+            raise ValueError('Error in instance creation: mismatch between conflicts and flight numbers')
+        if len(self.conflicts) != len(self.arrivalTimes):
+            raise ValueError('Error in instance creation: dimension mismatch between conflicts and arrival times')
+
