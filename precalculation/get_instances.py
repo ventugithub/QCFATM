@@ -12,8 +12,8 @@ import analysis
 
 def main():
     parser = argparse.ArgumentParser(description='Create QUBO instances from data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--maxDelay', default=18, help='maximum delay')
-    parser.add_argument('--delayStep', default=3, help='delay step')
+    parser.add_argument('--maxDelay', default=18, help='maximum delay', type=int)
+    parser.add_argument('--delayStep', default=3, help='delay step', type=int)
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
     parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
