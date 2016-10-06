@@ -249,7 +249,9 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 logRawResult = np.load(logRawSolutionFile)
                 energies = np.load(energiesFile)
                 numOccurrences = np.load(numOccurrencesFile)
-            print "Coefficient range ratio of embedded QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", qubo_embedded.getCoefficientRange()
+            crr = qubo_embedded.getCoefficientRange()
+            print "Coefficient range ratio of embedded QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", crr
+            inventorydata['embedding'][e]['maxCoefficientRangeRatio'] = max(crr[0], crr[1])
             print "Solution has energy: %f" % q.evaluate(logRawResult[0])
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(logRawResult[0]))
@@ -318,7 +320,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                                   'NLogQubits': np.array(inventorydata['NLogQubits']),
                                   'NPhysQubits': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['NPhysQubits'] for e in embeddings])),
                                   'SuccessProbability': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['successProbability'] for e in embeddings])), 5),
-                                  'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5)
+                                  'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5),
+                                  'maxCoefficientRangRatio': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings]))
                                   })
         inventory.set_index('instance', inplace=True)
 
