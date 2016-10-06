@@ -2,6 +2,7 @@
 import argparse
 import os
 import yaml
+import subprocess
 import numpy as np
 
 import qubo
@@ -327,17 +328,21 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
 
     # add data to inventory
     if exact and not qubo_creation_only and not embedding_only:
+        repoversion = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         embeddings = inventorydata['embedding'].keys()
         NRows = len(embeddings) + 1
         inventory = pd.DataFrame({'instance': [instancefile] * NRows,
                                   'exact': np.append(np.array([True]), np.array([False] * (NRows - 1))),
                                   'embedding': np.append(np.array([np.nan]), np.array(embeddings, dtype=int)),
+                                  'penalty_weight_unique': [penalty_weights['unique']] * NRows,
+                                  'penalty_weight_conflict': [penalty_weights['conflict']] * NRows,
                                   'NLogQubits': np.array(inventorydata['NLogQubits']),
                                   'NPhysQubits': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['NPhysQubits'] for e in embeddings])),
                                   'SuccessProbability': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['successProbability'] for e in embeddings])), 5),
                                   'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5),
                                   'isValid': np.append(np.array([inventorydata['exactValid']]), np.array([inventorydata['embedding'][e]['valid'] for e in embeddings])),
-                                  'maxCoefficientRangRatio': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings]))
+                                  'maxCoefficientRangRatio': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings])),
+                                  'version': [repoversion] * NRows
                                   })
         inventory.set_index('instance', inplace=True)
 
@@ -347,7 +352,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             inventory = pd.concat([inventory_before, inventory])
 
         inventory.reset_index(level=0, inplace=True)
-        inventory.drop_duplicates(inplace=True)
+        # drop duplicates but ignore version
+        inventory.drop_duplicates(inplace=True, subset=list(inventory.columns).remove('version'))
         inventory.set_index('instance', inplace=True)
         inventory.to_csv(inventoryfile, mode='w')
 
