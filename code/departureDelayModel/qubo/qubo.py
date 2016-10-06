@@ -11,7 +11,7 @@ def isRealConflict(delay1, delay2, t1, t2, threshold=3):
     else:
         return 0
 
-def get_qubo(input, unary=False):
+def get_qubo(input, penalty_weights, unary=False):
     """ Read in instance and calculate the QUBO as well as the index mapping """
     inst = instance.Instance(input)
 
@@ -28,11 +28,9 @@ def get_qubo(input, unary=False):
 
     NDelay = var.NDelay
 
-    penalty_weights = {
-        'departure': 1.0/delayValues[-1],
-        'conflict': 1.0,
-        'unique': 1.0,
-    }
+    penalty_weights['departure'] = 1.0/delayValues[-1]
+    print penalty_weights
+
     if not unary:
         raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
 

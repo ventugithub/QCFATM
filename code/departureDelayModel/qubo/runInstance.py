@@ -30,6 +30,8 @@ def main():
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
     parser.add_argument('--inventory', default='data/inventory.csv', help='Inventory file')
+    parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
+    parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
     args = parser.parse_args()
     chimera = [args.chimera_m, args.chimera_n, args.chimera_t]
     if (any(chimera) and not args.embedding_only):
@@ -40,7 +42,10 @@ def main():
         chimera = {}
     else:
         chimera = {'m': args.chimera_m, 'n': args.chimera_n, 't': args.chimera_t}
-
+    penalty_weights = {
+        'unique': args.penalty_weight_unique,
+        'conflict': args.penalty_weight_conflict
+    }
     atm(instancefile=args.input,
         num_embed=args.num_embed,
         e=args.e,
@@ -54,9 +59,10 @@ def main():
         timeout=args.timeout,
         chimera=chimera,
         exact=args.exact,
+        penalty_weights=penalty_weights,
         inventoryfile=args.inventory)
 
-def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile='inventory.csv', accuracy=14):
+def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile='inventory.csv', accuracy=14, penalty_weights=None):
 
     # invertory data
     inventorydata = {}
@@ -73,10 +79,19 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     subqubofiles['unique'] = "%s.%s.subqubo-unique.yaml" % (instancefile, representation)
     variablefile = "%s.%s.variable.yaml" % (instancefile, representation)
     hardConstraints = ['conflict', 'unique']
+    if not penalty_weights:
+        penalty_weights = {
+            'conflict': 1.0,
+            'unique': 1.0,
+        }
+    elif not penalty_weights == {'conflict': 1.0, 'unique': 1.0}:
+        representation = representation + ".pw"
+        for k, v in penalty_weights.items():
+            representation = representation + "-%s%0.3f" % (k, v)
 
     if not os.path.exists(qubofile) or not any([os.path.exists(f) for f in subqubofiles.values()]) or not os.path.exists(variablefile) or not use_snapshots:
         print "Calculate QUBO ..."
-        q, subqubos, var = qubo.get_qubo(instancefile, unary)
+        q, subqubos, var = qubo.get_qubo(instancefile, penalty_weights, unary)
         var.save(variablefile)
         q.save(qubofile)
         for k in subqubofiles.keys():
