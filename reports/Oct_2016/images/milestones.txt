@@ -1,0 +1,6 @@
+* wind-optimal trajectories
+* potential conflicts
+* maneuvers and delay windows
+* encoding of configuration space
+* cost function as QUBO
+* QUBO solver (quantum annealer)
