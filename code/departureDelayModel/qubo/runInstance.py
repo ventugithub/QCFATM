@@ -25,6 +25,7 @@ def main():
     parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
     parser.add_argument('--unary', action='store_true', help='Use unary representation of integer variables instead of binary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
+    parser.add_argument('--store_everything', action='store_true', help='store everything (e.g. physical raw solution)')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
     parser.add_argument('--chimera_m', default=None, help='Number of rows in Chimera', type=int)
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
@@ -60,10 +61,11 @@ def main():
         timeout=args.timeout,
         chimera=chimera,
         exact=args.exact,
+        store_everything=args.store_everything,
         penalty_weights=penalty_weights,
         inventoryfile=args.inventory)
 
-def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile='inventory.csv', accuracy=14, penalty_weights=None):
+def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile='inventory.csv', accuracy=14, penalty_weights=None, store_everything=False):
 
     # invertory data
     inventorydata = {}
@@ -239,7 +241,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             logRawSolutionFile = "%s.logRawSolutions.npy" % name
             energiesFile = "%s.energies.npy" % name
             numOccurrencesFile = "%s.numOccurrences.npy" % name
-            if not os.path.exists(physRawSolutionFile) or not os.path.exists(logRawSolutionFile) or not os.path.exists(energiesFile) or not os.path.exists(numOccurrencesFile) or not use_snapshots:
+            if (not os.path.exists(physRawSolutionFile) and store_everything) or not os.path.exists(logRawSolutionFile) or not os.path.exists(energiesFile) or not os.path.exists(numOccurrencesFile) or not use_snapshots:
                 print "Calculate solutions ..."
                 physRawResult, logRawResult, energies, numOccurrences = s.solve(num_reads=num_reads, eIndex=e)
 
@@ -253,7 +255,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 qubo_embedded.save(quboEmbeddedFile)
                 s.saveEmbeddedIsing(isingEmbeddedFile, e)
 
-                np.save(physRawSolutionFile, physRawResult)
+                if store_everything:
+                    np.save(physRawSolutionFile, physRawResult)
                 np.save(logRawSolutionFile, logRawResult)
                 np.save(energiesFile, energies)
                 np.save(numOccurrencesFile, numOccurrences)
@@ -261,7 +264,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 print "Read in solution ..."
                 qubo_embedded = polynomial.Polynomial()
                 qubo_embedded.load(quboEmbeddedFile)
-                physRawResult = np.load(physRawSolutionFile)
+                if store_everything:
+                    physRawResult = np.load(physRawSolutionFile)
                 logRawResult = np.load(logRawSolutionFile)
                 energies = np.load(energiesFile)
                 numOccurrences = np.load(numOccurrencesFile)
