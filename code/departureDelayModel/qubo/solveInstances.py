@@ -4,7 +4,7 @@ import itertools
 import glob
 
 delays = [3, 6, 9]
-penalty_weights = [1, 2]
+penalty_weights = [0.5, 1, 2]
 num_embed = 5
 inventoryfile = 'data/instances/inventory.csv'
 partitions = range(0, 80)
