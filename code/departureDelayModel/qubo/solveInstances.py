@@ -13,6 +13,6 @@ for (d, w) in itertools.product(delays, penalty_weights):
     for p in partitions:
         instancefiles = glob.glob('data/instances/instances_d%i/atm_instance_partition%04i_f????_c?????.yaml' % (d, p))
         assert len(instancefiles) == 1
-        cmd = './runInstance.py --num_embed %i -i %s --exact --timeout 1000 --unary  --use_snapshots --inventory %s -p2 %f -p3 %f' % (num_embed, instancefiles[0], inventoryfile, w, w)
+        cmd = './runInstance.py --num_embed %i -i %s --retry_embedding 5 --embedding_only --unary  --use_snapshots --inventory %s -p2 %f -p3 %f' % (num_embed, instancefiles[0], inventoryfile, w, w)
         print cmd
         subprocess.call(cmd, shell=True)
