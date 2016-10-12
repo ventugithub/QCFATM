@@ -114,6 +114,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             var = variable.Binary(variablefile, instancefile)
 
     print "Coefficient range ratio of QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", q.getCoefficientRange()
+    inventorydata['maxCoefficientRangeRatio'] = max(q.getCoefficientRange())
     inventorydata['coefficientRangeRatio'] = {}
     for k in subqubofiles.keys():
         inventorydata['coefficientRangeRatio'][k] = subqubos[k].getCoefficientRange()
@@ -345,7 +346,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                                   'SuccessProbability': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['successProbability'] for e in embeddings])), 5),
                                   'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5),
                                   'isValid': np.append(np.array([inventorydata['exactValid']]), np.array([inventorydata['embedding'][e]['valid'] for e in embeddings])),
-                                  'maxCoefficientRangRatio': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings])),
+                                  'maxCoefficientRangeRatioEmbedded': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings])),
+                                  'maxCoefficientRangeRatio': [inventorydata['maxCoefficientRangeRatio']] * NRows,
                                   'version': [repoversion] * NRows
                                   })
         inventory.set_index('instance', inplace=True)
