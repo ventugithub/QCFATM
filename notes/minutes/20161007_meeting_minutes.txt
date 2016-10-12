@@ -1,0 +1,30 @@
+Participants: Bryan, Salvatore, Tobias
+
+1. Status
+
+ * Salvatore is finishing the informal report
+ * Tobias finished some D-Wave runs on real data instances of the departure only model
+
+2. Discussion of Salvatore's plots of the conflict data
+
+3. Discussion about the general strategy for the next weeks
+ 
+ * Bryan suggested the following steps:
+   Step back from the D-Wave runs for now and try to isolate the various effects in order:
+
+   1. Effect of discretizing delay times at various resolutions (comparing quality of solution to that of the original continuous problem), using a classical solver and hard constraints.
+
+   2. Softening of constraints, still using a classical solver but exploring how strong the penalty weights need to be for the ground state to be valid.
+
+   3. Using simulated annealing and D-Wave runs, investigating the effect of embedding and precision issues. 
+
+4. Next steps:
+
+ * Salvatore will investigate the influence of discretization in the departure only model with the help of classical solvers.
+
+ * Tobias will try to overcome the precision issues as they occur for the departure delay model in the case of non-trivial number of delay steps.
+
+ * Salvatore and/or Bryan will try to
+   1. find a way to exchange large data
+   2. find a place to put the minutes
+
