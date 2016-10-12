@@ -27,7 +27,7 @@ class testInstance(unittest.TestCase):
             while (j == i):
                 j = flights[random.randint(1, Nf)]
             conflicts.append((i, j))
-        arrivalTimes = zip([int(t) for t in np.random.randint(1, 20, Nc)], [int(t) for t in np.random.randint(1, 20, Nc)])
+        arrivalTimes = zip([flights[t] for t in np.random.randint(0, Nf, Nc)], [flights[t] for t in np.random.randint(1, Nf, Nc)])
         delays = [int(d) for d in np.arange(0, 18 + 1, 3)]
 
         inst = instance.Instance(flights, conflicts, arrivalTimes, delays)

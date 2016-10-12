@@ -41,7 +41,7 @@ class Instance:
         for (i, j) in self.conflicts:
             flights.append(i)
             flights.append(j)
-        if set(flights) != set(self.flights):
+        if not set(flights).issubset(set(self.flights)):
             raise ValueError('Error in instance creation: mismatch between conflicts and flight numbers')
         if len(self.conflicts) != len(self.arrivalTimes):
             raise ValueError('Error in instance creation: dimension mismatch between conflicts and arrival times')
