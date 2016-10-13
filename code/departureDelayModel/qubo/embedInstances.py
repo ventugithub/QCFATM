@@ -7,8 +7,9 @@ from runInstance import atm
 
 delays = [3, 6, 9]
 penalty_weights = [0.5, 1, 2]
-num_embed = 5
 partitions = range(80, 96)
+num_embed = 5
+num_embed_desperate = 1
 
 np = 16
 
@@ -25,11 +26,11 @@ for (d, w) in itertools.product(delays, penalty_weights):
         instancefile = instancefiles[0]
         print "Process instance file %s" % instancefile
         atm_args = {'instancefile': instancefile,
-                    'num_embed': num_embed,
+                    'num_embed': 5,
                     'use_snapshots': True,
                     'embedding_only': True,
-                    'retry_embedding': 5,
-                    'retry_embedding_desperate': False,
+                    'retry_embedding': num_embed - 1 - num_embed_desperate,
+                    'retry_embedding_desperate': num_embed_desperate,
                     'unary': True,
                     'penalty_weights': penalty_weights,
                     'timeout': 3600,

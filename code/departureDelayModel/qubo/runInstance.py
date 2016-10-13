@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--retry_embedding', default=0, help='Number of retrys after embedding failed', type=int)
-    parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
+    parser.add_argument('--retry_embedding_desperate', default=0, help='Number of retrys with exteme variable after embedding failed for retry_embedding number of times', type=int)
     parser.add_argument('--unary', action='store_true', help='Use unary representation of integer variables instead of binary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--store_everything', action='store_true', help='store everything (e.g. physical raw solution)')
@@ -65,7 +65,7 @@ def main():
         penalty_weights=penalty_weights,
         inventoryfile=args.inventory)
 
-def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=False, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile='inventory.csv', accuracy=14, penalty_weights=None, store_everything=False):
+def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, penalty_weights=None, store_everything=False):
 
     # invertory data
     inventorydata = {}
@@ -134,15 +134,19 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     ###################################
     s = solver.Solver(q)
     energyExact = None
+    exactSuccess = False
+    name = "%s.%s" % (instancefile, representation)
+    rawExactSolutionFile = "%s.rawExactSolution.yaml" % name
+    isValidFile = "%s.exactSolutionIsValid.txt" % name
+    inventorydata['exactValid'] = np.nan
     if exact:
-        name = "%s.%s" % (instancefile, representation)
-        rawExactSolutionFile = "%s.rawExactSolution.yaml" % name
         if not os.path.exists(rawExactSolutionFile) or not use_snapshots:
             print "Calculate exact solution ..."
             rawresult = s.solve_exact(timeout=timeout)
             if not rawresult:
                 print "No exact solution found. Timeout was ", timeout, "seconds"
-                return
+            else:
+                exactSucces = True
             f = open(rawExactSolutionFile, 'w')
             yaml.dump(rawresult, f)
             f.close()
@@ -151,38 +155,40 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             f = open(rawExactSolutionFile, 'r')
             rawresult = yaml.load(f)
             f.close()
-        energyExact = rawresult['energy']
-        print "Exact solution has energy: %f" % energyExact
-        for k, v in subqubos.items():
-            print "Contribution of %s term: %f" % (k, v.evaluate(rawresult['solution']))
+            if rawresult:
+                exactSuccess = True
+        if exactSuccess:
+            energyExact = rawresult['energy']
+            print "Exact solution has energy: %f" % energyExact
+            for k, v in subqubos.items():
+                print "Contribution of %s term: %f" % (k, v.evaluate(rawresult['solution']))
 
-        isValidFile = "%s.exactSolutionIsValid.txt" % name
-        if any([subqubos[k].evaluate(rawresult['solution']) for k in hardConstraints]):
-            f = open(isValidFile, 'w')
-            f.write('not valid\n')
-            f.close()
-            print "Exact solution is NOT VALID"
-            inventorydata['exactValid'] = False
-        else:
-            f = open(isValidFile, 'w')
-            f.write('valid\n')
-            f.close()
-            print "Exact solution is VALID"
-            inventorydata['exactValid'] = True
+            if any([subqubos[k].evaluate(rawresult['solution']) for k in hardConstraints]):
+                f = open(isValidFile, 'w')
+                f.write('not valid\n')
+                f.close()
+                print "Exact solution is NOT VALID"
+                inventorydata['exactValid'] = False
+            else:
+                f = open(isValidFile, 'w')
+                f.write('valid\n')
+                f.close()
+                print "Exact solution is VALID"
+                inventorydata['exactValid'] = True
 
-        ###################################
-        # map solution vector back to
-        # multi-indices
-        ###################################
-        exactSolutionFile = "%s.exactSolution.yaml" % name
-        if not os.path.exists(exactSolutionFile) or not use_snapshots:
-            print "Map exact solution to integers ..."
-            result = var.getIntegerVariables(rawresult['solution'])
-            print "Write exact solution to %s ..." % exactSolutionFile
-            result.save(exactSolutionFile)
-        else:
-            print "Read in exact solution ..."
-            result = variable.IntegerVariable(exactSolutionFile)
+            ###################################
+            # map solution vector back to
+            # multi-indices
+            ###################################
+            exactSolutionFile = "%s.exactSolution.yaml" % name
+            if not os.path.exists(exactSolutionFile) or not use_snapshots:
+                print "Map exact solution to integers ..."
+                result = var.getIntegerVariables(rawresult['solution'])
+                print "Write exact solution to %s ..." % exactSolutionFile
+                result.save(exactSolutionFile)
+            else:
+                print "Read in exact solution ..."
+                result = variable.IntegerVariable(exactSolutionFile)
 
     ###################################
     # get embedding
@@ -203,33 +209,43 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     # get embedding
     inventorydata['embedding'] = {}
     embedparams = {}
+    skipEmbedding = False
     for e in range(num_embed):
+        # default values for unsuccessfull runs
         inventorydata['embedding'][e] = {}
+        inventorydata['embedding'][e]['maxCoefficientRangeRatio'] = np.nan
+        inventorydata['embedding'][e]['successProbability'] = np.nan
+        inventorydata['embedding'][e]['repeatTo99'] = np.nan
+        inventorydata['embedding'][e]['valid'] = np.nan
         print "Embedding %i" % e
         name = "%s.%s.embedding%05i" % (instancefile, representation, e)
         if (chimera):
             name = "%s.%s.embedding%05i_chimera%03i_%03i_%03i" % (instancefile, representation, e, chimera['m'], chimera['n'], chimera['t'])
         embedfile = "%s.yaml" % name
         if not os.path.exists(embedfile) or not use_snapshots:
-            print "Calculate embedding ..."
-            s.calculateEmbedding(eIndex=e, verbose=verbose, **embedparams)
-            s.writeEmbedding(embedfile, eIndex=e)
+            if not skipEmbedding:
+                print "Calculate embedding ..."
+                s.calculateEmbedding(eIndex=e, verbose=verbose, **embedparams)
+                s.writeEmbedding(embedfile, eIndex=e)
+            else:
+                print "Skip calculation of embedding %i ..." % e
+                s.embeddings[eIndex] = []
+                s.writeEmbedding(embedfile, eIndex=e)
         else:
             print "Read in embedding ..."
             s.readEmbedding(embedfile, eIndex=e)
         NPhysQubits = len([item for sublist in s.embeddings[e] for item in sublist])
         inventorydata['embedding'][e]['NPhysQubits'] = NPhysQubits
-        print "Number of physical Qubits: %i" % NPhysQubits
+        print "Number of physical Qubits (0: embedding unsuccessful): %i" % NPhysQubits
         if not any(s.embeddings.values()) and e >= retry_embedding:
-            if retry_embedding_desperate:
+            if e < retry_embedding + retry_embedding_desperate:
+                print "Set embedding parameters to extreme values for the following"
                 embedparams['max_no_improvement'] = 30
                 embedparams['timeout'] = 500
                 embedparams['tries'] = 50
-                retry_embedding *= 2
-                retry_embedding_desperate = False
             else:
-                print "Last %i embeddings were unsuccessfull. Skip the other ones" % (retry_embedding + 1)
-                break
+                print "Last %i embeddings were unsuccessfull. Skip the following." % (retry_embedding + retry_embedding_desperate + 1)
+                skipEmbedding = True
 
         if not embedding_only and NPhysQubits:
             ###################################
@@ -332,7 +348,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 result = variable.IntegerVariable(solutionfile)
 
     # add data to inventory
-    if exact and not qubo_creation_only and not embedding_only:
+    if inventoryfile:
         repoversion = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
         embeddings = inventorydata['embedding'].keys()
         NRows = len(embeddings) + 1
