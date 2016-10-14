@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
+    parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--inventory', default='data/inventory.csv', help='Inventory file')
     parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
     parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
@@ -63,9 +64,10 @@ def main():
         exact=args.exact,
         store_everything=args.store_everything,
         penalty_weights=penalty_weights,
+        retry_exact=args.retry_exact,
         inventoryfile=args.inventory)
 
-def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, penalty_weights=None, store_everything=False):
+def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, penalty_weights=None, store_everything=False, retry_exact=False):
 
     # invertory data
     inventorydata = {}
@@ -146,7 +148,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             if not rawresult:
                 print "No exact solution found. Timeout was ", timeout, "seconds"
             else:
-                exactSucces = True
+                exactSuccess = True
             f = open(rawExactSolutionFile, 'w')
             yaml.dump(rawresult, f)
             f.close()
@@ -157,6 +159,16 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             f.close()
             if rawresult:
                 exactSuccess = True
+            elif retry_embedding:
+                print "Calculate exact solution ..."
+                rawresult = s.solve_exact(timeout=timeout)
+                if not rawresult:
+                    print "No exact solution found. Timeout was ", timeout, "seconds"
+                else:
+                    exactSuccess = True
+                f = open(rawExactSolutionFile, 'w')
+                yaml.dump(rawresult, f)
+                f.close()
         if exactSuccess:
             energyExact = rawresult['energy']
             print "Exact solution has energy: %f" % energyExact
@@ -229,7 +241,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 s.writeEmbedding(embedfile, eIndex=e)
             else:
                 print "Skip calculation of embedding %i ..." % e
-                s.embeddings[eIndex] = []
+                s.embeddings[e] = []
                 s.writeEmbedding(embedfile, eIndex=e)
         else:
             print "Read in embedding ..."

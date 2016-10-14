@@ -11,7 +11,8 @@ def main():
     parser.add_argument('-e', '--exclude', default='*.npy', help='exclude string (e.g. "*.npy", argument to rsync exclude option)')
     args = parser.parse_args()
 
-    cmd = "rsync -avz --exclude '%s' %s@%s.nas.nasa.gov:%s %s" % (args.exclude, args.user, args.host, args.path, args.destination)
+    cmd = "rsync -avz --exclude '%s' %s@%s:%s %s" % (args.exclude, args.user, args.host, args.path, args.destination)
+    print cmd
     subprocess.call(cmd, shell=True)
 if __name__ == "__main__":
     main()
