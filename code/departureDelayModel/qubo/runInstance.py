@@ -89,10 +89,9 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             'conflict': 1.0,
             'unique': 1.0,
         }
-    elif not penalty_weights == {'conflict': 1.0, 'unique': 1.0}:
-        representation = representation + ".pw"
-        for k, v in penalty_weights.items():
-            representation = representation + "-%s%0.3f" % (k, v)
+    representation = representation + ".pw"
+    for k, v in penalty_weights.items():
+        representation = representation + "-%s%0.3f" % (k, v)
 
     if not os.path.exists(qubofile) or not any([os.path.exists(f) for f in subqubofiles.values()]) or not os.path.exists(variablefile) or not use_snapshots:
         print "Calculate QUBO ..."
