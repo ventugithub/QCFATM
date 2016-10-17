@@ -159,7 +159,7 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
             f.close()
             if rawresult:
                 exactSuccess = True
-            elif retry_embedding:
+            elif retry_exact:
                 print "Calculate exact solution ..."
                 rawresult = s.solve_exact(timeout=timeout)
                 if not rawresult:
@@ -169,6 +169,8 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
                 f = open(rawExactSolutionFile, 'w')
                 yaml.dump(rawresult, f)
                 f.close()
+            else:
+                print "Warning: No exact solution available in file. Probably due to timeout. Use --retry_exact for recalculation"
         if exactSuccess:
             energyExact = rawresult['energy']
             print "Exact solution has energy: %f" % energyExact
