@@ -357,7 +357,7 @@ def atm(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False,
 
     # add data to inventory
     if inventoryfile:
-        repoversion = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        repoversion = subprocess.check_output(['git', 'rev-parse', 'HEAD']).rstrip('\n')
         embeddings = inventorydata['embedding'].keys()
         NRows = len(embeddings) + 1
         inventory = pd.DataFrame({'instance': [instancefile] * NRows,
