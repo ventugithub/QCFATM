@@ -366,35 +366,24 @@ An appropriate QUBO for that problem is relatively straightforward, and can be w
 General instances fall into neither of the above extremes.
 One potential solution is to use some sort of master-slave subproblem decomposition to combine solvers for each extremal case into a general solution.
 
-\section{Mapping to Job Shop Scheduling}
-We can map the ATM problem to job shop scheduling by imagining the space at a potential conflict $k$ as a resource, the flights $I_k$ have to compete for.
-\begin{equation*}
-    R_k = \text{spatial trajectory points of the flights } i \in I_k \text{which are in (spatial) conflict with each other}
-\end{equation*}
-In the language of job shop scheduling, we have a ordered set of tasks for each flight $i \in I_k$:
-\begin{equation*}
-    \mathcal{T}_i = \left(R^{t_0}_i, \dots, R^{t_M}_i\right)
-\end{equation*}
-where $t_0$ and $t_M$ are the earliest and the latest time in the whole trajectory data set.
-$R^t_i$ is the resource assigned to flight $i$ at time $t$.
-If a flight $i$ at time $t'$ occupies a spatial trajectory point which is not in spatial conflict with any other flight, it is viewed as using the resource $R_i$, i.e.\ $R^{t'}_i = R_i$.
-The role of conflict avoiding maneuvers is replaced by the a task waiting for a resource occupied by a conflicting flight to free up.
-In contrast to the above models where the cost function was the sum of all delays, the cost function of this approach is the maximal delay among all flights.
-\subsection{Example}
-Assume three flights and two potential conflicts between flight $1$ and $2$ as well as between $2$ and $3$ (see figure \ref{fig:jobshop_example}).
-Let the set of tasks for each flights read
+\subsection{Departure delay model}
+In this simplification of the the delay frontier model we restrict ourselves to departure delays. 
+By encoding the departure delays in unary, we get the following QUBO
 \begin{align*}
-    \mathcal{T}_1 &= \left(R_1, R_1, R_{k_1}, R_1, R_1\;\,, R_{k_2}, R_1\right) \\
-    \mathcal{T}_2 &= \left(R_2, R_2, R_{k_1}, R_2, R_2\;\,, R_2\;\,, R_2 \right) \\
-    \mathcal{T}_2 &= \left(R_3, R_3, R_3\;\,, R_3, R_{k_2}, R_3\;\,, R_3 \right) 
+    C &= \sum_i \lambda^\text{delay}_i \sum_\alpha \alpha d_{i\alpha}
+       + \sum_i \lambda^\text{unique}_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \\
+      &+ \sum_k \left. \lambda^\text{conflict}_{ij} \sum_{(\alpha, \beta) \in B_k} d_{i\alpha} d_{j\beta} \right|_{(i,j)\in I_k}
 \end{align*}
-
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=0.6\linewidth]{pics/jobshop_example}
-    \caption{Example for mapping to job shop scheduling}
-    \label{fig:jobshop_example}
-\end{figure}
+where
+\begin{itemize}
+    \item $I_k$ is the pair of flights $(i, j)$ involved in the conflict $k$ 
+    \item $B_k$ is the set of $\alpha$ and $\beta$ which correspond to \emph{real} conflicts
+        \begin{equation*}
+            B_k = \left\{(\alpha, \beta) : \left| \sum_\alpha \alpha d_{i\alpha} -\sum_\beta \beta d_{j\beta} + t_{ik} - t_{jk} \right|_{(i,j)\in I_k} < t_\text{thres} \right\}
+        \end{equation*}
+    \item $t_{ik}$ is the wind-optimal arrival time of flight $i$ at the conflict $k$.
+    \item $\lambda^\text{delay}_{i}, \lambda^\text{unique}_{i}$ and $\lambda^\text{conflict}_{ij}$ are the penalty weights for the different contributions to the cost function.
+\end{itemize}
 
 \newpage
 \appendix

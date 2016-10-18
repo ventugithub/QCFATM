@@ -8,7 +8,7 @@ from runInstance import atm
 
 def main():
     parser = argparse.ArgumentParser(description='Create NASIC instances', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-o', '--output', default='data', help='output folder')
+    parser.add_argument('-o', '--output', default='data/random_instances', help='output folder')
     parser.add_argument('-n', '--repetitions', default='10', help='number of repetitions', type=int)
     parser.add_argument('-f', '--Fmin', default='10', help='Minimum number of flights', type=int)
     parser.add_argument('-F', '--Fmax', default='10', help='Maximum number of flights', type=int)
@@ -31,13 +31,16 @@ def main():
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--retry_embedding', default=0, help='Number of retrys after embedding failed', type=int)
     parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
-    parser.add_argument('--unary', action='store_true', help='Use unary representation of integer variables instead of binary representation')
+    parser.add_argument('--binary', action='store_true', help='Use binary representation of integer variables instead of unary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
     parser.add_argument('--chimera_m', default=None, help='Number of rows in Chimera', type=int)
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
+    parser.add_argument('--inventory', default='data/random_instances/inventory.csv', help='Inventory file')
+    parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
+    parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
 
     parser.add_argument('-p', '--np', default=1, help='number of parallel processes', type=int)
     args = parser.parse_args()
@@ -50,6 +53,12 @@ def main():
         chimera = {}
     else:
         chimera = {'m': args.chimera_m, 'n': args.chimera_n, 't': args.chimera_t}
+    if (args.np != 1 and not args.embedding_only):
+        parser.error('You can run in parallel only if the --embedding_only option is set')
+    penalty_weights = {
+        'unique': args.penalty_weight_unique,
+        'conflict': args.penalty_weight_conflict
+    }
 
     # create output folders
     if not os.path.exists(args.output):
@@ -68,6 +77,7 @@ def main():
         for instancefile in filenames:
             print "Process instance file %s" % instancefile
             atm(instancefile=instancefile,
+                penalty_weights=penalty_weights,
                 num_embed=args.num_embed,
                 e=args.e,
                 use_snapshots=args.use_snapshots,
@@ -75,17 +85,19 @@ def main():
                 embedding_only=args.embedding_only,
                 retry_embedding=args.retry_embedding,
                 retry_embedding_desperate=args.retry_embedding_desperate,
-                unary=args.unary,
+                unary=not args.binary,
                 verbose=args.verbose,
                 timeout=args.timeout,
                 chimera=chimera,
-                exact=args.exact)
+                exact=args.exact,
+                inventoryfile=args.inventory)
 
     else:
         pool = multiprocessing.Pool(processes=args.np)
         for instancefile in filenames:
             print "Process instance file %s" % instancefile
             atm_args = {'instancefile': instancefile,
+                        'penalty_weights': args.penalty_weights,
                         'num_embed': args.num_embed,
                         'e': args.e,
                         'use_snapshots': args.use_snapshots,
@@ -93,11 +105,12 @@ def main():
                         'embedding_only': args.embedding_only,
                         'retry_embedding': args.retry_embedding,
                         'retry_embedding_desperate': args.retry_embedding_desperate,
-                        'unary': args.unary,
+                        'unary': not args.binary,
                         'verbose': args.verbose,
                         'timeout': args.timeout,
                         'chimera': chimera,
-                        'exact': args.exact}
+                        'exact': args.exact,
+                        'inventory': args.inventory}
             pool.apply_async(atm,  kwds=atm_args)
 
         pool.close()

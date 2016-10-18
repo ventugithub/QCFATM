@@ -18,8 +18,8 @@ def main():
     parser.add_argument('-C', '--Cmax', default='4', help='Max number of conflicts', type=int)
     parser.add_argument('--Tmin', default='100', help='Minimum value of total time range', type=int)
     parser.add_argument('--Tmax', default='100', help='Maximum value of total time range ', type=int)
-    parser.add_argument('--tmin', default='10', help='Minimum value of sigma in arrival time at conflict', type=int)
-    parser.add_argument('--tmax', default='10', help='Maximum value of sigma in arrival time at conflict', type=int)
+    parser.add_argument('--tmin', default='10', help='Minimum value of uncertainty in arrival time at conflict', type=int)
+    parser.add_argument('--tmax', default='10', help='Maximum value of uncertainty in arrival time at conflict', type=int)
     parser.add_argument('--Dmin', default='18', help='Minimum value maximal delays', type=int)
     parser.add_argument('--Dmax', default='18', help='Maximum value maximal delays', type=int)
     parser.add_argument('--dmin', default='3', help='Minimum value delay steps', type=int)
@@ -67,10 +67,11 @@ def create_instances(output='data/',
     random.seed(0)
 
     filenames = []
-    print 'Calculate instances'
     # init progress bar
     pbar = progressbar.ProgressBar().start()
-    pbar.maxval = len(FValues) * len(CValues) * len(TValues) * len(tValues) * len(DValues) * len(dValues) * Nr
+    NInstances = len(FValues) * len(CValues) * len(TValues) * len(tValues) * len(DValues) * len(dValues) * Nr
+    pbar.maxval = NInstances
+    print 'Calculate %i instances' % NInstances
     count = 0
     for F, C, TRangeMax, TRangeDelta, delayMax, delayDelta in it.product(FValues, CValues, TValues, tValues, DValues, dValues):
         for n in range(Nr):

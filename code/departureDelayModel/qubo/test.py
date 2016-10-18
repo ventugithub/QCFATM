@@ -27,7 +27,7 @@ class testInstance(unittest.TestCase):
             while (j == i):
                 j = flights[random.randint(1, Nf)]
             conflicts.append((i, j))
-        arrivalTimes = zip([int(t) for t in np.random.randint(1, 20, Nc)], [int(t) for t in np.random.randint(1, 20, Nc)])
+        arrivalTimes = zip([flights[t] for t in np.random.randint(0, Nf, Nc)], [flights[t] for t in np.random.randint(1, Nf, Nc)])
         delays = [int(d) for d in np.arange(0, 18 + 1, 3)]
 
         inst = instance.Instance(flights, conflicts, arrivalTimes, delays)
@@ -57,6 +57,11 @@ class testPolynomial(unittest.TestCase):
         if os.path.exists(self.filename):
             os.remove(self.filename)
 
+    def testEqual(self):
+        Q = self.Q1
+        Q = polynomial.Polynomial({(1,): 7, (2,): 2, (3,): 3, (4,): 1})
+        self.assertFalse(Q == self.Q1)
+
     def testSum(self):
         Q = self.Q1 + self.Q2
         expectedQ = polynomial.Polynomial({(): 3, (1,): 5, (2,): 7, (4,): 1, (5,): 7, (1, 3): 3, (2, 4): 4, (3, 4): 3})
@@ -84,6 +89,10 @@ class testPolynomial(unittest.TestCase):
                        3. x3 x4^2 + 9. x2 x3 x4^2 + 21. x5 + 35. x1 x5 + 42. x2 x5 +
                        21. x1 x3 x5 + 7. x4 x5 + 21. x2 x4 x5""")
         self.assertEqual(Q, expectedQ)
+        Q = self.Q1 * self.Q1
+        Q2 = self.Q1
+        Q2 *= self.Q1
+        self.assertEqual(Q, Q2)
 
     def testScalarProduct(self):
         Q = 3 * self.Q1
@@ -144,18 +153,12 @@ class testVariable(unittest.TestCase):
 
         # fill integer variables randomly
         I = len(self.inst.flights)
-        K = len(self.inst.conflicts)
         delayValues = [int(d) for d in self.inst.delays]
         NDelay = len(delayValues)
-        deltaValues = [int(d) for d in np.concatenate((np.sort(-np.array(self.inst.delays[1:])), np.array(self.inst.delays)))]
-        NDelta = len(deltaValues)
         intDelay = np.zeros(I, dtype=int)
-        intDelta = np.zeros(K, dtype=int)
         for i in range(I):
             intDelay[i] = delayValues[random.randint(0, NDelay - 1)]
-        for k in range(K):
-            intDelta[k] = deltaValues[random.randint(0, NDelta - 1)]
-        self.intVar = variable.IntegerVariable(intDelay, intDelta)
+        self.intVar = variable.IntegerVariable(intDelay)
 
     def testNumberOfVariables(self):
         N1 = self.varUnary.calculateNumberOfVariables()
@@ -169,7 +172,6 @@ class testVariable(unittest.TestCase):
         self.intVar.save(self.filenameIntVar)
         intVar2 = variable.IntegerVariable(self.filenameIntVar)
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
     def testIOUnary(self):
         self.varUnary.save(self.filenameUnary)
@@ -183,21 +185,19 @@ class testVariable(unittest.TestCase):
 
     def testBackAndForthVariablesUnary(self):
         # project to binary string
-        bitstring = self.varUnary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
+        bitstring = self.varUnary.getBinaryVariables(self.intVar.delay)
         # back project
         intVar2 = self.varUnary.getIntegerVariables(bitstring)
         # check
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
     # def testBackAndForthVariablesBinary(self):
         # # project to binary string
-        # bitstring = self.varBinary.getBinaryVariables(self.intVar.delay, self.intVar.delta)
+        # bitstring = self.varBinary.getBinaryVariables(self.intVar.delay)
         # # back project
         # intVar2 = self.varBinary.getIntegerVariables(bitstring)
         # # check
         # self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        # self.assertTrue(np.array_equal(self.intVar.delta, intVar2.delta))
 
     def tearDown(self):
         if os.path.exists(self.filenameUnary):
@@ -229,9 +229,8 @@ class testSolver(unittest.TestCase):
     def testSolution(self):
         physRawResult, logRawResult, energies, numOccurrences = self.solver.solve(num_reads=1, eIndex=3)
         energy = self.qubo.evaluate(logRawResult[0])
-        self.assertEqual(energies[0], energy)
-        self.assertEqual(energies[0], -8.0)
-        self.assertEqual(logRawResult[0], [1, 1, 0, 0, 1, 0])
+        self.assertEqual(energy, -8.0)
+        self.assertTrue((logRawResult[0] == [1, 1, 0, 0, 1, 0]).all())
 
     def testExactSolution(self):
         r = self.solver.solve_exact()
