@@ -1,0 +1,31 @@
+Start: 11:00 PDT
+Scribe: Bryan
+
+discussion of Tobias's plots
+	10^16 coefficient ratio due to rounding error
+	let 
+		k = # starting times
+		L_0 = penalty weight for exactly one delay
+		L_1 = conflict penalty weight
+	biggest h coefficient: max{k  - 1, 2 * L_0}
+	biggest J coefficient: max{L_0, L_1}
+
+next steps:
+	explore range of penalty weights (solve instances exactly)
+		for now, try via max-sat
+			fails for large instances
+			but can try in heurist mode or other max-sat solvers
+		selby's only good for embedded instances
+		when limit of max-sat reached, try SA (can be sure constraints met, but not that global min. found with certainty)
+
+	compare quality of solution in continuous vs. discrete problems:
+		first step: solve continuous version
+			SA
+			(M)ILP (maybe, if needed)
+
+	establish hardness of delay-only model:
+		consensual conjecture: hard in general, maybe not for realistic instances
+
+random thought:
+	delay-only model equivalent to (k, 2)-CSP model as described, with best-known-algo., in arXiv:cs/0006046
+	
