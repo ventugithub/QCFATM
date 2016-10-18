@@ -67,7 +67,7 @@ def main():
         retry_exact=args.retry_exact,
         inventoryfile=args.inventory)
 
-def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, penalty_weights=None, store_everything=False, retry_exact=False):
+def atm(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
 
     # invertory data
     inventorydata = {}
@@ -76,6 +76,11 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     representation = 'binary'
     if unary:
         representation = 'unary'
+    # add penalty weights to representation string in order
+    # to distinguish between different penalty weights
+    representation = representation + ".pw"
+    for k, v in penalty_weights.items():
+        representation = representation + "-%s%0.3f" % (k, v)
     # read in instance and calculate QUBO and index mapping
     qubofile = "%s.%s.qubo.yaml" % (instancefile, representation)
     subqubofiles = {}
@@ -84,14 +89,6 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
     subqubofiles['unique'] = "%s.%s.subqubo-unique.yaml" % (instancefile, representation)
     variablefile = "%s.%s.variable.yaml" % (instancefile, representation)
     hardConstraints = ['conflict', 'unique']
-    if not penalty_weights:
-        penalty_weights = {
-            'conflict': 1.0,
-            'unique': 1.0,
-        }
-    representation = representation + ".pw"
-    for k, v in penalty_weights.items():
-        representation = representation + "-%s%0.3f" % (k, v)
 
     if not os.path.exists(qubofile) or not any([os.path.exists(f) for f in subqubofiles.values()]) or not os.path.exists(variablefile) or not use_snapshots:
         print "Calculate QUBO ..."
@@ -111,8 +108,6 @@ def atm(instancefile, num_embed=1, e=None, use_snapshots=False, embedding_only=F
         print "Read in Variable ..."
         if unary:
             var = variable.Unary(variablefile, instancefile)
-        else:
-            var = variable.Binary(variablefile, instancefile)
 
     print "Coefficient range ratio of QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", q.getCoefficientRange()
     inventorydata['maxCoefficientRangeRatio'] = max(q.getCoefficientRange())
