@@ -266,7 +266,7 @@ def atm(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False,
             logRawSolutionFile = "%s.logRawSolutions.npy" % name
             energiesFile = "%s.energies.npy" % name
             numOccurrencesFile = "%s.numOccurrences.npy" % name
-            if (not os.path.exists(physRawSolutionFile) and store_everything) or not os.path.exists(logRawSolutionFile) or not os.path.exists(energiesFile) or not os.path.exists(numOccurrencesFile) or not use_snapshots:
+            if (not os.path.exists(physRawSolutionFile) and store_everything) or not os.path.exists(logRawSolutionFile) or not os.path.exists(energiesFile) or not os.path.exists(numOccurrencesFile) and not os.path.exists(quboEmbeddedFile) or not use_snapshots:
                 print "Calculate solutions ..."
                 physRawResult, logRawResult, energies, numOccurrences = s.solve(num_reads=num_reads, eIndex=e)
 
@@ -276,7 +276,7 @@ def atm(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False,
                         print "Annealer found the correct solution"
                     else:
                         print "Warning: Annealer did not find the correct solution"
-                qubo_embedded = s.getEmbeddedQUBO(e)
+                qubo_embedded = s.getEmbeddedQUBO(e, suppressThreshold=1E-14)
                 qubo_embedded.save(quboEmbeddedFile)
                 s.saveEmbeddedIsing(isingEmbeddedFile, e)
 

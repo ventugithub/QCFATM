@@ -103,10 +103,15 @@ class Solver:
         rawsolution_log = (np.array(unembedded_result) + 1)/2
         return rawsolution_phys, rawsolution_log, np.array(result['energies']) + self.qubo_offset + self.ising_offset, np.array(result['num_occurrences'])
 
-    def getEmbeddedQUBO(self, eIndex=0, **kwargs):
+    def getEmbeddedQUBO(self, eIndex=0, suppressThreshold=0, **kwargs):
         if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
             self.getEmbeddedIsing(eIndex, **kwargs)
         Q, offset = util.ising_to_qubo(self.h_embedded[eIndex], self.J_embedded[eIndex])
+        # suppress very small coefficients
+        for k, v in Q.items():
+            if abs(v) < suppressThreshold:
+                del Q[k]
+
         self.qubo_embedded[eIndex] = polynomial.Polynomial(Q)
         self.qubo_embedded[eIndex] += polynomial.Polynomial({(): offset})
         return self.qubo_embedded[eIndex]
