@@ -40,7 +40,7 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
         else:
             valid, energy = solveAndCheckValidity(instancefile, w, wfixed, **solve_instance_args)
         # for trivial solutions, any choice of penealy weights yields the result
-        if energy == 0:
+        if abs(energy) < 1E-13:
             wminabove = 0
             found = True
             break
