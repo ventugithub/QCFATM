@@ -133,6 +133,7 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
     rawExactSolutionFile = "%s.rawExactSolution.yaml" % name
     isValidFile = "%s.exactSolutionIsValid.txt" % name
     inventorydata['exactValid'] = np.nan
+    inventorydata['exactEnergy'] = np.nan
     if exact:
         if not os.path.exists(rawExactSolutionFile) or not use_snapshots:
             print "Calculate exact solution ..."
@@ -165,6 +166,7 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                 print "Warning: No exact solution available in file. Probably due to timeout. Use --retry_exact for recalculation"
         if exactSuccess:
             energyExact = rawresult['energy']
+            inventorydata['exactEnergy'] = energyExact
             print "Exact solution has energy: %f" % energyExact
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(rawresult['solution']))
@@ -223,6 +225,7 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
         inventorydata['embedding'][e]['successProbability'] = np.nan
         inventorydata['embedding'][e]['repeatTo99'] = np.nan
         inventorydata['embedding'][e]['valid'] = np.nan
+        inventorydata['embedding'][e]['energy'] = np.nan
         print "Embedding %i" % e
         name = "%s.%s.embedding%05i" % (instancefile, representation, e)
         if (chimera):
@@ -295,7 +298,9 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
             crr = qubo_embedded.getCoefficientRange()
             print "Coefficient range ratio of embedded QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", crr
             inventorydata['embedding'][e]['maxCoefficientRangeRatio'] = max(crr[0], crr[1])
-            print "Solution has energy: %f" % q.evaluate(logRawResult[0])
+            energy = q.evaluate(logRawResult[0])
+            inventorydata['embedding'][e]['energy'] = energy
+            print "Solution has energy: %f" % energy
             for k, v in subqubos.items():
                 print "Contribution of %s term: %f" % (k, v.evaluate(logRawResult[0]))
 
@@ -368,20 +373,25 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                                   'SuccessProbability': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['successProbability'] for e in embeddings])), 5),
                                   'repeatTo99': np.round(np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['repeatTo99'] for e in embeddings])), 5),
                                   'isValid': np.append(np.array([inventorydata['exactValid']]), np.array([inventorydata['embedding'][e]['valid'] for e in embeddings])),
+                                  'energy': np.append(np.array([inventorydata['exactEnergy']]), np.array([inventorydata['embedding'][e]['energy'] for e in embeddings])),
                                   'maxCoefficientRangeRatioEmbedded': np.append(np.array([np.nan]), np.array([inventorydata['embedding'][e]['maxCoefficientRangeRatio'] for e in embeddings])),
                                   'maxCoefficientRangeRatio': [inventorydata['maxCoefficientRangeRatio']] * NRows,
                                   'version': [repoversion] * NRows
                                   })
+        inventory = inventory.round(accuracy)
         inventory.set_index('instance', inplace=True)
 
         # read in inventory file if existent
         if os.path.exists(inventoryfile):
             inventory_before = pd.read_csv(inventoryfile, index_col='instance')
             inventory = pd.concat([inventory_before, inventory])
+        inventory = inventory.round(accuracy)
 
         inventory.reset_index(level=0, inplace=True)
         # drop duplicates but ignore version
-        inventory.drop_duplicates(inplace=True, subset=list(inventory.columns).remove('version'))
+        columnsToCompare = list(inventory.columns)
+        columnsToCompare.remove('version')
+        inventory.drop_duplicates(inplace=True, subset=columnsToCompare)
         inventory.set_index('instance', inplace=True)
         inventory.to_csv(inventoryfile, mode='w')
 
