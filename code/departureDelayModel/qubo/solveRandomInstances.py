@@ -3,7 +3,7 @@ import argparse
 import os
 import multiprocessing
 
-from solveInstance import solve_instance
+import solveInstance as si
 from create_random_instances import create_instances as ci
 
 def main():
@@ -75,51 +75,22 @@ def main():
                    Dmin=args.Dmin, Dmax=args.Dmax,
                    dmin=args.dmin, dmax=args.dmax)
 
-    if args.np == 1:
-        for instancefile in filenames:
-            print "Process instance file %s" % instancefile
-            solve_instance(instancefile=instancefile,
-                           penalty_weights=penalty_weights,
-                           num_embed=args.num_embed,
-                           e=args.e,
-                           use_snapshots=args.use_snapshots,
-                           qubo_creation_only=args.qubo_creation_only,
-                           embedding_only=args.embedding_only,
-                           retry_embedding=args.retry_embedding,
-                           retry_embedding_desperate=args.retry_embedding_desperate,
-                           unary=not args.binary,
-                           verbose=args.verbose,
-                           timeout=args.timeout,
-                           chimera=chimera,
-                           exact=args.exact,
-                           store_everything=args.store_everything,
-                           retry_exact=args.retry_exact,
-                           inventoryfile=args.inventory)
+    solve_instance_args = {'num_embed': args.num_embed,
+                           'e': args.e,
+                           'use_snapshots': args.use_snapshots,
+                           'qubo_creation_only': args.qubo_creation_only,
+                           'embedding_only': args.embedding_only,
+                           'retry_embedding': args.retry_embedding,
+                           'retry_embedding_desperate': args.retry_embedding_desperate,
+                           'unary': not args.binary,
+                           'verbose': args.verbose,
+                           'timeout': args.timeout,
+                           'chimera': chimera,
+                           'exact': args.exact,
+                           'store_everything': args.store_everything,
+                           'retry_exact': args.retry_exact,
+                           'inventoryfile': args.inventory}
+    si.solve_instances(filenames, penalty_weights, np=args.np, **solve_instance_args)
 
-    else:
-        pool = multiprocessing.Pool(processes=args.np)
-        for instancefile in filenames:
-            print "Process instance file %s" % instancefile
-            solve_instance_args = {'instancefile': instancefile,
-                                   'penalty_weights': penalty_weights,
-                                   'num_embed': args.num_embed,
-                                   'e': args.e,
-                                   'use_snapshots': args.use_snapshots,
-                                   'qubo_creation_only': args.qubo_creation_only,
-                                   'embedding_only': args.embedding_only,
-                                   'retry_embedding': args.retry_embedding,
-                                   'retry_embedding_desperate': args.retry_embedding_desperate,
-                                   'unary': not args.binary,
-                                   'verbose': args.verbose,
-                                   'timeout': args.timeout,
-                                   'chimera': chimera,
-                                   'exact': args.exact,
-                                   'store_everything': args.store_everything,
-                                   'retry_exact': args.retry_exact,
-                                   'inventoryfile': args.inventory}
-            pool.apply_async(solve_instance, kwds=solve_instance_args)
-
-        pool.close()
-        pool.join()
 if __name__ == "__main__":
     main()

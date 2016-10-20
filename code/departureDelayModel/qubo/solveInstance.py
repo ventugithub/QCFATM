@@ -3,6 +3,7 @@ import argparse
 import os
 import yaml
 import subprocess
+import multiprocessing
 import numpy as np
 
 import qubo
@@ -386,6 +387,22 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, e=None, use_snaps
         inventory.drop_duplicates(inplace=True, subset=list(inventory.columns).remove('version'))
         inventory.set_index('instance', inplace=True)
         inventory.to_csv(inventoryfile, mode='w')
+
+def solve_instances(instancefiles, penalty_weights, np=1, **kwargs):
+    if np != 1:
+        pool = multiprocessing.Pool(processes=np)
+    for instancefile in instancefiles:
+        print "Process instance file %s" % instancefile
+        solve_instance_args = {'instancefile': instancefile, 'penalty_weights': penalty_weights}
+        solve_instance_args.update(kwargs)
+        if np != 1:
+            pool.apply_async(solve_instance, kwds=solve_instance_args)
+        else:
+            solve_instance(**solve_instance_args)
+
+    if np != 1:
+        pool.close()
+        pool.join()
 
 if __name__ == "__main__":
     main()
