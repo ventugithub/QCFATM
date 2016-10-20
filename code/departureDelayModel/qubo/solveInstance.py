@@ -378,19 +378,19 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                                   'maxCoefficientRangeRatio': [inventorydata['maxCoefficientRangeRatio']] * NRows,
                                   'version': [repoversion] * NRows
                                   })
-        inventory = inventory.round(accuracy)
         inventory.set_index('instance', inplace=True)
 
         # read in inventory file if existent
         if os.path.exists(inventoryfile):
             inventory_before = pd.read_csv(inventoryfile, index_col='instance')
             inventory = pd.concat([inventory_before, inventory])
-        inventory = inventory.round(accuracy)
 
         inventory.reset_index(level=0, inplace=True)
         # drop duplicates but ignore version
         columnsToCompare = list(inventory.columns)
         columnsToCompare.remove('version')
+        # remove duplicates by rounding to 4 digits
+        inventory = inventory.ix[~inventory.round(4).duplicated()]
         inventory.drop_duplicates(inplace=True, subset=columnsToCompare)
         inventory.set_index('instance', inplace=True)
         inventory.to_csv(inventoryfile, mode='w')
