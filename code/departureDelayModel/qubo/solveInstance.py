@@ -49,25 +49,25 @@ def main():
         'unique': args.penalty_weight_unique,
         'conflict': args.penalty_weight_conflict
     }
-    atm(instancefile=args.input,
-        num_embed=args.num_embed,
-        e=args.e,
-        use_snapshots=args.use_snapshots,
-        embedding_only=args.embedding_only,
-        qubo_creation_only=args.qubo_creation_only,
-        retry_embedding=args.retry_embedding,
-        retry_embedding_desperate=args.retry_embedding_desperate,
-        unary=args.unary,
-        verbose=args.verbose,
-        timeout=args.timeout,
-        chimera=chimera,
-        exact=args.exact,
-        store_everything=args.store_everything,
-        penalty_weights=penalty_weights,
-        retry_exact=args.retry_exact,
-        inventoryfile=args.inventory)
+    solve_instance(instancefile=args.input,
+                   num_embed=args.num_embed,
+                   e=args.e,
+                   use_snapshots=args.use_snapshots,
+                   embedding_only=args.embedding_only,
+                   qubo_creation_only=args.qubo_creation_only,
+                   retry_embedding=args.retry_embedding,
+                   retry_embedding_desperate=args.retry_embedding_desperate,
+                   unary=args.unary,
+                   verbose=args.verbose,
+                   timeout=args.timeout,
+                   chimera=chimera,
+                   exact=args.exact,
+                   store_everything=args.store_everything,
+                   penalty_weights=penalty_weights,
+                   retry_exact=args.retry_exact,
+                   inventoryfile=args.inventory)
 
-def atm(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
+def solve_instance(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
 
     # invertory data
     inventorydata = {}

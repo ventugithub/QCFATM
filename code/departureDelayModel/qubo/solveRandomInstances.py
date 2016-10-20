@@ -3,8 +3,8 @@ import argparse
 import os
 import multiprocessing
 
-from create_instances import create_instances as ci
-from runInstance import atm
+from create_random_instances import create_instances as ci
+from solveInstance import solve_instance
 
 def main():
     parser = argparse.ArgumentParser(description='Create NASIC instances', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -76,42 +76,42 @@ def main():
     if args.np == 1:
         for instancefile in filenames:
             print "Process instance file %s" % instancefile
-            atm(instancefile=instancefile,
-                penalty_weights=penalty_weights,
-                num_embed=args.num_embed,
-                e=args.e,
-                use_snapshots=args.use_snapshots,
-                qubo_creation_only=args.qubo_creation_only,
-                embedding_only=args.embedding_only,
-                retry_embedding=args.retry_embedding,
-                retry_embedding_desperate=args.retry_embedding_desperate,
-                unary=not args.binary,
-                verbose=args.verbose,
-                timeout=args.timeout,
-                chimera=chimera,
-                exact=args.exact,
-                inventoryfile=args.inventory)
+            solve_instance(instancefile=instancefile,
+                           penalty_weights=penalty_weights,
+                           num_embed=args.num_embed,
+                           e=args.e,
+                           use_snapshots=args.use_snapshots,
+                           qubo_creation_only=args.qubo_creation_only,
+                           embedding_only=args.embedding_only,
+                           retry_embedding=args.retry_embedding,
+                           retry_embedding_desperate=args.retry_embedding_desperate,
+                           unary=not args.binary,
+                           verbose=args.verbose,
+                           timeout=args.timeout,
+                           chimera=chimera,
+                           exact=args.exact,
+                           inventoryfile=args.inventory)
 
     else:
         pool = multiprocessing.Pool(processes=args.np)
         for instancefile in filenames:
             print "Process instance file %s" % instancefile
-            atm_args = {'instancefile': instancefile,
-                        'penalty_weights': args.penalty_weights,
-                        'num_embed': args.num_embed,
-                        'e': args.e,
-                        'use_snapshots': args.use_snapshots,
-                        'qubo_creation_only': args.qubo_creation_only,
-                        'embedding_only': args.embedding_only,
-                        'retry_embedding': args.retry_embedding,
-                        'retry_embedding_desperate': args.retry_embedding_desperate,
-                        'unary': not args.binary,
-                        'verbose': args.verbose,
-                        'timeout': args.timeout,
-                        'chimera': chimera,
-                        'exact': args.exact,
-                        'inventory': args.inventory}
-            pool.apply_async(atm,  kwds=atm_args)
+            solve_instance_args = {'instancefile': instancefile,
+                                   'penalty_weights': args.penalty_weights,
+                                   'num_embed': args.num_embed,
+                                   'e': args.e,
+                                   'use_snapshots': args.use_snapshots,
+                                   'qubo_creation_only': args.qubo_creation_only,
+                                   'embedding_only': args.embedding_only,
+                                   'retry_embedding': args.retry_embedding,
+                                   'retry_embedding_desperate': args.retry_embedding_desperate,
+                                   'unary': not args.binary,
+                                   'verbose': args.verbose,
+                                   'timeout': args.timeout,
+                                   'chimera': chimera,
+                                   'exact': args.exact,
+                                   'inventory': args.inventory}
+            pool.apply_async(solve_instance,  kwds=solve_instance_args)
 
         pool.close()
         pool.join()
