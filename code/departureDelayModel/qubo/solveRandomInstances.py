@@ -3,8 +3,8 @@ import argparse
 import os
 import multiprocessing
 
-from create_random_instances import create_instances as ci
 from solveInstance import solve_instance
+from create_random_instances import create_instances as ci
 
 def main():
     parser = argparse.ArgumentParser(description='Create NASIC instances', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--retry_embedding', default=0, help='Number of retrys after embedding failed', type=int)
     parser.add_argument('--retry_embedding_desperate', action='store_true', help='try extreme values for embedding')
+    parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--binary', action='store_true', help='Use binary representation of integer variables instead of unary representation')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
@@ -38,6 +39,7 @@ def main():
     parser.add_argument('--chimera_n', default=None, help='Number of columns in Chimera', type=int)
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
+    parser.add_argument('--store_everything', action='store_true', help='store everything (e.g. physical raw solution)')
     parser.add_argument('--inventory', default='data/random_instances/inventory.csv', help='Inventory file')
     parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
     parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
@@ -90,6 +92,8 @@ def main():
                            timeout=args.timeout,
                            chimera=chimera,
                            exact=args.exact,
+                           store_everything=args.store_everything,
+                           retry_exact=args.retry_exact,
                            inventoryfile=args.inventory)
 
     else:
@@ -97,7 +101,7 @@ def main():
         for instancefile in filenames:
             print "Process instance file %s" % instancefile
             solve_instance_args = {'instancefile': instancefile,
-                                   'penalty_weights': args.penalty_weights,
+                                   'penalty_weights': penalty_weights,
                                    'num_embed': args.num_embed,
                                    'e': args.e,
                                    'use_snapshots': args.use_snapshots,
@@ -110,8 +114,10 @@ def main():
                                    'timeout': args.timeout,
                                    'chimera': chimera,
                                    'exact': args.exact,
-                                   'inventory': args.inventory}
-            pool.apply_async(solve_instance,  kwds=solve_instance_args)
+                                   'store_everything': args.store_everything,
+                                   'retry_exact': args.retry_exact,
+                                   'inventoryfile': args.inventory}
+            pool.apply_async(solve_instance, kwds=solve_instance_args)
 
         pool.close()
         pool.join()
