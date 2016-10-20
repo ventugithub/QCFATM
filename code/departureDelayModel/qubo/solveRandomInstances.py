@@ -23,9 +23,7 @@ def main():
     parser.add_argument('--dmin', default='3', help='Minimum value delay steps', type=int)
     parser.add_argument('--dmax', default='3', help='Maximum value delay steps ', type=int)
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
-    group.add_argument('-e', default=0, help='choose only a single embedding by index', type=int)
+    parser.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
@@ -76,7 +74,6 @@ def main():
                    dmin=args.dmin, dmax=args.dmax)
 
     solve_instance_args = {'num_embed': args.num_embed,
-                           'e': args.e,
                            'use_snapshots': args.use_snapshots,
                            'qubo_creation_only': args.qubo_creation_only,
                            'embedding_only': args.embedding_only,

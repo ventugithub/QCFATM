@@ -16,9 +16,7 @@ import pandas as pd
 def main():
     parser = argparse.ArgumentParser(description='Map ATM instance to qubo and solve it')
     parser.add_argument('-i', '--input', required=True, help='input instance yaml file')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
-    group.add_argument('-e', default=0, help='choose only a single embedding by index', type=int)
+    parser.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
@@ -52,7 +50,6 @@ def main():
     }
     solve_instance(instancefile=args.input,
                    num_embed=args.num_embed,
-                   e=args.e,
                    use_snapshots=args.use_snapshots,
                    embedding_only=args.embedding_only,
                    qubo_creation_only=args.qubo_creation_only,
@@ -68,7 +65,7 @@ def main():
                    retry_exact=args.retry_exact,
                    inventoryfile=args.inventory)
 
-def solve_instance(instancefile, penalty_weights, num_embed=1, e=None, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
+def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
 
     # invertory data
     inventorydata = {}
