@@ -3,6 +3,7 @@ import glob
 import os
 import argparse
 import multiprocessing
+import filelock
 import pandas as pd
 import numpy as np
 import solveInstance as si
@@ -73,32 +74,37 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
         wminabove = np.nan
 
     if store_inventory:
-        if penalty_weights_unique is not None:
-            iv = pd.DataFrame({'instance': [instancefile],
-                               'penalty_weight_unique': [wfixed],
-                               'penalty_weight_conflict': [wminabove],
-                               'fixed': ['unique'],
-                               })
-        else:
-            iv = pd.DataFrame({'instance': [instancefile],
-                               'penalty_weight_unique': [wminabove],
-                               'penalty_weight_conflict': [wfixed],
-                               'fixed': ['conflict'],
-                               })
-        iv = iv.round(3)
-        iv.set_index('instance', inplace=True)
+        # use lock file to prevent simultaneous updates to inventory
+        # in the case of multiprocessing
+        lockfile = ivfile + ".lock"
+        lock = filelock.FileLock(lockfile)
+        with lock.acquire():
+            if penalty_weights_unique is not None:
+                iv = pd.DataFrame({'instance': [instancefile],
+                                   'penalty_weight_unique': [wfixed],
+                                   'penalty_weight_conflict': [wminabove],
+                                   'fixed': ['unique'],
+                                   })
+            else:
+                iv = pd.DataFrame({'instance': [instancefile],
+                                   'penalty_weight_unique': [wminabove],
+                                   'penalty_weight_conflict': [wfixed],
+                                   'fixed': ['conflict'],
+                                   })
+            iv = iv.round(3)
+            iv.set_index('instance', inplace=True)
 
-        # read in iv file if existent if os.path.exists(ivfile):
-        if os.path.exists(ivfile):
-            iv_before = pd.read_csv(ivfile, index_col='instance')
-            iv = pd.concat([iv_before, iv])
-        iv = iv.round(3)
+            # read in iv file if existent if os.path.exists(ivfile):
+            if os.path.exists(ivfile):
+                iv_before = pd.read_csv(ivfile, index_col='instance')
+                iv = pd.concat([iv_before, iv])
+            iv = iv.round(3)
 
-        iv.reset_index(level=0, inplace=True)
-        # drop duplicates but ignore version
-        iv.drop_duplicates(inplace=True)
-        iv.set_index('instance', inplace=True)
-        iv.to_csv(ivfile, mode='w')
+            iv.reset_index(level=0, inplace=True)
+            # drop duplicates but ignore version
+            iv.drop_duplicates(inplace=True)
+            iv.set_index('instance', inplace=True)
+            iv.to_csv(ivfile, mode='w')
 
 def main():
     parser = argparse.ArgumentParser(description='Solve departure only model exactly and scan for threshold in penalty weights at which the solutions become invalid')
