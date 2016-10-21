@@ -4,6 +4,7 @@ import os
 import yaml
 import subprocess
 import multiprocessing
+import filelock
 import numpy as np
 
 import qubo
@@ -380,20 +381,25 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                                   })
         inventory.set_index('instance', inplace=True)
 
-        # read in inventory file if existent
-        if os.path.exists(inventoryfile):
-            inventory_before = pd.read_csv(inventoryfile, index_col='instance')
-            inventory = pd.concat([inventory_before, inventory])
+        # use lock file to prevent simultaneous updates to inventory
+        # in the case of multiprocessing
+        lockfile = inventoryfile + ".lock"
+        lock = filelock.FileLock(lockfile)
+        with lock.acquire():
+            # read in inventory file if existent
+            if os.path.exists(inventoryfile):
+                inventory_before = pd.read_csv(inventoryfile, index_col='instance')
+                inventory = pd.concat([inventory_before, inventory])
 
-        inventory.reset_index(level=0, inplace=True)
-        # drop duplicates but ignore version
-        columnsToCompare = list(inventory.columns)
-        columnsToCompare.remove('version')
-        # remove duplicates by rounding to 4 digits
-        inventory = inventory.ix[~inventory.round(4).duplicated()]
-        inventory.drop_duplicates(inplace=True, subset=columnsToCompare)
-        inventory.set_index('instance', inplace=True)
-        inventory.to_csv(inventoryfile, mode='w')
+            inventory.reset_index(level=0, inplace=True)
+            # drop duplicates but ignore version
+            columnsToCompare = list(inventory.columns)
+            columnsToCompare.remove('version')
+            # remove duplicates by rounding to 4 digits
+            inventory = inventory.ix[~inventory.round(4).duplicated()]
+            inventory.drop_duplicates(inplace=True, subset=columnsToCompare)
+            inventory.set_index('instance', inplace=True)
+            inventory.to_csv(inventoryfile, mode='w')
 
 def solve_instances(instancefiles, penalty_weights, np=1, **kwargs):
     if np != 1:
