@@ -107,7 +107,8 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
             iv.to_csv(ivfile, mode='w')
 
 def main():
-    parser = argparse.ArgumentParser(description='Solve departure only model exactly and scan for threshold in penalty weights at which the solutions become invalid')
+    parser = argparse.ArgumentParser(description='Solve departure only model exactly and scan for threshold in penalty weights at which the solutions become invalid',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--inventoryfile', default='data/instances/analysis/inventory.csv', help='inventory file')
     parser.add_argument('--inventoryfile_penalty_threshold', default='data/instances/analysis/inventory-penalty-weight-threshold.csv', help='inventory file for penalty weight threshold')
     parser.add_argument('--pmin', default=0, help='minimum index of partition to consider', type=int)
