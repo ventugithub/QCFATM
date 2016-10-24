@@ -165,32 +165,17 @@ def main():
                                                 'instancefile': instancefile,
                                                 'inventoryfile_penalty_threshold': args.inventoryfile_penalty_threshold,
                                                 'penalty_weights_unique': penalty_weights_unique,
+                                                'store_inventory': True,
                                                 'penalty_weights_conflict': penalty_weights_conflict}
             solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
             if nproc != 1:
-                solveAndFindPenaltyThresholdArgs.update({'store_inventory': False})
                 pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
             else:
-                solveAndFindPenaltyThresholdArgs.update({'store_inventory': True})
                 solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
 
     if nproc != 1:
         pool.close()
         pool.join()
 
-    if nproc != 1:
-        for instancefile in instancefiles:
-            for wfixed in penalty_weights_fixed:
-                solveAndFindPenaltyThresholdArgs = {'wfixed': wfixed,
-                                                    'wstart': wstart,
-                                                    'delta_w': delta_w,
-                                                    'instancefile': instancefile,
-                                                    'inventoryfile_penalty_threshold': args.inventoryfile_penalty_threshold,
-                                                    'penalty_weights_unique': penalty_weights_unique,
-                                                    'penalty_weights_conflict': penalty_weights_conflict,
-                                                    'store_inventory': True,
-                                                    'use_snapshots': True}
-                solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
-                solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
 if __name__ == "__main__":
     main()
