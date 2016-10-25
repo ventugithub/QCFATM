@@ -1,0 +1,16 @@
+Start: 11:00 PDT
+Scribe: Bryan
+
+Tobias' data for penalty weights:
+	for delay step = 3 and small instances (~5 flights), independent penalty and conflict weights
+	seems threshold for each penalty weight, threshold independent of other
+	next steps:
+		finer resolution of valid-invalid border (esp. in uniqueness penalty weight)
+		many more instances
+		scaling WRT delay step
+
+Salvatore: will write SA code for solving larger ATM instances (akmaxsat takes > 24 hrs.) and talk to Zhihui re: CP solvers
+
+Salvatore: 
+	extract smaller instances from larger instances
+	generative model of instances
