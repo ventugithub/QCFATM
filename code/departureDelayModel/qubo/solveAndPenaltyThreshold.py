@@ -25,7 +25,7 @@ def solveAndCheckValidity(instancefile, w2, w3, **solve_instance_args):
     energy = subset.iloc[0]['energy']
     return isValid, energy
 
-def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, penalty_weights_unique, penalty_weights_conflict, store_inventory, **solve_instance_args):
+def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, penalty_weights_unique, penalty_weights_conflict, store_inventory, validityMapFile, **solve_instance_args):
     ivfile = inventoryfile_penalty_threshold
     w = wstart
     wbelow = wstart
@@ -33,13 +33,17 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
     found = False
     first = True
     wminabove = None
+    f = open(validityMapFile, 'a')
     while not found and w < 1E4:
         w = np.round(w, 3)
         print "Bisection algorithm is at", w
         if penalty_weights_unique is not None:
             valid, energy = solveAndCheckValidity(instancefile, wfixed, w, **solve_instance_args)
+            # store data
+            f.write("%0.3f,%0.3f,%i,%e\n" % (wfixed, w, valid, energy))
         else:
             valid, energy = solveAndCheckValidity(instancefile, w, wfixed, **solve_instance_args)
+            f.write("%0.3f,%0.3f,%i,%e\n" % (w, wfixed, valid, energy))
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
             wminabove = 0
@@ -72,6 +76,7 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
             wminabove = wabove
     if not found:
         wminabove = np.nan
+    f.close()
 
     if store_inventory:
         # use lock file to prevent simultaneous updates to inventory
@@ -118,6 +123,7 @@ def main():
     parser.add_argument('-d', '--delays', nargs='+', default=[3], help='delay steps to consider', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
+    parser.add_argument('--overwrite_validity_map', action='store_true', help='Overwrite valitidy map files')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--fixed_penalty_unique', nargs='+', help='list of fixed penalty weights for unique term of the QUBO', type=float)
     group.add_argument('--fixed_penalty_conflict', nargs='+', help='list of fixed penalty weights for conflict term of the QUBO', type=float)
@@ -158,6 +164,13 @@ def main():
     if nproc != 1:
         pool = multiprocessing.Pool(processes=nproc)
     for instancefile in instancefiles:
+        validityMapFile = instancefile + ".validityMap.csv"
+        if args.overwrite_validity_map and os.path.exists(validityMapFile):
+            os.remove(validityMapFile)
+        if not os.path.exists(validityMapFile):
+            f = open(validityMapFile, 'w')
+            f.write("penalty_weights_unique,penalty_weights_conflict,validity,energy\n")
+            f.close()
         for wfixed in penalty_weights_fixed:
             solveAndFindPenaltyThresholdArgs = {'wfixed': wfixed,
                                                 'wstart': wstart,
@@ -166,6 +179,7 @@ def main():
                                                 'inventoryfile_penalty_threshold': args.inventoryfile_penalty_threshold,
                                                 'penalty_weights_unique': penalty_weights_unique,
                                                 'store_inventory': True,
+                                                'validityMapFile': validityMapFile,
                                                 'penalty_weights_conflict': penalty_weights_conflict}
             solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
             if nproc != 1:
