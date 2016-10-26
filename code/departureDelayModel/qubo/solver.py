@@ -150,6 +150,18 @@ class Solver:
         else:
             return None
 
+    def saveIsing(self, filename):
+        h = self.h
+        J = self.J
+        f = open(filename, 'w')
+        for i in range(len(h)):
+            if h[i] != 0:
+                f.write("%i %i %f\n" % (i, i, h[i]))
+        for k, j in J.items():
+            if j != 0:
+                f.write("%i %i %f\n" % (k[0], k[1], j))
+        f.close()
+
     def saveEmbeddedIsing(self, filename, eIndex=0, **kwargs):
         if eIndex not in self.h_embedded or eIndex not in self.J_embedded:
             self.getEmbeddedIsing(eIndex, **kwargs)
