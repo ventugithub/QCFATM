@@ -1,5 +1,4 @@
 import os
-import sys
 import yaml
 import numpy as np
 import dwave_sapi2.remote as remote
@@ -90,7 +89,7 @@ class Solver:
         self.embeddings[eIndex] = new_embed
 
     def solve(self, annealing_time=20, num_reads=10000, eIndex=0, **kwargs):
-        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+        if eIndex not in self.h_embedded or eIndex not in self.J_embedded:
             self.getEmbeddedIsing(eIndex, **kwargs)
         self.establishConnection()
 
@@ -104,7 +103,7 @@ class Solver:
         return rawsolution_phys, rawsolution_log, np.array(result['energies']) + self.qubo_offset + self.ising_offset, np.array(result['num_occurrences'])
 
     def getEmbeddedQUBO(self, eIndex=0, suppressThreshold=0, **kwargs):
-        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+        if eIndex not in self.h_embedded or eIndex not in self.J_embedded:
             self.getEmbeddedIsing(eIndex, **kwargs)
         Q, offset = util.ising_to_qubo(self.h_embedded[eIndex], self.J_embedded[eIndex])
         # suppress very small coefficients
@@ -117,11 +116,11 @@ class Solver:
         return self.qubo_embedded[eIndex]
 
     def solve_embedded_exact(self, eIndex=0, timeout=None, **kwargs):
-        if not self.qubo_embedded.has_key(eIndex):
+        if eIndex not in self.qubo_embedded:
             self.getEmbeddedQUBO(eIndex, **kwargs)
         Q, offset = util.ising_to_qubo(self.h_embedded[eIndex], self.J_embedded[eIndex])
         qubo_embed = polynomial.Polynomial(Q)
-        r ={}
+        r = {}
         l = []
         for k in Q.keys():
             for i in k:
@@ -152,16 +151,16 @@ class Solver:
             return None
 
     def saveEmbeddedIsing(self, filename, eIndex=0, **kwargs):
-        if not self.h_embedded.has_key(eIndex) or not self.J_embedded.has_key(eIndex):
+        if eIndex not in self.h_embedded or eIndex not in self.J_embedded:
             self.getEmbeddedIsing(eIndex, **kwargs)
         f = open(filename, 'w')
         h = self.h_embedded[eIndex]
         J = self.J_embedded[eIndex]
         for i in range(len(h)):
-            if h[i]!=0:
+            if h[i] != 0:
                 f.write("%i %i %f\n" % (i, i, h[i]))
         for k, j in J.items():
-            if j!=0:
+            if j != 0:
                 f.write("%i %i %f\n" % (k[0], k[1], j))
         f.close()
 
