@@ -48,6 +48,7 @@ def solveAndFindPenaltyThreshold(wfixed, wstart, delta_w, instancefile, inventor
         if abs(energy) < 1E-13:
             wminabove = 0
             found = True
+            print "WARNING: Energy of solution is zero. Stop search for penalty weight threshold"
             break
         # break if exact solution was not found
         if valid is None or np.isnan(valid):
