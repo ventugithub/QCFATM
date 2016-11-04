@@ -20,7 +20,6 @@ def solveAndCheckValidity(instancefile, w2, w3, **solve_instance_args):
         return None
     elif len(subset) != 1:
         print "Duplicates in inventory:"
-        print inventory
         print subset
         raise ValueError('Duplicates in inventory')
 

@@ -391,13 +391,11 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                 inventory_before = pd.read_csv(inventoryfile, index_col='instance')
                 inventory = pd.concat([inventory_before, inventory])
 
+            # index to column for duplication dropping
             inventory.reset_index(level=0, inplace=True)
-            # drop duplicates but ignore version
-            columnsToCompare = list(inventory.columns)
-            columnsToCompare.remove('version')
-            # remove duplicates by rounding to 4 digits
-            inventory = inventory.ix[~inventory.round(4).duplicated()]
-            inventory.drop_duplicates(inplace=True, subset=columnsToCompare)
+            # drop duplicates but ignore version and ignoring small differences
+            inventory = inventory[~inventory.drop(['version'], axis=1).round(10).duplicated()]
+            # instance column back to index
             inventory.set_index('instance', inplace=True)
             inventory.to_csv(inventoryfile, mode='w')
 
