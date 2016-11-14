@@ -1,46 +1,72 @@
+import h5py
 import yaml
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
 import instance
+import arraydict
 from polynomial import Polynomial as poly
 
 class IntegerVariable:
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         if len(args) == 1:
             if type(args[0]) == str:
-                self.load(args[0])
+                if kwargs and kwargs['hdf5'] == False:
+                    self.load_txt(args[0])
+                else:
+                    self.load_hdf5(args[0])
             else:
                 self.update(*args)
         else:
-            raise ValueError('Error in instance creation: Wrong number of arguments')
+            raise ValueError('Error in integer variable creation: Wrong number of arguments')
 
     def update(self, delay):
         self.delay = delay
 
-    def save(self, filename):
+    def save_txt(self, filename):
         data = {}
         data['delay'] = self.delay.tolist()
         f = open(filename, 'w')
         yaml.dump(data, f)
         f.close()
 
-    def load(self, filename):
+    def load_txt(self, filename):
         f = open(filename)
         data = yaml.load(f)
         f.close()
         self.delay = np.array(data['delay'], dtype=int)
 
+    def save_hdf5(self, filename, mode='w'):
+        f = h5py.File(filename, mode)
+        if 'IntegerVariable' in f:
+            del f['IntegerVariable']
+        group = f.create_group('IntegerVariable')
+        group.create_dataset('delay', data=self.delay)
+        f.close()
+
+    def load_hdf5(self, filename):
+        f = h5py.File(filename, 'r')
+        if 'IntegerVariable' not in f:
+            raise ValueError('Did not find IntegerVariable group in hdf5 file %s' % filename)
+        group = f['IntegerVariable']
+        if 'delay' not in group:
+            raise ValueError('Did not find delay dataset in hdf5 file %s' % filename)
+        dataset = group['delay']
+        self.delay = dataset.value
+
 class Variable(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         if len(args) == 1:
             self.update(args[0])
         elif len(args) == 2:
-            self.load(args[0], args[1])
+            if kwargs and kwargs['hdf5'] == False:
+                self.load_txt(args[0], args[1])
+            else:
+                self.load_hdf5(args[0], args[1])
         else:
-            raise ValueError('Error in instance creation: Wrong number of arguments')
+            raise ValueError('Error in variable creation: Wrong number of arguments')
 
     def __eq__(self, var):
         c = []
@@ -52,7 +78,7 @@ class Variable(object):
         c.append(self.num_qubits == var.num_qubits)
         return all(c)
 
-    def save(self, filename):
+    def save_txt(self, filename):
         data = {}
         data['representation'] = self.representation
         data['d'] = self.d
@@ -65,7 +91,7 @@ class Variable(object):
         yaml.dump(data, f)
         f.close()
 
-    def load(self, filename, instancefile):
+    def load_txt(self, filename, instancefile):
         self.instance = instance.Instance(instancefile)
         f = open(filename)
         data = yaml.load(f)
@@ -77,6 +103,63 @@ class Variable(object):
         self.flat2Multi = data['flat2Multi']
         self.num_qubits = data['num_qubits']
         self.I = data['I']
+
+    def save_hdf5(self, filename, mode='a'):
+        f = h5py.File(filename, mode)
+        if 'Variable' in f:
+            del f['Variable']
+        group = f.create_group('Variable')
+        group.create_dataset('representation', data=self.representation)
+        # group.create_dataset('d', data=self.d)
+        # group.create_dataset('flat2Multi', data=self.flat2Multi)
+        group.create_dataset('NDelay', data=self.NDelay)
+        group.create_dataset('delayValues', data=self.delayValues)
+        group.create_dataset('num_qubits', data=self.num_qubits)
+        group.create_dataset('I', data=self.I)
+
+        group.create_group('d')
+        group.create_group('flat2Multi')
+        f.close()
+
+        adict = arraydict.ArrayDict()
+        for k, val in self.d.items():
+            adict[k] = np.array(val)
+        adict.save(filename, 'Variable/d', mode='a')
+        adict = arraydict.ArrayDict()
+        for k, v in self.flat2Multi.items():
+            adict[(k,)] = np.array(v, dtype=[('name', 'S10'), ('integerIndex', 'i4'), ('binaryIndex', 'i4')])
+        adict.save(filename, 'Variable/flat2Multi', mode='a')
+
+    def load_hdf5(self, filename, instancefile):
+        self.instance = instance.Instance(instancefile)
+        f = h5py.File(filename, 'r')
+        if 'Variable' not in f:
+            raise ValueError('Did not find variable group in hdf5 file %s' % filename)
+        group = f['Variable']
+        attributes = ['representation', 'd', 'NDelay', 'delayValues', 'flat2Multi', 'num_qubits']
+        if any([i not in group for i in attributes]):
+            raise ValueError('Did not find delay dataset in hdf5 file %s' % filename)
+        self.representation = group['representation'].value
+        self.NDelay = group['NDelay'].value
+        self.delayValues = group['delayValues'].value.tolist()
+        self.num_qubits = group['num_qubits'].value
+        self.I = group['I'].value
+        adict = arraydict.ArrayDict()
+        adict.load(filename, 'Variable/d')
+        self.d = {}
+        for k, v in adict.dict.items():
+            self.d[k] = int(v)
+        self.flat2Multi = {}
+        adict = arraydict.ArrayDict()
+        adict.load(filename, 'Variable/flat2Multi')
+        for k, v in adict.dict.items():
+            self.flat2Multi[k[0]] = (str(v[0]), int(v[1]), int(v[2]))
+
+    def load(self, filename, instancefile, hdf5=True):
+        if hdf5:
+            self.load_hdf5(filename, instancefile)
+        else:
+            self.load_txt(filename, instancefile)
 
     @abstractmethod
     def update(self, inst):

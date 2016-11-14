@@ -8,6 +8,31 @@ import instance
 import polynomial
 import solver
 import variable
+import arraydict
+
+# test arraydict file IO
+class testArrayDict(unittest.TestCase):
+    def setUp(self):
+        self.filename = "test_arraydict.h5"
+        np.random.seed(0)
+
+    def testIO(self):
+        dic = {}
+        dic[(0,)] = np.random.rand(10).reshape((2, 5))
+        dic[(0, 2)] = np.random.rand(10).reshape((2, 5))
+        dic[(0, 2, 5)] = np.random.rand(10).reshape((2, 5))
+        adict = arraydict.ArrayDict(dic)
+        adict.__setitem__((0, 2, 3, 4),  np.random.rand(10).reshape((2, 5)))
+        adict.__setitem__((0, 2, 3, 4),  np.random.rand(10).reshape((2, 5)))
+        self.assertEqual(len(adict), 4)
+        adict.save(self.filename, 'testgroup')
+        adict2 = arraydict.ArrayDict()
+        adict2.load(self.filename, 'testgroup')
+        self.assertEqual(adict, adict2)
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
 # test instance file IO
 class testInstance(unittest.TestCase):
@@ -118,9 +143,13 @@ class testPolynomial(unittest.TestCase):
         self.assertTrue(Q.isQUBO())
 
     def testIO(self):
-        self.Q2.save(self.filename)
+        self.Q2.save_hdf5(self.filename)
         expectedQ = polynomial.Polynomial()
-        expectedQ.load(self.filename)
+        expectedQ.load_hdf5(self.filename)
+        self.assertEqual(self.Q2, expectedQ)
+        self.Q2.save_txt(self.filename)
+        expectedQ = polynomial.Polynomial()
+        expectedQ.load_txt(self.filename)
         self.assertEqual(self.Q2, expectedQ)
 
     def testEvaluate(self):
@@ -141,9 +170,9 @@ class testVariable(unittest.TestCase):
     def setUp(self):
         np.random.seed(0)
         random.seed(0)
-        self.filenameUnary = "test_unary.yml"
+        self.filenameUnary = "test_unary.h5"
         # self.filenameBinary = "test_binary.yml"
-        self.filenameIntVar = "test_integerVariable.yml"
+        self.filenameIntVar = "test_integerVariable.h5"
         self.instancefile = "testdata/test_instance.yml"
         self.inst = instance.Instance(self.instancefile)
         self.varUnary = variable.Unary(self.inst)
@@ -169,13 +198,19 @@ class testVariable(unittest.TestCase):
         # self.assertEqual(N1, N2)
 
     def testIntegerVariable(self):
-        self.intVar.save(self.filenameIntVar)
-        intVar2 = variable.IntegerVariable(self.filenameIntVar)
+        self.intVar.save_txt(self.filenameIntVar)
+        intVar2 = variable.IntegerVariable(self.filenameIntVar, hdf5=False)
+        self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
+        self.intVar.save_hdf5(self.filenameIntVar)
+        intVar2 = variable.IntegerVariable(self.filenameIntVar, hdf5=True)
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
 
     def testIOUnary(self):
-        self.varUnary.save(self.filenameUnary)
-        var2 = variable.Unary(self.filenameUnary, self.instancefile)
+        self.varUnary.save_txt(self.filenameUnary)
+        var2 = variable.Unary(self.filenameUnary, self.instancefile, hdf5=False)
+        self.assertEqual(self.varUnary, var2)
+        self.varUnary.save_hdf5(self.filenameUnary, mode='w')
+        var2 = variable.Unary(self.filenameUnary, self.instancefile, hdf5=True)
         self.assertEqual(self.varUnary, var2)
 
     # def testIOBinary(self):
