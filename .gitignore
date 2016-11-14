@@ -1,2 +1,5 @@
 .ipynb_checkpoints
 data/
+precalculation/analysis/
+code/departureDelayModel/analysis/
+*.bak
