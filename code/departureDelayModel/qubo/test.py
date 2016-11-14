@@ -201,7 +201,7 @@ class testVariable(unittest.TestCase):
         self.intVar.save_txt(self.filenameIntVar)
         intVar2 = variable.IntegerVariable(self.filenameIntVar, hdf5=False)
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
-        self.intVar.save_hdf5(self.filenameIntVar)
+        self.intVar.save_hdf5(self.filenameIntVar, mode='w')
         intVar2 = variable.IntegerVariable(self.filenameIntVar, hdf5=True)
         self.assertTrue(np.array_equal(self.intVar.delay, intVar2.delay))
 
@@ -257,8 +257,11 @@ class testSolver(unittest.TestCase):
         self.embeddings = self.solver.embeddings
 
     def testEmbeddingIO(self):
-        self.solver.writeEmbedding(self.filename, eIndex=3)
-        self.solver.readEmbedding(self.filename, eIndex=3)
+        self.solver.writeEmbeddingTxt(self.filename, eIndex=3)
+        self.solver.readEmbeddingTxt(self.filename, eIndex=3)
+        self.assertEqual(self.embeddings[3], self.solver.embeddings[3])
+        self.solver.writeEmbeddingHDF5(self.filename, eIndex=3, mode='w')
+        self.solver.readEmbeddingHDF5(self.filename, eIndex=3)
         self.assertEqual(self.embeddings[3], self.solver.embeddings[3])
 
     def testSolution(self):

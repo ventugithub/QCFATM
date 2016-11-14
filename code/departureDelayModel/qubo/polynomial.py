@@ -204,7 +204,7 @@ class Polynomial:
         for i, v in sorted(self.poly.items()):
             print "%s %s" % (i, v)
 
-    def save_hdf5(self, filename, groupname='Polynomial', mode='w'):
+    def save_hdf5(self, filename, groupname='Polynomial', mode='a'):
         adict = arraydict.ArrayDict()
         for k, val in self.poly.items():
             adict[k] = np.array(val)

@@ -1,5 +1,6 @@
 import os
 import yaml
+import h5py
 import numpy as np
 import dwave_sapi2.remote as remote
 import dwave_sapi2.embedding as embedding
@@ -176,16 +177,45 @@ class Solver:
                 f.write("%i %i %f\n" % (k[0], k[1], j))
         f.close()
 
-    def writeEmbedding(self, filename, eIndex=0):
+    def writeEmbeddingTxt(self, filename, eIndex=0):
         """Save embedding to yaml file"""
         f = open(filename, 'w')
         yaml.dump(self.embeddings[eIndex], f)
         f.close()
 
-    def readEmbedding(self, filename, eIndex=0):
-        """Read embedding to yaml file"""
+    def readEmbeddingTxt(self, filename, eIndex=0):
+        """Read embedding from yaml file"""
         if not self.embeddings:
             self.embeddings = {}
         f = open(filename, 'r')
         self.embeddings[eIndex] = yaml.load(f)
         f.close()
+
+    def writeEmbeddingHDF5(self, filename, name='embedding', eIndex=0, mode='a'):
+        """Save embedding to hdf5 file"""
+        # open file
+        f = h5py.File(filename, mode)
+        # write keys
+        if name in f:
+            del f[name]
+        e = self.embeddings[eIndex]
+        N = len(e)
+        dt = h5py.special_dtype(vlen=np.dtype('int32'))
+        dataset = f.create_dataset(name, (N,), dtype=dt)
+        for i in range(N):
+            dataset[i] = e[i]
+        f.close()
+
+    def readEmbeddingHDF5(self, filename, name='embedding', eIndex=0):
+        """Read embedding from hdf5 file"""
+        if not self.embeddings:
+            self.embeddings = {}
+        f = h5py.File(filename, 'r')
+        if name not in f:
+            raise ValueError('Did not find embedding dataset "%s" in hdf5 file %s' % (name, filename))
+        dataset = f[name].value
+        e = []
+        for d in dataset:
+            e.append(d.tolist())
+        f.close()
+        self.embeddings[eIndex] = e

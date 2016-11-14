@@ -17,6 +17,9 @@ class IntegerVariable:
                     self.load_hdf5(args[0])
             else:
                 self.update(*args)
+        elif len(args) == 2:
+            if type(args[0]) == str:
+                self.load_hdf5(args[0], args[1])
         else:
             raise ValueError('Error in integer variable creation: Wrong number of arguments')
 
@@ -36,19 +39,19 @@ class IntegerVariable:
         f.close()
         self.delay = np.array(data['delay'], dtype=int)
 
-    def save_hdf5(self, filename, mode='w'):
+    def save_hdf5(self, filename, name='IntegerVariable', mode='a'):
         f = h5py.File(filename, mode)
-        if 'IntegerVariable' in f:
-            del f['IntegerVariable']
-        group = f.create_group('IntegerVariable')
+        if name in f:
+            del f[name]
+        group = f.create_group(name)
         group.create_dataset('delay', data=self.delay)
         f.close()
 
-    def load_hdf5(self, filename):
+    def load_hdf5(self, filename, name='IntegerVariable'):
         f = h5py.File(filename, 'r')
-        if 'IntegerVariable' not in f:
-            raise ValueError('Did not find IntegerVariable group in hdf5 file %s' % filename)
-        group = f['IntegerVariable']
+        if name not in f:
+            raise ValueError('Did not find %s group in hdf5 file %s' % (name, filename))
+        group = f[name]
         if 'delay' not in group:
             raise ValueError('Did not find delay dataset in hdf5 file %s' % filename)
         dataset = group['delay']
@@ -106,9 +109,9 @@ class Variable(object):
 
     def save_hdf5(self, filename, mode='a'):
         f = h5py.File(filename, mode)
-        if 'Variable' in f:
-            del f['Variable']
-        group = f.create_group('Variable')
+        if 'variable' in f:
+            del f['variable']
+        group = f.create_group('variable')
         group.create_dataset('representation', data=self.representation)
         # group.create_dataset('d', data=self.d)
         # group.create_dataset('flat2Multi', data=self.flat2Multi)
@@ -124,18 +127,18 @@ class Variable(object):
         adict = arraydict.ArrayDict()
         for k, val in self.d.items():
             adict[k] = np.array(val)
-        adict.save(filename, 'Variable/d', mode='a')
+        adict.save(filename, 'variable/d', mode='a')
         adict = arraydict.ArrayDict()
         for k, v in self.flat2Multi.items():
             adict[(k,)] = np.array(v, dtype=[('name', 'S10'), ('integerIndex', 'i4'), ('binaryIndex', 'i4')])
-        adict.save(filename, 'Variable/flat2Multi', mode='a')
+        adict.save(filename, 'variable/flat2Multi', mode='a')
 
     def load_hdf5(self, filename, instancefile):
         self.instance = instance.Instance(instancefile)
         f = h5py.File(filename, 'r')
-        if 'Variable' not in f:
+        if 'variable' not in f:
             raise ValueError('Did not find variable group in hdf5 file %s' % filename)
-        group = f['Variable']
+        group = f['variable']
         attributes = ['representation', 'd', 'NDelay', 'delayValues', 'flat2Multi', 'num_qubits']
         if any([i not in group for i in attributes]):
             raise ValueError('Did not find delay dataset in hdf5 file %s' % filename)
@@ -145,13 +148,13 @@ class Variable(object):
         self.num_qubits = group['num_qubits'].value
         self.I = group['I'].value
         adict = arraydict.ArrayDict()
-        adict.load(filename, 'Variable/d')
+        adict.load(filename, 'variable/d')
         self.d = {}
         for k, v in adict.dict.items():
             self.d[k] = int(v)
         self.flat2Multi = {}
         adict = arraydict.ArrayDict()
-        adict.load(filename, 'Variable/flat2Multi')
+        adict.load(filename, 'variable/flat2Multi')
         for k, v in adict.dict.items():
             self.flat2Multi[k[0]] = (str(v[0]), int(v[1]), int(v[2]))
 
