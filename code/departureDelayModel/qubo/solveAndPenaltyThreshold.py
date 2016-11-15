@@ -1,12 +1,31 @@
 #!/usr/bin/env python
-import glob
 import os
 import argparse
 import multiprocessing
 import filelock
+import h5py
 import pandas as pd
 import numpy as np
 import solveInstance as si
+
+def extractValidityMap(instancefile):
+    resultfile = instancefile.rstrip('.h5') + '.results.h5'
+    if not os.path.exists(resultfile):
+        raise ValueError('Unable to extract validity map since result file %s does not exist' % resultfile)
+    f = h5py.File(resultfile, 'a')
+    validityMap = []
+    for name, group in f.items():
+        if name.startswith('pw-'):
+            s = name.split('-unique')[1].split('-conflict')
+            pw2 = s[0]
+            pw3 = s[1]
+            exactSolutionGroup = group['exactSolution']
+            isValid = exactSolutionGroup.attrs['isValid']
+            validityMap.append(np.array((pw2, pw3, isValid), dtype=[('penalty-weight-unique', 'float32'), ('penalty-weight-conflict', 'float32'), ('isValid', 'int8')]))
+    if 'validityMap' in f:
+        del f['validityMap']
+    f.create_dataset('validityMap', data=validityMap)
+    f.close()
 
 def solveAndCheckValidity(instancefile, w2, w3, **solve_instance_args):
     """
@@ -41,14 +60,13 @@ def getPointOnCircle(center, radius, angle):
     deltax = radius * np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]).dot(xunit)
     return center + deltax
 
-def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, instancefile, inventoryfile_penalty_threshold, validityMapFile, **solve_instance_args):
+def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, instancefile, inventoryfile_penalty_threshold, **solve_instance_args):
     """
     Find threshold on circle around a given starting point (wunique, wconflict)
     which is assumed to be valid
     """
     foundInvalid = False
     center = np.array([wunique, wconflict])
-    f = open(validityMapFile, 'a')
     # check point nearest to the origin is invalid, if not invalid increase radius
     uinv = None
     vinv = None
@@ -61,8 +79,6 @@ def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, inst
         vinv = v
         print "Threshold detection algorithm is at radius %f. Point = (%0.3f, %0.3f)" % (radius, u, v)
         valid, energy = solveAndCheckValidity(instancefile, u, v, **solve_instance_args)
-        # store data
-        f.write("%0.3f,%0.3f,%i,%e\n" % (u, v, valid, energy))
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
             print "WARNING: Energy of solution is zero. Stop search for penalty weight threshold on circle"
@@ -88,8 +104,6 @@ def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, inst
         v = max(np.round(x[1], 3), 0.001)
         print "Threshold detection bisection algorithm is at angle %0.3f Pi. Point = (%0.3f, %0.3f)" % (angle / np.pi, u, v)
         valid, energy = solveAndCheckValidity(instancefile, u, v, **solve_instance_args)
-        # store data
-        f.write("%0.3f,%0.3f,%i,%e\n" % (u, v, valid, energy))
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
             wu = 0
@@ -122,14 +136,12 @@ def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, inst
             found = True
             wu = u
             wc = v
-    f.close()
     if not found:
         wu = np.nan
         wc = np.nan
-    f.close()
     return wu, wc, found
 
-def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, validityMapFile, **solve_instance_args):
+def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, **solve_instance_args):
     """
     given a fixed penalty weight (unique), find the threshold in
     the penalty weight conflict. i.e. the boundary btw. valid and invalid solutions
@@ -140,14 +152,11 @@ def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryf
     found = False
     first = True
     wminabove = None
-    f = open(validityMapFile, 'a')
     # bisection to find first validity threshold point
     while not found and w < 1E4:
         w = np.round(w, 3)
         print "Bisection algorithm is at (%0.3f, %0.3f)" % (wfixedunique, w)
         valid, energy = solveAndCheckValidity(instancefile, wfixedunique, w, **solve_instance_args)
-        # store data
-        f.write("%0.3f,%0.3f,%i,%e\n" % (wfixedunique, w, valid, energy))
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
             wminabove = 0
@@ -181,7 +190,6 @@ def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryf
             wminabove = wabove
     if not found:
         wminabove = np.nan
-    f.close()
     return wfixedunique, wminabove, found
 
 def storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_threshold):
@@ -212,12 +220,12 @@ def storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_thres
         iv.set_index('instance', inplace=True)
         iv.to_hdf(ivfile, 'penalty_threshold_inventory', mode='w')
 
-def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_penalty_unique, max_penalty_conflict, radiuses, instancefile, inventoryfile_penalty_threshold, store_inventory, validityMapFile, **solve_instance_args):
+def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_penalty_unique, max_penalty_conflict, radiuses, instancefile, inventoryfile_penalty_threshold, store_inventory, **solve_instance_args):
     """
     solve instances along the boundary btw. valid and invalid solution.
     """
     # start with bisection for a fixed penalty weight unique
-    wunique, wconflict, success = bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, validityMapFile, **solve_instance_args)
+    wunique, wconflict, success = bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, inventoryfile_penalty_threshold, **solve_instance_args)
     if success and store_inventory:
         storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_threshold)
     # radiuses to try to find an invalid point at the point on a circle around the current threshold point with the smallest distance to the origin
@@ -225,7 +233,7 @@ def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_p
     # maximum values of penalty weights
     finished = False
     while not finished:
-        wunique, wconflict, success = findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, instancefile, inventoryfile_penalty_threshold, validityMapFile, **solve_instance_args)
+        wunique, wconflict, success = findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, instancefile, inventoryfile_penalty_threshold, **solve_instance_args)
         if success and store_inventory:
             print "Found threshold point at (%03f, %03f)" % (wunique, wconflict)
             storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_threshold)
@@ -235,6 +243,9 @@ def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_p
         if wunique > max_penalty_unique or wconflict > max_penalty_conflict:
             print "Threshold point at (%03f, %03f) is out of boundaries. Stop algorithm." % (wunique, wconflict)
             finished = True
+
+    print "Extract Validity Map"
+    extractValidityMap(instancefile)
 
 def main():
     parser = argparse.ArgumentParser(description='Solve departure only model exactly and scan for threshold in penalty weights at which the solutions become invalid',
@@ -253,6 +264,7 @@ def main():
     parser.add_argument('--counter_clockwise', action='store_true', help='Counter clockwise search for threshold points on a circle during the algorithm following the threshold boundary')
     parser.add_argument('--max_penalty_unique', default=2.5, help='maximum penalty weights for unique term of the QUBO to consider during search for threshold', type=float)
     parser.add_argument('--max_penalty_conflict', default=2.5, help='maximum penalty weights for conflict term of the QUBO to consider during search for threshold', type=float)
+    parser.add_argument('--maxDelay', default=18, help='maximum delay', type=int)
     parser.add_argument('--radiuses', nargs='+', default=[0.1, 0.2, 0.5, 1], help='radiuses used in algorithm following the threshold boundary', type=float)
     parser.add_argument('--np', default=1, help='number of processes', type=int)
     args = parser.parse_args()
@@ -283,20 +295,14 @@ def main():
     instancefiles = []
     for d in delays:
         for p in partitions:
-            files = glob.glob('data/instances/instances_d%i/atm_instance_partition%04i_f????_c?????.yaml' % (d, p))
-            assert len(files) == 1
-            instancefiles.append(files[0])
+            instancefile = 'data/instances/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (p, d, args.maxDelay)
+            if not os.path.exists(instancefile):
+                raise ValueError('%s does not exists' % instancefile)
+            instancefiles.append(instancefile)
     print "Solve instances ..."
     if nproc != 1:
         pool = multiprocessing.Pool(processes=nproc)
     for instancefile in instancefiles:
-        validityMapFile = instancefile + ".validityMap.csv"
-        if args.overwrite_validity_map and os.path.exists(validityMapFile):
-            os.remove(validityMapFile)
-        if not os.path.exists(validityMapFile):
-            f = open(validityMapFile, 'w')
-            f.write("penalty_weights_unique,penalty_weights_conflict,validity,energy\n")
-            f.close()
         solveAndFindPenaltyThresholdArgs = {'wfixedunique': wfixedunique,
                                             'wstart': wstart,
                                             'delta_w': delta_w,
@@ -306,8 +312,7 @@ def main():
                                             'radiuses': radiuses,
                                             'instancefile': instancefile,
                                             'inventoryfile_penalty_threshold': args.inventoryfile_penalty_threshold,
-                                            'store_inventory': True,
-                                            'validityMapFile': validityMapFile}
+                                            'store_inventory': True}
         solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
         if nproc != 1:
             pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)

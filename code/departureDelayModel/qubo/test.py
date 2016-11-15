@@ -37,7 +37,7 @@ class testArrayDict(unittest.TestCase):
 # test instance file IO
 class testInstance(unittest.TestCase):
     def setUp(self):
-        self.filename = "test_instance.yml"
+        self.filename = "test_instance.h5"
         np.random.seed(0)
         random.seed(0)
 
@@ -56,8 +56,14 @@ class testInstance(unittest.TestCase):
         delays = [int(d) for d in np.arange(0, 18 + 1, 3)]
 
         inst = instance.Instance(flights, conflicts, arrivalTimes, delays)
-        inst.save(self.filename)
-        inst2 = instance.Instance(self.filename)
+        inst.save_txt(self.filename)
+        inst2 = instance.Instance(self.filename, hdf5=False)
+        self.assertEqual(flights, inst2.flights)
+        self.assertEqual(conflicts, inst2.conflicts)
+        self.assertEqual(arrivalTimes, inst2.arrivalTimes)
+        self.assertEqual(delays, inst2.delays)
+        inst.save_hdf5(self.filename)
+        inst2 = instance.Instance(self.filename, hdf5=True)
         self.assertEqual(flights, inst2.flights)
         self.assertEqual(conflicts, inst2.conflicts)
         self.assertEqual(arrivalTimes, inst2.arrivalTimes)
@@ -76,7 +82,7 @@ class testPolynomial(unittest.TestCase):
         self.Q2 = polynomial.Polynomial({(2,): 1, (2, 4): 1, (3, 4): 3, (5,): 7})
         # qubo3 : 7 x1 + 2 x2 + 3 x3 + x4
         self.Q3 = polynomial.Polynomial({(1,): 7, (2,): 2, (3,): 3, (4,): 1})
-        self.filename = "test_qubo.yml"
+        self.filename = "test_qubo.h5"
 
     def tearDown(self):
         if os.path.exists(self.filename):
@@ -171,9 +177,9 @@ class testVariable(unittest.TestCase):
         np.random.seed(0)
         random.seed(0)
         self.filenameUnary = "test_unary.h5"
-        # self.filenameBinary = "test_binary.yml"
+        # self.filenameBinary = "test_binary.h5"
         self.filenameIntVar = "test_integerVariable.h5"
-        self.instancefile = "testdata/test_instance.yml"
+        self.instancefile = "testdata/test_instance.h5"
         self.inst = instance.Instance(self.instancefile)
         self.varUnary = variable.Unary(self.inst)
         # self.varBinary = variable.Binary(self.inst)
@@ -253,7 +259,7 @@ class testSolver(unittest.TestCase):
         self.qubo.getDWaveQUBO()
         self.solver = solver.Solver(self.qubo)
         self.solver.calculateEmbedding(3, random_seed=0)
-        self.filename = 'testSolverEmbedding.yml'
+        self.filename = 'testSolverEmbedding.h5'
         self.embeddings = self.solver.embeddings
 
     def testEmbeddingIO(self):

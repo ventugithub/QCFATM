@@ -17,6 +17,7 @@ import pandas as pd
 def main():
     parser = argparse.ArgumentParser(description='Map ATM instance to qubo and solve it')
     parser.add_argument('-i', '--input', required=True, help='input instance yaml file')
+    parser.add_argument('-o', '--output', help='result folder')
     parser.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
@@ -101,17 +102,19 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
     inventorydata = {}
     if not unary:
         raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
-    representation = 'binary'
-    if unary:
-        representation = 'unary'
-    # add penalty weights to representation string in order
-    # to distinguish between different penalty weights
-    representation = representation + ".pw"
+    # string representing the penalty weights
+    pwstr = "pw"
     for k, v in penalty_weights.items():
-        representation = representation + "-%s%0.3f" % (k, v)
+        pwstr = pwstr + "-%s%0.3f" % (k, v)
     # read in instance and calculate QUBO and index mapping
-    resultfile = "%s.%s.results.h5" % (instancefile, representation)
+    resultfile = "%s.results.h5" % instancefile.rstrip('.h5')
+    # remove group representing penalty weights in resultfile
     hardConstraints = ['conflict', 'unique']
+    if os.path.exists(resultfile):
+        f = h5py.File(resultfile, 'a')
+        if pwstr in f:
+            del f[pwstr]
+        f.close()
 
     subqubonames = ['departure', 'conflict', 'unique']
     grouplist = []
@@ -123,17 +126,17 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
         print "Calculate QUBO ..."
         q, subqubos, var = qubo.get_qubo(instancefile, penalty_weights, unary)
         var.save_hdf5(resultfile)
-        q.save_hdf5(resultfile, 'qubo')
+        q.save_hdf5(resultfile, '%s/qubo' % pwstr)
         for name in subqubonames:
-            subqubos[name].save_hdf5(resultfile, 'subqubo-%s' % name)
+            subqubos[name].save_hdf5(resultfile, '%s/subqubo-%s' % (pwstr, name))
     else:
         print "Read in QUBO ..."
         q = polynomial.Polynomial()
-        q.load_hdf5(resultfile, 'qubo')
+        q.load_hdf5(resultfile, '%s/qubo' % pwstr)
         subqubos = {}
         for name in subqubonames:
             subqubos[name] = polynomial.Polynomial()
-            subqubos[name].load_hdf5(resultfile, 'subqubo-%s' % name)
+            subqubos[name].load_hdf5(resultfile, '%s/subqubo-%s' % (pwstr, name))
         print "Read in Variable ..."
         if unary:
             var = variable.Unary(resultfile, instancefile, hdf5=True)
@@ -163,35 +166,36 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
     inventorydata['exactValid'] = np.nan
     inventorydata['exactEnergy'] = np.nan
     if exact:
+        exactSolutionStr = '%s/exactSolution' % pwstr
         datasets = []
-        datasets.append('exactSolution/rawExactSolution')
-        datasets.append('exactSolution/energy')
-        if not exists(resultfile, 'exactSolution') or not use_snapshots:
+        datasets.append('%s/rawExactSolution' % exactSolutionStr)
+        datasets.append('%s/energy' % exactSolutionStr)
+        if not exists(resultfile, exactSolutionStr) or not use_snapshots:
             print "Calculate exact solution ..."
             rawresult = s.solve_exact(timeout=timeout)
             if not rawresult:
                 print "No exact solution found. Timeout was ", timeout, "seconds"
                 f = h5py.File(resultfile, 'a')
-                f['exactSolution'].attrs['foundSolution'] = False
+                f[exactSolutionStr].attrs['foundSolution'] = False
                 f.close()
             else:
                 exactSuccess = True
                 f = h5py.File(resultfile, 'a')
-                if 'exactSolution' not in f:
-                    f.create_group('exactSolution')
-                f['exactSolution'].attrs['foundSolution'] = True
+                if exactSolutionStr not in f:
+                    f.create_group(exactSolutionStr)
+                f[exactSolutionStr].attrs['foundSolution'] = True
                 f.close()
             if exactSuccess:
-                save_array_in_group(rawresult['solution'], resultfile, 'exactSolution', 'rawExactSolution')
-                save_array_in_group(rawresult['energy'], resultfile, 'exactSolution', 'energy')
+                save_array_in_group(rawresult['solution'], resultfile, exactSolutionStr, 'rawExactSolution')
+                save_array_in_group(rawresult['energy'], resultfile, exactSolutionStr, 'energy')
         else:
             print "Read in exact solution ..."
             f = h5py.File(resultfile, 'r')
-            if 'exactSolution' in f and 'foundSolution' in f['exactSolution'].attrs and f['exactSolution'].attrs['foundSolution']:
+            if exactSolutionStr in f and 'foundSolution' in f[exactSolutionStr].attrs and f[exactSolutionStr].attrs['foundSolution']:
                 exactSuccess = True
                 rawresult = {}
-                rawresult['solution'] = f['exactSolution/rawExactSolution'].value.tolist()
-                rawresult['energy'] = f['exactSolution/energy'].value
+                rawresult['solution'] = f['%s/rawExactSolution' % exactSolutionStr].value.tolist()
+                rawresult['energy'] = f['%s/energy' % exactSolutionStr].value
                 f.close()
             elif retry_exact:
                 f.close()
@@ -200,12 +204,12 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                 if not rawresult:
                     print "No exact solution found. Timeout was ", timeout, "seconds"
                     f = h5py.File(resultfile, 'a')
-                    f['exactSolution'].attrs['foundSolution'] = False
+                    f[exactSolutionStr].attrs['foundSolution'] = False
                     f.close()
                 else:
                     exactSuccess = True
                     f = h5py.File(resultfile, 'a')
-                    f['exactSolution'].attrs['foundSolution'] = True
+                    f[exactSolutionStr].attrs['foundSolution'] = True
                     f.close()
             else:
                 print "Warning: No exact solution available in file. Probably due to timeout. Use --retry_exact for recalculation"
@@ -219,13 +223,13 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
 
             if any([subqubos[k].evaluate(rawresult['solution']) for k in hardConstraints]):
                 f = h5py.File(resultfile, 'a')
-                f['exactSolution'].attrs['isValid'] = False
+                f[exactSolutionStr].attrs['isValid'] = False
                 f.close()
                 print "Exact solution is NOT VALID"
                 inventorydata['exactValid'] = False
             else:
                 f = h5py.File(resultfile, 'a')
-                f['exactSolution'].attrs['isValid'] = True
+                f[exactSolutionStr].attrs['isValid'] = True
                 f.close()
                 print "Exact solution is VALID"
                 inventorydata['exactValid'] = True
@@ -234,14 +238,14 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
             # map solution vector back to
             # multi-indices
             ###################################
-            if not exists(resultfile, 'exactSolution/exactSolution') or not use_snapshots:
+            if not exists(resultfile, '%s/exactSolution' % exactSolutionStr) or not use_snapshots:
                 print "Map exact solution to integers ..."
                 result = var.getIntegerVariables(rawresult['solution'])
                 print "Write exact solution ..."
-                result.save_hdf5(resultfile, name='exactSolution/exactSolution')
+                result.save_hdf5(resultfile, name='%s/exactSolution' % exactSolutionStr)
             else:
                 print "Read in exact solution ..."
-                result = variable.IntegerVariable(resultfile, 'exactSolution/exactSolution', hdf5=True)
+                result = variable.IntegerVariable(resultfile, '%s/exactSolution' % exactSolutionStr, hdf5=True)
     ###################################
     # get embedding
     ###################################
@@ -271,9 +275,9 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
         inventorydata['embedding'][e]['valid'] = np.nan
         inventorydata['embedding'][e]['energy'] = np.nan
         print "Embedding %i" % e
-        embedname = "embedding%05i" % e
+        embedname = "%s/embedding%05i" % (pwstr, e)
         if (chimera):
-            embedname = "embedding%05i_chimera%03i_%03i_%03i" % (e, chimera['m'], chimera['n'], chimera['t'])
+            embedname = "%s/embedding%05i_chimera%03i_%03i_%03i" % (pwstr, e, chimera['m'], chimera['n'], chimera['t'])
         if not exists(resultfile, embedname) or not use_snapshots:
             if not skipEmbedding:
                 print "Calculate embedding ..."
@@ -304,12 +308,13 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
             # solve problem
             ###################################
             num_reads = 10000
+            solutionStr = "%s/solution" % pwstr
             datasets = []
-            datasets.append('solution/quboEmbedded')
-            datasets.append('solution/logRawSolutions')
-            datasets.append('solution/energies')
-            datasets.append('solution/numOccurences')
-            if not all([exists(resultfile, d) for d in datasets]) or (not exists(resultfile, 'solution/physRawSolutions') and store_everything) or not use_snapshots:
+            datasets.append('%s/quboEmbedded' % solutionStr)
+            datasets.append('%s/logRawSolutions' % solutionStr)
+            datasets.append('%s/energies' % solutionStr)
+            datasets.append('%s/numOccurences' % solutionStr)
+            if not all([exists(resultfile, d) for d in datasets]) or (not exists(resultfile, '%s/physRawSolutions' % solutionStr) and store_everything) or not use_snapshots:
                 print "Calculate solutions ..."
                 physRawResult, logRawResult, energies, numOccurrences = s.solve(num_reads=num_reads, eIndex=e)
 
@@ -322,21 +327,21 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
                 qubo_embedded = s.getEmbeddedQUBO(e, suppressThreshold=1E-14)
 
                 if store_everything:
-                    save_array_in_group(physRawResult, resultfile, 'solution', 'physRawSolutions')
-                save_array_in_group(logRawResult, resultfile, 'solution', 'logRawSolutions')
-                save_array_in_group(energies, resultfile, 'solution', 'energies')
-                save_array_in_group(numOccurrences, resultfile, 'solution', 'numOccurences')
-                qubo_embedded.save_hdf5(resultfile, 'solution/quboEmbedded')
+                    save_array_in_group(physRawResult, resultfile, solutionStr, 'physRawSolutions')
+                save_array_in_group(logRawResult, resultfile, solutionStr, 'logRawSolutions')
+                save_array_in_group(energies, resultfile, solutionStr, 'energies')
+                save_array_in_group(numOccurrences, resultfile, solutionStr, 'numOccurences')
+                qubo_embedded.save_hdf5(resultfile, '%s/quboEmbedded' % solutionStr)
             else:
                 print "Read in solution ..."
                 qubo_embedded = polynomial.Polynomial()
-                qubo_embedded.load_hdf5(resultfile, 'solution/quboEmbedded')
+                qubo_embedded.load_hdf5(resultfile, '%s/quboEmbedded' % solutionStr)
                 f = h5py.File(resultfile, 'r')
                 if store_everything:
-                    physRawResult = f['solution/physRawSolutions'].value
-                logRawResult = f['solution/logRawSolutions'].value
-                energies = f['solution/energies'].value
-                numOccurrences = f['solution/numOccurences'].value
+                    physRawResult = f['%s/physRawSolutions' % solutionStr].value
+                logRawResult = f['%s/logRawSolutions' % solutionStr].value
+                energies = f['%s/energies' % solutionStr].value
+                numOccurrences = f['%s/numOccurences' % solutionStr].value
                 f.close()
             crr = qubo_embedded.getCoefficientRange()
             print "Coefficient range ratio of embedded QUBO: (maxLinear/minLinear, maxQuadratic/minQuadratic) = ", crr
@@ -375,13 +380,13 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
 
             if any([subqubos[k].evaluate(logRawResult[0]) for k in hardConstraints]):
                 f = h5py.File(resultfile, 'a')
-                f['solution'].attrs['isValid'] = False
+                f[solutionStr].attrs['isValid'] = False
                 f.close()
                 inventorydata['embedding'][e]['valid'] = False
                 print "Solution is NOT VALID"
             else:
                 f = h5py.File(resultfile, 'a')
-                f['solution'].attrs['isValid'] = False
+                f[solutionStr].attrs['isValid'] = False
                 f.close()
                 inventorydata['embedding'][e]['valid'] = True
                 print "Solution is VALID"
@@ -390,14 +395,14 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
             # map solution vector back to
             # multi-indices
             ###################################
-            if not exists(resultfile, 'solution/solution') or not use_snapshots:
+            if not exists(resultfile, '%s/solution' % solutionStr) or not use_snapshots:
                 print "Map solution to integers ..."
                 result = var.getIntegerVariables(logRawResult[0])
                 print "Write solution ..."
-                result.save_hdf5(resultfile, 'solution/solution')
+                result.save_hdf5(resultfile, '%s/solution' % solutionStr)
             else:
                 print "Read in solution ..."
-                result = variable.IntegerVariable(resultfile, 'solution/solution', hdf5=True)
+                result = variable.IntegerVariable(resultfile, '%s/solution' % solutionStr, hdf5=True)
 
     # add data to inventory
     if inventoryfile:

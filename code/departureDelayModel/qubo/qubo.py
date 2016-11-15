@@ -1,5 +1,3 @@
-import progressbar
-
 from polynomial import Polynomial as poly
 import instance
 import variable
@@ -38,21 +36,12 @@ def get_qubo(input, penalty_weights, unary=False):
     qubo = poly()
     subqubos = {}
     print "Calculate departure delay contribution"
-    pbar = progressbar.ProgressBar().start()
-    pbar.maxval = I
-    count = 0
     subqubos['departure'] = poly()
     for i in range(I):
         subqubos['departure'] += var.delay(i)
-        pbar.update(count)
-        count = count + 1
     qubo += penalty_weights['departure'] * subqubos['departure']
-    pbar.finish()
 
     print "Calculate conflict contribution"
-    pbar = progressbar.ProgressBar().start()
-    pbar.maxval = K
-    count = 0
     subqubos['conflict'] = poly()
     flights = var.instance.flights
     for k in range(K):
@@ -65,15 +54,9 @@ def get_qubo(input, penalty_weights, unary=False):
                 if isRealConflict(delayValues[a], delayValues[b], arrivalTimes[k][0], arrivalTimes[k][1]):
                     Q += poly({(var.d[i, a],): 1}) * poly({(var.d[j, b],): 1})
         subqubos['conflict'] += Q
-        pbar.update(count)
-        count = count + 1
     qubo += penalty_weights['conflict'] * subqubos['conflict']
-    pbar.finish()
 
     print "Calculate departure delay uniqueness contribution"
-    pbar = progressbar.ProgressBar().start()
-    pbar.maxval = I
-    count = 0
     subqubos['unique'] = poly()
     for i in range(I):
         Q = poly()
@@ -81,10 +64,7 @@ def get_qubo(input, penalty_weights, unary=False):
             Q += poly({(var.d[i, a],): 1})
         Q += poly({(): -1})
         subqubos['unique'] += Q * Q
-        pbar.update(count)
-        count = count + 1
     qubo += penalty_weights['unique'] * subqubos['unique']
-    pbar.finish()
 
     if not qubo.isQUBO():
         print "WARNING: Cost function is not quadratic!"
