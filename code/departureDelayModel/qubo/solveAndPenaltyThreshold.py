@@ -13,7 +13,8 @@ def solveAndCheckValidity(instancefile, w2, w3, **solve_instance_args):
     solve the instance for given penalty weights. gives back validity and energy of solution
     """
     si.solve_instance(instancefile, penalty_weights={'unique': w2, 'conflict': w3}, **solve_instance_args)
-    inventory = pd.read_csv(solve_instance_args['inventoryfile'])
+    inventory = pd.read_hdf(solve_instance_args['inventoryfile'])
+    inventory = inventory.reset_index()
     subset = inventory[(inventory.instance == instancefile) & (np.abs(inventory.penalty_weight_unique - w2) < 1E-14) & (np.abs(inventory.penalty_weight_conflict - w3) < 1E-14) & (inventory.exact)]
     if len(subset) == 0:
         print "Warning: No exact solution available"
@@ -196,12 +197,12 @@ def storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_thres
         iv = pd.DataFrame({'instance': [instancefile],
                            'penalty_weight_unique': [wunique],
                            'penalty_weight_conflict': [wconflict]})
-        iv = iv.round(3)
         iv.set_index('instance', inplace=True)
+        iv = iv.round(3)
 
         # read in iv file if existent if os.path.exists(ivfile):
         if os.path.exists(ivfile):
-            iv_before = pd.read_csv(ivfile, index_col='instance')
+            iv_before = pd.read_hdf(ivfile, 'penalty_threshold_inventory')
             iv = pd.concat([iv_before, iv])
         iv = iv.round(3)
 
@@ -209,7 +210,7 @@ def storeInventory(wunique, wconflict, instancefile, inventoryfile_penalty_thres
         # drop duplicates but ignore version
         iv.drop_duplicates(inplace=True)
         iv.set_index('instance', inplace=True)
-        iv.to_csv(ivfile, mode='w')
+        iv.to_hdf(ivfile, 'penalty_threshold_inventory', mode='w')
 
 def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_penalty_unique, max_penalty_conflict, radiuses, instancefile, inventoryfile_penalty_threshold, store_inventory, validityMapFile, **solve_instance_args):
     """
@@ -238,8 +239,8 @@ def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_p
 def main():
     parser = argparse.ArgumentParser(description='Solve departure only model exactly and scan for threshold in penalty weights at which the solutions become invalid',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--inventoryfile', default='data/instances/analysis/inventory.csv', help='inventory file')
-    parser.add_argument('--inventoryfile_penalty_threshold', default='data/instances/analysis/inventory-penalty-weight-threshold.csv', help='inventory file for penalty weight threshold')
+    parser.add_argument('--inventoryfile', default='data/instances/analysis/inventory.h5', help='inventory file')
+    parser.add_argument('--inventoryfile_penalty_threshold', default='data/instances/analysis/inventory-penalty-weight-threshold.h5', help='inventory file for penalty weight threshold')
     parser.add_argument('--pmin', default=0, help='minimum index of partition to consider', type=int)
     parser.add_argument('--pmax', default=79, help='maximum index of partition to consider', type=int)
     parser.add_argument('--wstart', default=0.001, help='starting value of penalty weight for bisection algorithm (rounded to 3 digits)', type=float)

@@ -428,19 +428,14 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
         with lock.acquire():
             # read in inventory file if existent
             if os.path.exists(inventoryfile):
-                inventory_before = pd.read_csv(inventoryfile, index_col='instance')
+                inventory_before = pd.read_hdf(inventoryfile, 'inventory')
                 inventory = pd.concat([inventory_before, inventory])
 
-            # index to column for duplication dropping
-            inventory.reset_index(level=0, inplace=True)
-            # drop duplicates but ignore version and ignoring small differences
-            print inventory
-            print inventory.drop(['version'], axis=1)
-            print inventory.drop(['version'], axis=1).round(10)
-            inventory = inventory[~inventory.drop(['version'], axis=1).round(10).duplicated()]
-            # instance column back to index
-            inventory.set_index('instance', inplace=True)
-            inventory.to_csv(inventoryfile, mode='w')
+            # drop duplicates but ignore version
+            columnsToConsider = inventory.columns.values.tolist()
+            columnsToConsider.remove('version')
+            inventory.drop_duplicates(subset=columnsToConsider, keep='last', inplace=True)
+            inventory.to_hdf(inventoryfile, 'inventory', mode='w')
 
 def solve_instances(instancefiles, penalty_weights, np=1, **kwargs):
     if np != 1:
