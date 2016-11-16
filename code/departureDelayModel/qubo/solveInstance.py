@@ -51,6 +51,7 @@ def main():
         'conflict': args.penalty_weight_conflict
     }
     solve_instance(instancefile=args.input,
+                   outputFolder=args.output,
                    num_embed=args.num_embed,
                    use_snapshots=args.use_snapshots,
                    embedding_only=args.embedding_only,
@@ -96,7 +97,7 @@ def save_array_in_group(array, filename, groupname, datasetname, mode='a'):
     group.create_dataset(datasetname, data=array)
     f.close()
 
-def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
+def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
 
     # invertory data
     inventorydata = {}
@@ -106,21 +107,17 @@ def solve_instance(instancefile, penalty_weights, num_embed=1, use_snapshots=Fal
     pwstr = "pw"
     for k, v in penalty_weights.items():
         pwstr = pwstr + "-%s%0.3f" % (k, v)
-    # read in instance and calculate QUBO and index mapping
-    resultfile = "%s.results.h5" % instancefile.rstrip('.h5')
-    # remove group representing penalty weights in resultfile
+    if not os.path.exists(outputFolder):
+        os.mkdir(outputFolder)
+    resultfile = "%s/%s.results.h5" % (outputFolder, os.path.basename(instancefile).rstrip('.h5'))
     hardConstraints = ['conflict', 'unique']
-    if os.path.exists(resultfile):
-        f = h5py.File(resultfile, 'a')
-        if pwstr in f:
-            del f[pwstr]
-        f.close()
 
+    # read in instance and calculate QUBO and index mapping
     subqubonames = ['departure', 'conflict', 'unique']
     grouplist = []
-    grouplist.append('qubo')
+    grouplist.append('%s/qubo' % pwstr)
     for name in subqubonames:
-        grouplist.append('subqubo-%s' % name)
+        grouplist.append('%s/subqubo-%s' % (pwstr, name))
     grouplist.append('variable')
     if not all([exists(resultfile, g) for g in grouplist]) or not use_snapshots:
         print "Calculate QUBO ..."
