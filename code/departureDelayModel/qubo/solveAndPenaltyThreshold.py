@@ -299,11 +299,12 @@ def main():
                                             'store_inventory': True}
         solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
         if nproc != 1:
-            pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
+            result = pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
         else:
             solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
 
     if nproc != 1:
+        result.get()
         pool.close()
         pool.join()
 

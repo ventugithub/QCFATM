@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import tools
 import argparse
-from mpl_toolkits.basemap import Basemap
 import networkx as nx
 
 def prepareWorldMapPlot(llcrnrlon=None, llcrnrlat=None, urcrnrlon=None, urcrnrlat=None, centerLat=0.0, centerLon=0.0):
@@ -15,6 +14,7 @@ def prepareWorldMapPlot(llcrnrlon=None, llcrnrlat=None, urcrnrlon=None, urcrnrla
     fig.add_subplot(1, 1, 1)
 
     # Create a map, using the Gall-Peters projection,
+    from mpl_toolkits.basemap import Basemap
     map = Basemap(projection='gall',
                   # with low resolution,
                   resolution='l',
@@ -249,6 +249,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
     ax = fig.add_subplot(1, 1, 1)
 
     # Create a map, using the Gall-Peters projection,
+    from mpl_toolkits.basemap import Basemap
     map = Basemap(ax=ax, projection='gall',
                   # with low resolution,
                   resolution='l',

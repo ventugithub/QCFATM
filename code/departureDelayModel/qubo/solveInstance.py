@@ -107,8 +107,11 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
     pwstr = "pw"
     for k, v in penalty_weights.items():
         pwstr = pwstr + "-%s%0.3f" % (k, v)
+    # create folders if necessary
     if not os.path.exists(outputFolder):
-        os.mkdir(outputFolder)
+        os.makedirs(outputFolder)
+    if not os.path.exists(os.path.dirname(inventoryfile)):
+        os.makedirs(os.path.dirname(inventoryfile))
     resultfile = "%s/%s.results.h5" % (outputFolder, os.path.basename(instancefile).rstrip('.h5'))
     hardConstraints = ['conflict', 'unique']
 
