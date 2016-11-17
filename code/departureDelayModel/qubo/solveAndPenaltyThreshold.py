@@ -3,7 +3,6 @@ import os
 import argparse
 import multiprocessing
 import h5py
-import pandas as pd
 import numpy as np
 import solveInstance as si
 
@@ -39,19 +38,16 @@ def solveAndCheckValidity(instancefile, w2, w3, **solve_instance_args):
     solve the instance for given penalty weights. gives back validity and energy of solution
     """
     si.solve_instance(instancefile, penalty_weights={'unique': w2, 'conflict': w3}, **solve_instance_args)
-    inventory = pd.read_hdf(solve_instance_args['inventoryfile'])
-    inventory = inventory.reset_index()
-    subset = inventory[(inventory.instance == instancefile) & (np.abs(inventory.penalty_weight_unique - w2) < 1E-14) & (np.abs(inventory.penalty_weight_conflict - w3) < 1E-14) & (inventory.exact)]
-    if len(subset) == 0:
-        print "Warning: No exact solution available"
-        return None
-    elif len(subset) != 1:
-        print "Duplicates in inventory:"
-        print subset
-        raise ValueError('Duplicates in inventory')
-
-    isValid = subset.iloc[0]['isValid']
-    energy = subset.iloc[0]['energy']
+    resultfile = "%s/%s.results.h5" % (solve_instance_args['outputFolder'], os.path.basename(instancefile).rstrip('.h5'))
+    pwstr = "pw"
+    penalty_weights = {'unique': w2, 'conflict': w3}
+    for k, v in penalty_weights.items():
+        pwstr = pwstr + "-%s%0.3f" % (k, v)
+    f = h5py.File(resultfile, 'r')
+    g = f[pwstr]
+    gg = g['exactSolution']
+    isValid = gg.attrs['isValid']
+    energy = gg['energy'].value
     return isValid, energy
 
 def getPointOnCircle(center, radius, angle):
