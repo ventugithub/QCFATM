@@ -8,10 +8,9 @@ def main():
     parser.add_argument('-n', '--host', default='pfe23', help='host name on cluster')
     parser.add_argument('-p', '--path', default='projects/qcfatm/code/departureDelayModel/qubo/data/', help='path to data folder on cluster')
     parser.add_argument('-d', '--destination', default='data', help='path to destination data folder on local machine')
-    parser.add_argument('-e', '--exclude', default='*.npy', help='exclude string (e.g. "*.npy", argument to rsync exclude option)')
     args = parser.parse_args()
 
-    cmd = "rsync -avz --exclude '%s' %s@%s:%s %s" % (args.exclude, args.user, args.host, args.path, args.destination)
+    cmd = "rsync -avz %s@%s:%s %s" % (args.user, args.host, args.path, args.destination)
     print cmd
     subprocess.call(cmd, shell=True)
 if __name__ == "__main__":
