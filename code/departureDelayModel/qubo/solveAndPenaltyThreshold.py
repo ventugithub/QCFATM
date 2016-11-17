@@ -109,11 +109,8 @@ def findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, inst
         valid, energy = solveAndCheckValidity(instancefile, u, v, **solve_instance_args)
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
-            wu = 0
-            wc = 0
-            found = True
             print "WARNING: Energy of solution is zero. Stop search for penalty weight threshold"
-            break
+            return 0, 0, False
         # break if exact solution was not found
         if valid is None or np.isnan(valid):
             print "WARNING: No exact solution available. Stop search for penalty weight threshold"
@@ -162,10 +159,8 @@ def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, **solve_in
         valid, energy = solveAndCheckValidity(instancefile, wfixedunique, w, **solve_instance_args)
         # for trivial solutions, any choice of penealy weights yields the result
         if abs(energy) < 1E-13:
-            wminabove = 0
-            found = False
             print "WARNING: Energy of solution is zero. Stop search for penalty weight threshold"
-            break
+            return wfixedunique, 0, False
         # break if exact solution was not found
         if valid is None or np.isnan(valid):
             print "WARNING: No exact solution available. Stop search for penalty weight threshold"
