@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 import argparse
 import os
+import h5py
 
 import instance
 import analysis
@@ -16,7 +17,7 @@ def main():
     parser.add_argument('--delayStep', default=3, help='delay step', type=int)
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('-t', '--mintime', default=180, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
     parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
     parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
     parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
@@ -83,9 +84,17 @@ def main():
                 arrivalTimes.append((int(pc.time1.min()), int(pc.time2.min())))
                 cnfl.append((int(pc.flight1.iloc[0]), int(pc.flight2.iloc[0])))
         flights = [int(f) for f in flights]
-        filename = args.output + "/atm_instance_partition%04i_f%04i_c%05i.yaml" % (count, N, len(conflicts))
+        filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5" % (count, args.delayStep, args.maxDelay)
         inst = instance.Instance(flights, cnfl, arrivalTimes, delays)
-        inst.save(filename)
+        inst.save_hdf5(filename)
+        f = h5py.File(filename, 'a')
+        # save metadata
+        for arg in vars(args):
+            val = getattr(args, arg)
+            if val is not None:
+                f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
+        f.close()
+
         count = count + 1
 
 if __name__ == "__main__":

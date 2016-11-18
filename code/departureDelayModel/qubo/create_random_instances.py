@@ -93,10 +93,10 @@ def create_instances(output='data/',
                 t2 = random.randint(Tmin, Tmax)
                 arrivalTimes.append((t1, t2))
             delays = [int(d) for d in np.arange(0, delayMax + 1, delayDelta)]
-            filename = "%s/atm_instance_F%03i_C%03i_T%03i_t%03i_D%03i_d%03i_n%05i.yml" % (output, F, C, TRangeMax, TRangeDelta, delayMax, delayDelta, n)
+            filename = "%s/atm_instance_F%03i_C%03i_T%03i_t%03i_D%03i_d%03i_n%05i.h5" % (output, F, C, TRangeMax, TRangeDelta, delayMax, delayDelta, n)
             if not names_only:
                 inst = instance.Instance(flights, conflicts, arrivalTimes, delays)
-                inst.save(filename)
+                inst.save_hdf5(filename)
 
             # progress bar
             if count % 100 == 0:

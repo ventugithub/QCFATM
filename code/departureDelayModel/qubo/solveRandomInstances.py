@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import argparse
 import os
-import multiprocessing
 
 import solveInstance as si
 from create_random_instances import create_instances as ci
 
 def main():
     parser = argparse.ArgumentParser(description='Create NASIC instances', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-o', '--output', default='data/random_instances', help='output folder')
+    parser.add_argument('-o', '--output', default='data/random_instances/instances', help='output folder for instances')
+    parser.add_argument('--outputResults', default='data/random_instances/results', help='output folder for results')
     parser.add_argument('-n', '--repetitions', default='10', help='number of repetitions', type=int)
     parser.add_argument('-f', '--Fmin', default='10', help='Minimum number of flights', type=int)
     parser.add_argument('-F', '--Fmax', default='10', help='Maximum number of flights', type=int)
@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
     parser.add_argument('--store_everything', action='store_true', help='store everything (e.g. physical raw solution)')
-    parser.add_argument('--inventory', default='data/random_instances/inventory.csv', help='Inventory file')
+    parser.add_argument('--inventory', default='data/random_instances/analysis/inventory.h5', help='Inventory file')
     parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
     parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
 
@@ -62,7 +62,9 @@ def main():
 
     # create output folders
     if not os.path.exists(args.output):
-        os.mkdir(args.output)
+        os.makedirs(args.output)
+    if not os.path.exists(os.path.dirname(args.inventory)):
+        os.makedirs(os.path.dirname(args.inventory))
 
     filenames = ci(output=args.output,
                    repetitions=args.repetitions,
@@ -74,6 +76,7 @@ def main():
                    dmin=args.dmin, dmax=args.dmax)
 
     solve_instance_args = {'num_embed': args.num_embed,
+                           'outputFolder': args.outputResults,
                            'use_snapshots': args.use_snapshots,
                            'qubo_creation_only': args.qubo_creation_only,
                            'embedding_only': args.embedding_only,

@@ -2,6 +2,8 @@ import itertools as it
 import re
 import yaml
 import sys
+import numpy as np
+import arraydict
 
 class Polynomial:
     """A polynomial of binary variables defined as
@@ -202,12 +204,24 @@ class Polynomial:
         for i, v in sorted(self.poly.items()):
             print "%s %s" % (i, v)
 
-    def save(self, filename):
+    def save_hdf5(self, filename, groupname='Polynomial', mode='a'):
+        adict = arraydict.ArrayDict()
+        for k, val in self.poly.items():
+            adict[k] = np.array(val)
+        adict.save(filename, groupname, mode)
+
+    def load_hdf5(self, filename, groupname='Polynomial'):
+        adict = arraydict.ArrayDict()
+        adict.load(filename, groupname)
+        for k, v in adict.dict.items():
+            self.poly[k] = v
+
+    def save_txt(self, filename):
         f = open(filename, 'w')
         yaml.dump(self.poly, f)
         f.close()
 
-    def load(self, filename):
+    def load_txt(self, filename):
         f = open(filename)
         self.poly = yaml.load(f)
         f.close()
