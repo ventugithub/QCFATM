@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--Tmax', default='100', help='Maximum value of total time range ', type=int)
     parser.add_argument('--tmin', default='10', help='Minimum value of uncertainty in arrival time at conflict', type=int)
     parser.add_argument('--tmax', default='10', help='Maximum value of uncertainty in arrival time at conflict', type=int)
+    parser.add_argument('--tspread', default='3', help='Maximum spread in time difference between trajctory points inside conflict', type=int)
     parser.add_argument('--Dmin', default='18', help='Minimum value maximal delays', type=int)
     parser.add_argument('--Dmax', default='18', help='Maximum value maximal delays', type=int)
     parser.add_argument('--dmin', default='3', help='Minimum value delay steps', type=int)
@@ -28,6 +29,7 @@ def main():
 
     create_instances(output=args.output,
                      repetitions=args.repetitions,
+                     tspread=args.tspread,
                      Fmin=args.Fmin, Fmax=args.Fmax,
                      Cmin=args.Cmin, Cmax=args.Cmax,
                      Tmin=args.Tmin, Tmax=args.Tmax,
@@ -45,6 +47,7 @@ def create_instances(output='data/',
                      Tmax=100,
                      tmin=10,
                      tmax=10,
+                     tspread=3,
                      Dmin=18,
                      Dmax=18,
                      dmin=3,
@@ -70,6 +73,7 @@ def create_instances(output='data/',
     # init progress bar
     pbar = progressbar.ProgressBar().start()
     NInstances = len(FValues) * len(CValues) * len(TValues) * len(tValues) * len(DValues) * len(dValues) * Nr
+    print NInstances
     pbar.maxval = NInstances
     print 'Calculate %i instances' % NInstances
     count = 0
@@ -84,18 +88,21 @@ def create_instances(output='data/',
                 while (j == i):
                     j = flights[random.randint(1, F - 1)]
                 conflicts.append((i, j))
-            arrivalTimes = []
+            timeLimits = []
             for c in range(C):
                 T = random.randint(0 + TRangeDelta, TRangeMax - TRangeDelta)
                 Tmin = T - TRangeDelta
                 Tmax = T + TRangeDelta
                 t1 = random.randint(Tmin, Tmax)
                 t2 = random.randint(Tmin, Tmax)
-                arrivalTimes.append((t1, t2))
+                ts = random.randint(0, tspread)
+                tmin = t1 - t2 - ts
+                tmax = t1 - t2 + ts
+                timeLimits.append((tmin, tmax))
             delays = [int(d) for d in np.arange(0, delayMax + 1, delayDelta)]
-            filename = "%s/atm_instance_F%03i_C%03i_T%03i_t%03i_D%03i_d%03i_n%05i.h5" % (output, F, C, TRangeMax, TRangeDelta, delayMax, delayDelta, n)
+            filename = "%s/atm_instance_F%03i_C%03i_T%03i_t%03i_D%03i_d%03i_s%03i_n%05i.h5" % (output, F, C, TRangeMax, TRangeDelta, delayMax, delayDelta, tspread, n)
             if not names_only:
-                inst = instance.Instance(flights, conflicts, arrivalTimes, delays)
+                inst = instance.Instance(flights, conflicts, timeLimits, delays)
                 inst.save_hdf5(filename)
 
             # progress bar

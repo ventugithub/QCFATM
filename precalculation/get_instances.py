@@ -17,10 +17,10 @@ def main():
     parser.add_argument('--delayStep', default=3, help='delay step', type=int)
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=180, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
-    parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
+    parser.add_argument('-t', '--mintime', default=18, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('--delayPerConflict', default=0, help='Delay introduced by each conflict avoiding maneuver', type=int)
     parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
-    parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
+    parser.add_argument('--maxDepartDelay', default=18, help='Maximum departure delay', type=int)
     parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
     parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
     parser.add_argument('--flights2ConflictsFile', help='input file the mapping from flight to conflict indices (overwrites -t and -d)')
@@ -68,24 +68,26 @@ def main():
         conflicts = list(set(conflicts))
         conflictsPerPartition.append((N, flights, conflicts))
 
+    parallelConflicts['timediff'] = parallelConflicts['time1'] - parallelConflicts['time2']
     delays = [int(d) for d in np.arange(0, args.maxDelay + 1, args.delayStep)]
     NPointConflicts = len(pointConflicts)
     count = 0
     for N, flights, conflicts in conflictsPerPartition:
-        arrivalTimes = []
+        timeLimits = []
         cnfl = []
         for c in [int(n) for n in conflicts]:
             if c < NPointConflicts:
                 pc = pointConflicts.loc[c]
-                arrivalTimes.append((int(pc.time1), int(pc.time2)))
+                deltaT = int(pc.time1) - int(pc.time2)
+                timeLimits.append((deltaT, deltaT))
                 cnfl.append((int(pc.flight1), int(pc.flight2)))
             else:
                 pc = parallelConflicts.loc[c - NPointConflicts]
-                arrivalTimes.append((int(pc.time1.min()), int(pc.time2.min())))
+                timeLimits.append((int(pc.timediff.min()), int(pc.timediff.max())))
                 cnfl.append((int(pc.flight1.iloc[0]), int(pc.flight2.iloc[0])))
         flights = [int(f) for f in flights]
         filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5" % (count, args.delayStep, args.maxDelay)
-        inst = instance.Instance(flights, cnfl, arrivalTimes, delays)
+        inst = instance.Instance(flights, cnfl, timeLimits, delays)
         inst.save_hdf5(filename)
         f = h5py.File(filename, 'a')
         # save metadata

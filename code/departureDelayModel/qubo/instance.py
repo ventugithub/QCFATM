@@ -18,7 +18,7 @@ class Instance:
         elif len(args) == 4:
             self.flights = args[0]
             self.conflicts = args[1]
-            self.arrivalTimes = args[2]
+            self.timeLimits = args[2]
             self.delays = args[3]
         else:
             raise ValueError('Error in instance creation: Wrong number of arguments')
@@ -28,7 +28,7 @@ class Instance:
         data = {}
         data['flights'] = self.flights
         data['conflicts'] = self.conflicts
-        data['arrivalTimes'] = self.arrivalTimes
+        data['timeLimits'] = self.timeLimits
         data['delays'] = self.delays
         f = open(filename, 'w')
         yaml.dump(data, f)
@@ -41,7 +41,7 @@ class Instance:
         f.close()
         self.flights = data['flights']
         self.conflicts = data['conflicts']
-        self.arrivalTimes = data['arrivalTimes']
+        self.timeLimits = data['timeLimits']
         self.delays = data['delays']
         self.check()
 
@@ -52,7 +52,7 @@ class Instance:
         group = f.create_group(name)
         group.create_dataset('delays', data=np.array(self.delays, dtype=int))
         group.create_dataset('flights', data=np.array(self.flights, dtype=int))
-        group.create_dataset('arrivalTimes', data=np.array(self.arrivalTimes, dtype=int))
+        group.create_dataset('timeLimits', data=np.array(self.timeLimits, dtype=int))
         group.create_dataset('conflicts', data=np.array(self.conflicts, dtype=int))
         group.attrs['Number of flights'] = len(self.flights)
         group.attrs['Number of conflicts'] = len(self.conflicts)
@@ -63,16 +63,16 @@ class Instance:
         if name not in f:
             raise ValueError('Did not find %s group in hdf5 file %s' % (name, filename))
         group = f[name]
-        if any([d not in group for d in ['delays', 'flights', 'arrivalTimes', 'conflicts']]):
+        if any([d not in group for d in ['delays', 'flights', 'timeLimits', 'conflicts']]):
             raise ValueError('Did not find all %s datasets in hdf5 file %s' % (name, filename))
         dataset = group['delays']
         self.delays = dataset.value.tolist()
         dataset = group['flights']
         self.flights = dataset.value.tolist()
-        dataset = group['arrivalTimes']
-        self.arrivalTimes = []
+        dataset = group['timeLimits']
+        self.timeLimits = []
         for i, j in dataset.value:
-            self.arrivalTimes.append((i, j))
+            self.timeLimits.append((i, j))
         dataset = group['conflicts']
         self.conflicts = []
         for k, p in dataset.value:
@@ -87,5 +87,5 @@ class Instance:
             flights.append(j)
         if not set(flights).issubset(set(self.flights)):
             raise ValueError('Error in instance creation: mismatch between conflicts and flight numbers')
-        if len(self.conflicts) != len(self.arrivalTimes):
+        if len(self.conflicts) != len(self.timeLimits):
             raise ValueError('Error in instance creation: dimension mismatch between conflicts and arrival times')

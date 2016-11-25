@@ -2,9 +2,11 @@ from polynomial import Polynomial as poly
 import instance
 import variable
 
-def isRealConflict(delay1, delay2, t1, t2, threshold=3):
-    diff = abs(delay1 - delay2 + t1 - t2)
-    if diff < threshold:
+def isRealConflict(delay1, delay2, deltaTMin, deltaTMax, threshold=3):
+    dmin = - threshold - deltaTMax
+    dmax = - threshold + deltaTMin
+    delayDiff = delay1 - delay2
+    if delayDiff > dmin and delayDiff < dmax:
         return 1
     else:
         return 0
@@ -16,7 +18,7 @@ def get_qubo(input, penalty_weights, unary=False):
     flights = inst.flights
     delays = inst.delays
     conflicts = inst.conflicts
-    arrivalTimes = inst.arrivalTimes
+    timeLimits = inst.timeLimits
     I = len(flights)
     K = len(conflicts)
 
@@ -51,7 +53,7 @@ def get_qubo(input, penalty_weights, unary=False):
         Q = poly()
         for a in range(NDelay):
             for b in range(NDelay):
-                if isRealConflict(delayValues[a], delayValues[b], arrivalTimes[k][0], arrivalTimes[k][1]):
+                if isRealConflict(delayValues[a], delayValues[b], timeLimits[k][0], timeLimits[k][1]):
                     Q += poly({(var.d[i, a],): 1}) * poly({(var.d[j, b],): 1})
         subqubos['conflict'] += Q
     qubo += penalty_weights['conflict'] * subqubos['conflict']

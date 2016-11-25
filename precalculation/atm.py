@@ -89,6 +89,7 @@ def main():
         f.write('# count\tnumber of conflicts\n')
         while not diff == 0 and count < iterMax:
             flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
+            flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
             NConflicts = len(pointConflicts) + len(parallelConflicts)
             pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
             NConflictsNew = len(pointConflicts) + len(parallelConflicts)
