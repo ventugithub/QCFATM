@@ -190,7 +190,7 @@ def bisectionToThreshold(wfixedunique, wstart, delta_w, instancefile, **solve_in
         wminabove = np.nan
     return wfixedunique, wminabove, found
 
-def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_penalty_unique, max_penalty_conflict, radiuses, instancefile, store_inventory, **solve_instance_args):
+def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_penalty_unique, max_penalty_conflict, radiuses, instancefile, **solve_instance_args):
     """
     solve instances along the boundary btw. valid and invalid solution.
     """
@@ -205,7 +205,7 @@ def solveAndFindPenaltyThreshold(wfixedunique, wstart, delta_w, direction, max_p
         finished = False
         while not finished:
             wunique, wconflict, success = findThresholdOnCircle(wunique, wconflict, radiuses, direction, delta_w, instancefile, **solve_instance_args)
-            if success and store_inventory:
+            if success:
                 validityBoundary.append((wunique, wconflict))
                 print "Found threshold point at (%03f, %03f)" % (wunique, wconflict)
             elif not success:
@@ -286,8 +286,7 @@ def main():
                                             'max_penalty_unique': max_penalty_unique,
                                             'max_penalty_conflict': max_penalty_conflict,
                                             'radiuses': radiuses,
-                                            'instancefile': instancefile,
-                                            'store_inventory': True}
+                                            'instancefile': instancefile}
         solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
         if nproc != 1:
             result = pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
