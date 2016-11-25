@@ -36,7 +36,8 @@ where
 $\tau'_{i,0} = \tau_{i,0} + d_i$,
 $\tau'_{i,1} = \tau_{i,1} + d_i$, and
 ${x'}_{i,t} = x_{i, t - d_i}$.
-Let $T_i = [\tau_{i, 0}, \tau_{i, 1}]$.
+Let $T_i = [\tau_{i, 0}, \tau_{i, 1}]$ and
+$T_i^{n, m} = [\tau_{i,0} + n, \tau_{i,0} + m]$.
 
 The problem is to find the set of delays 
 $\mathbf d = {\left(d_i\right)}_{i=1}^n$ such that $\sum_{i=1}^n d_i$ is minimized subject to the constraint that conflicts are avoided.
@@ -44,11 +45,20 @@ Let $\Delta_x$ and $\delta_t$ be respectively the spatial and temporal minimum s
 
 Two spacetime points $\mathbf x'_{i,t}$ and $\mathbf x'_{j,u}$ are in conflict if 
 $\|\mathbf x'_{i,t} - \mathbf x'_{j,u}\| \leq \Delta_x$ and $|t - u| \leq \Delta_t$.
+For each pair of flights $(i, j)$ we group together subsequent spacetime points, which are in spatial conflict
+\begin{align*}
+    \mathcal{X}_k = &\bigl\{ (x_{i,t},x_{j,u}) \; | \;  \|\mathbf x_{i,t} - \mathbf x_{j,u}\| \leq \Delta_x \bigr. \\
+    &\bigl. \forall (t, u) \in T_{i}^{n_k, n_k + M_k}  \times T_{j}^{m_k, m_k + M_k}\bigr\} 
+\end{align*}
+We call these groups \emph{spatial conflicts}\footnote{Later on, we will drop all the spatial conflicts which can not become real conflicts, given the range of allowed delays. The conflicts left are called \emph{potential conflicts}.}.
+Each spatial conflict $\mathcal{X}_k$ has exactly two involved flights $I_k = (i_k, j_k)$.
+It is characterized by  the arrival times of the flights $(n_k, m_k)$ at the spatial conflict and the number of trajectory points involved $M_k$.
+We denote the set of all conflicts by $\mathcal{K}$.
 
-For flights $i$ and $j$, let 
-$T_{i,j} = 
-\left\{(t, u) \in T_i \times T_j \middle| \left\|x_{i,t} - x_{j,u}\right\| \leq \Delta_x \right\}$.
-For every $(t, u) \in T_{i, j}$, we have the constraint $|(t + d_i) - (u + d_j)| > \Delta_t$, 
+For all $k \in \mathcal{K}$ let 
+$T_k = 
+\left\{(t, u) \in T_{i_k}^{n_k, n_k + M_k} \times T_{j_k}^{m_k, m_k + M_k} \right\}$.
+For every $(t, u) \in T_k$, we have the constraint $|(t + d_{i_k}) - (u + d_{j_k})| > \Delta_t$, 
 i.e.
 %\begin{equation}
 %\begin{split}
@@ -63,23 +73,23 @@ i.e.
 %In other words, 
 there is a conflict if 
 \begin{equation}
-- \Delta_t - (t - u) \leq d_i - d_j \leq \Delta_t - (t -u).
+    - \Delta_t - (t - u) \leq d_{i_k} - d_{j_k} \leq \Delta_t - (t -u).
 \end{equation}
 Let 
-$D_{i, j, t, u} = [- \Delta_t - (t -u), \Delta_t - (t -u)]$
+$D_{k, t, u} = [- \Delta_t - (t -u), \Delta_t - (t -u)]$
 and
-$D_{i, j} = \bigcup_{(t, u) \in T_{i, j}} D_{i, j, t, u}$.
-Assuming that the segments $\left\{D_{i, j, t, u} \middle| (t, u) \in T_{i, j}\right\}$ are contiguous, this simplifies to
-$D_{i, j} = 
-\left[b_{i, j, 0}, b_{i, j, 1}\right]$,
+$D_{k} = \bigcup_{(t, u) \in T_k} D_{k, t, u}$.
+Assuming that the segments $\left\{D_{k, t, u} \middle| (t, u) \in T_k\right\}$ are contiguous, this simplifies to
+$D_k = 
+\left[b_{k, 0}, b_{k, 1}\right]$,
 where
 \begin{align}
-b_{i, j, 0} &= -\Delta_t - \max_{(t, u) \in T_{i, j}} \{t -u\},\\
-b_{i, j, 1} &= \Delta_t - \min_{(t, u) \in T_{i, j}} \{t -u\}.
+b_{k, 0} &= -\Delta_t - \max_{(t, u) \in T_k} \{t -u\},\\
+b_{k, 1} &= \Delta_t - \min_{(t, u) \in T_k} \{t -u\}.
 \end{align}
 
 In this notation, the conflict-avoidance constraint can be formulated as 
-$d_i - d_j \notin D_{i, j}$ for all $i$, $j$.
+$d_{i_k} - d_{j_k} \notin D_k$ for all $k$.
 
 %If $|t - u| > \dmax + \Delta_t$, then this is satisfied for all values of $d_i$, $d_j$:
 %\begin{align}
@@ -115,7 +125,7 @@ $d_i - d_j \notin D_{i, j}$ for all $i$, $j$.
 The delay will be discretized to resolution $\Delta_d$; that is, each $d_i \in \{0, \Delta_d, 2\Delta_d, \ldots, \dmax\}$.
 When $\Delta_d = 0$, $d_i \in [0, \dmax]$.
 
-An instance is specified by $n$, $\dmax$, $\Delta_d$, and ${\left(b_{i, j, k}\right)}_{\substack{\{i, j\} \in \binom{[n]}{2} \\ k \in \{0, 1\}}}$.
+An instance is specified by $\dmax$, $\Delta_d$, and ${\left(b_{k, a}\right)}_{\substack{\{k\} \in \mathcal{K} \\ a \in \{0, 1\}}}$.
 
 \section{Mapping to QUBO}
 
@@ -143,10 +153,14 @@ The cost function to be minimized is
 Conflicts are avoided using the penalty  function
 \begin{equation}
 \func{conflict} = 
-\sum_{\{i, j\} \in \binom{[n]}{2}}
-\penweight{conflict}_{i, j}
-\sum_{\alpha, \beta \in [\dmax/\Delta_d]} d_{i,\alpha} d_{j, \beta}.
+    \sum_{k \in \mathcal{K}}
+\penweight{conflict}_k
+\sum_{\alpha, \beta \in C_k} d_{i_k,\alpha} d_{j_k, \beta} 
 \end{equation}
+where $C_k$ is the set of indices $(\alpha, \beta)$ at which a conflict occurs
+\begin{equation*}
+    C_k = \left\{(\alpha, \beta) \; \middle| \; \Delta_d \alpha - \Delta_d \beta \in [b_{k,0}, b_{k,1}] \right\}
+\end{equation*}
 
 Putting it together, we have
 \begin{equation}
