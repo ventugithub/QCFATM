@@ -59,9 +59,9 @@ cdef getCoarseRawPointConflict(vector[vector[vector[vector[vector[float]]]]] & c
     J: coarse grid index in longitude direction
     K: coarse grid index in time direction
     """
-    rangeI = np.array((I, I + 1), dtype=int)
-    rangeJ = np.array((J, J + 1), dtype=int)
-    rangeK = np.array((K, K + 1), dtype=int)
+    rangeI = np.arange(I - 1, I + 2, dtype=int)
+    rangeJ = np.arange(J - 1, J + 2, dtype=int)
+    rangeK = np.arange(K - 1, K + 2, dtype=int)
     cdef int i
     cdef int j
     cdef int k
