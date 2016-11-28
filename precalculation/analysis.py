@@ -15,126 +15,38 @@ def prepareWorldMapPlot(llcrnrlon=None, llcrnrlat=None, urcrnrlon=None, urcrnrla
 
     # Create a map, using the Gall-Peters projection,
     from mpl_toolkits.basemap import Basemap
-    map = Basemap(projection='gall',
-                  # with low resolution,
-                  resolution='l',
-                  # And threshold 100000
-                  area_thresh=100000.0,
-                  # Center
-                  lat_0=centerLat, lon_0=centerLon,
-                  # corners
-                  llcrnrlon=llcrnrlon,
-                  llcrnrlat=llcrnrlat,
-                  urcrnrlon=urcrnrlon,
-                  urcrnrlat=urcrnrlat
-                  )
+    worldmap = Basemap(projection='gall',
+                       # with low resolution,
+                       resolution='l',
+                       # And threshold 100000
+                       area_thresh=100000.0,
+                       # Center
+                       lat_0=centerLat, lon_0=centerLon,
+                       # corners
+                       llcrnrlon=llcrnrlon,
+                       llcrnrlat=llcrnrlat,
+                       urcrnrlon=urcrnrlon,
+                       urcrnrlat=urcrnrlat
+                       )
 
     # Draw the coastlines on the map
-    map.drawcoastlines()
+    worldmap.drawcoastlines()
 
     # Draw country borders on the map
-    map.drawcountries()
+    worldmap.drawcountries()
 
     # Fill the land with grey
-    map.fillcontinents(color='#888888')
+    worldmap.fillcontinents(color='#888888')
 
     # Draw the map boundaries
-    map.drawmapboundary(fill_color='#f4f4f4')
-    return map
+    worldmap.drawmapboundary(fill_color='#f4f4f4')
+    return worldmap
 
-def arrowplot(axes, x, y, narrs=30, dspace=0.5, direc='pos', hl=0.3, hw=6, c='black'):
-    ''' narrs  :  Number of arrows that will be drawn along the curve
-
-        dspace :  Shift the position of the arrows along the curve.
-                  Should be between 0. and 1.
-
-        direc  :  can be 'pos' or 'neg' to select direction of the arrows
-
-        hl     :  length of the arrow head
-
-        hw     :  width of the arrow head
-
-        c      :  color of the edge and face of the arrow head
-    '''
-
-    # r is the distance spanned between pairs of points
-    r = [0]
-    for i in range(1, len(x)):
-        dx = x[i]-x[i-1]
-        dy = y[i]-y[i-1]
-        r.append(np.sqrt(dx*dx+dy*dy))
-    r = np.array(r)
-
-    # rtot is a cumulative sum of r, it's used to save time
-    rtot = []
-    for i in range(len(r)):
-        rtot.append(r[0:i].sum())
-    rtot.append(r.sum())
-
-    # based on narrs set the arrow spacing
-    aspace = r.sum() / narrs
-
-    if direc is 'neg':
-        dspace = -1.*abs(dspace)
-    else:
-        dspace = abs(dspace)
-
-    # will hold tuples of x,y,theta for each arrow
-    arrowData = []
-    # current point on walk along data
-    # could set arrowPos to 0 if you want
-    # an arrow at the beginning of the curve
-    arrowPos = aspace*(dspace)
-
-    ndrawn = 0
-    rcount = 1
-    while arrowPos < r.sum() and ndrawn < narrs:
-        x1, x2 = x[rcount - 1], x[rcount]
-        y1, y2 = y[rcount - 1], y[rcount]
-        da = arrowPos - rtot[rcount]
-        theta = np.arctan2((x2 - x1), (y2 - y1))
-        ax = np.sin(theta) * da + x1
-        ay = np.cos(theta) * da + y1
-        arrowData.append((ax, ay, theta))
-        ndrawn += 1
-        arrowPos += aspace
-        while arrowPos > rtot[rcount+1]:
-            rcount += 1
-            if arrowPos > rtot[-1]:
-                break
-
-    # could be done in above block if you want
-    for ax, ay, theta in arrowData:
-        # use aspace as a guide for size and length of things
-        # scaling factors were chosen by experimenting a bit
-
-        dx0 = np.sin(theta) * hl / 2. + ax
-        dy0 = np.cos(theta) * hl / 2. + ay
-        dx1 = -1. * np.sin(theta) * hl / 2. + ax
-        dy1 = -1. * np.cos(theta) * hl / 2. + ay
-
-        if direc is 'neg':
-            ax0 = dx0
-            ay0 = dy0
-            ax1 = dx1
-            ay1 = dy1
-        else:
-            ax0 = dx1
-            ay0 = dy1
-            ax1 = dx0
-            ay1 = dy0
-
-        axes.annotate('', xy=(ax0, ay0), xycoords='data',
-                      xytext=(ax1, ay1), textcoords='data',
-                      arrowprops=dict(headwidth=hw, ec=c, fc=c))
-
-    axes.plot(x, y, color=c)
-
-def addPoints(map, trajectory, markersize=2, color='b', marker='+', linewidth=1, linestyle='-', latitude='latitude', longitude='longitude'):
+def addPoints(worldmap, trajectory, markersize=2, color='b', marker='+', linewidth=1, linestyle='-', latitude='latitude', longitude='longitude'):
     """ Plot trajectory points
 
     Arguments:
-        map: basemap object for plotting
+        worldmap: basemap object for plotting
         trajectory: Pandas object containing columns for latitude and longitude
         markersize: matplotlib markersize
         marker: matplotlib marker
@@ -143,33 +55,33 @@ def addPoints(map, trajectory, markersize=2, color='b', marker='+', linewidth=1,
         latitude: name of the latitude column
         longitude: name of the longitude column
     """
-    x, y = map(np.array(trajectory[longitude]), np.array(trajectory[latitude]))
-    map.plot(x, y, 'b', color=color, linestyle=linestyle, linewidth=linewidth, markersize=markersize, marker=marker)
+    x, y = worldmap(np.array(trajectory[longitude]), np.array(trajectory[latitude]))
+    worldmap.plot(x, y, 'b', color=color, linestyle=linestyle, linewidth=linewidth, markersize=markersize, marker=marker)
 
-def addTrajectories(map, trajectories, eastWest=False):
+def addTrajectories(worldmap, trajectories, eastWest=False):
     if eastWest:
         for flightIndex in set(trajectories.index):
-            x, y = map(trajectories[trajectories.index == flightIndex]['longitude'].values, trajectories[trajectories.index == flightIndex]['latitude'].values)
+            x, y = worldmap(trajectories[trajectories.index == flightIndex]['longitude'].values, trajectories[trajectories.index == flightIndex]['latitude'].values)
             if x[1] > x[0]:
-                map.plot(x, y, 'b', markersize=2, marker='+')
+                worldmap.plot(x, y, 'b', markersize=2, marker='+')
             else:
-                map.plot(x, y, color='brown', markersize=2, marker='+')
+                worldmap.plot(x, y, color='brown', markersize=2, marker='+')
     else:
-        x, y = map(trajectories['longitude'].values, trajectories['latitude'].values)
-        map.plot(x, y, 'b', markersize=2, marker='+')
+        x, y = worldmap(trajectories['longitude'].values, trajectories['latitude'].values)
+        worldmap.plot(x, y, 'b', markersize=2, marker='+')
 
 
-def addPointConflicts(map, pointConflicts):
-    x, y = map(pointConflicts['lon1'].values, pointConflicts['lat1'].values)
-    map.plot(x, y, 'r', markersize=6, marker='<', linestyle='None')
-    x, y = map(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
-    map.plot(x, y, 'g', markersize=6, marker='>', linestyle='None')
+def addPointConflicts(worldmap, pointConflicts):
+    x, y = worldmap(pointConflicts['lon1'].values, pointConflicts['lat1'].values)
+    worldmap.plot(x, y, 'r', markersize=6, marker='<', linestyle='None')
+    x, y = worldmap(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
+    worldmap.plot(x, y, 'g', markersize=6, marker='>', linestyle='None')
 
-def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
+def addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
     """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
 
     Arguments:
-        map: basemap object for plotting
+        worldmap: basemap object for plotting
         conflictIndex: conflict index
         trajectories: Pandas Dataframe containing all trajectories
         pointConflicts: Pandas Dataframe containing the point conflicts
@@ -178,20 +90,15 @@ def addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelCo
     """
     # plot involved flight trajectories
     flight1, flight2, conflictTrajectoryPoints = tools.getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts)
-    addPoints(map, trajectories.loc[flight1], markersize=2, marker='+')
-    addPoints(map, trajectories.loc[flight2], markersize=2, marker='+')
+
+    addPoints(worldmap, trajectories.loc[flight1], markersize=4, marker='+')
+    addPoints(worldmap, trajectories.loc[flight2], markersize=4, marker='+')
     # point conflict
     col = 'r' if red else 'g'
-    addPoints(map, conflictTrajectoryPoints, color=col, markersize=6, linewidth=6, marker='>', linestyle='-', latitude='lat1', longitude='lon1')
-    addPoints(map, conflictTrajectoryPoints, color='r', markersize=6, linewidth=6, marker='<', linestyle='-', latitude='lat2', longitude='lon2')
+    addPoints(worldmap, conflictTrajectoryPoints, color=col, markersize=6, linewidth=6, marker='o', linestyle='-', latitude='lat1', longitude='lon1')
+    addPoints(worldmap, conflictTrajectoryPoints, color='r', markersize=6, linewidth=6, marker='o', linestyle='-', latitude='lat2', longitude='lon2')
 
-def projection(lon, lat):
-    """ Gall-Peters sterographic projection """
-    x = lon / np.sqrt(2)
-    y = (1 + np.sqrt(2) / 2) * np.tan(lat / 2)
-    return x, y
-
-def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflicts, npoints=3, ax=None):
+def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflicts, npoints=3, ax=None, verbose=False):
     """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
     around the conflict region
 
@@ -275,8 +182,16 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
         maxindex = min(subset.index[-1], maxindex + npoints)
         t2.append(subset.loc[minindex:maxindex])
 
+    from mpl_toolkits.basemap import Basemap
+    worldmap = Basemap(projection='gall',
+                       # with low resolution,
+                       resolution='l',
+                       # And threshold 100000
+                       area_thresh=100000.0,
+                       # Center
+                       lat_0=centerLat, lon_0=centerLon)
     for i in range(len(conflictIndices)):
-        x, y = projection(np.array(t1[i]['longitude']), np.array(t1[i]['latitude']))
+        x, y = worldmap(np.array(t1[i]['longitude']), np.array(t1[i]['latitude']))
         for k in range(1, len(x)):
             ax.annotate("",
                         xytext=(x[k - 1], y[k - 1]), xycoords='data',
@@ -284,7 +199,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
                         arrowprops=dict(arrowstyle="-|>", color='b', connectionstyle="arc3"),
                         )
         ax.plot(x, y, color='b', linestyle='-')
-        x, y = projection(np.array(t2[i]['longitude']), np.array(t2[i]['latitude']))
+        x, y = worldmap(np.array(t2[i]['longitude']), np.array(t2[i]['latitude']))
         for k in range(1, len(x)):
             ax.annotate("",
                         xytext=(x[k - 1], y[k - 1]), xycoords='data',
@@ -295,10 +210,27 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
 
         ax.plot(x, y, color='g', linestyle='-')
         # point conflict
-        x, y = projection(np.array(conflictTrajectoryPoints['lon1']), np.array(conflictTrajectoryPoints['lat1']))
+        x, y = worldmap(np.array(conflictTrajectoryPoints['lon1']), np.array(conflictTrajectoryPoints['lat1']))
         ax.plot(x, y, color='r',  markersize=5, marker='o')
-        x, y = projection(np.array(conflictTrajectoryPoints['lon2']), np.array(conflictTrajectoryPoints['lat2']))
+        x, y = worldmap(np.array(conflictTrajectoryPoints['lon2']), np.array(conflictTrajectoryPoints['lat2']))
         ax.plot(x, y, color='violet',  markersize=5, marker='o')
+
+        if verbose:
+            lon1 = t1[i]['longitude'].values
+            lon2 = t2[i]['longitude'].values
+            lat1 = t1[i]['latitude'].values
+            lat2 = t2[i]['latitude'].values
+            time1 = t1[i]['time'].values
+            time2 = t2[i]['time'].values
+            CosD = np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * (np.cos(lon1) * np.cos(lon2) + np.sin(lon1) * np.sin(lon2))
+            CosD = np.minimum(CosD, np.ones_like(CosD))
+            CosD = np.maximum(CosD, -np.ones_like(CosD))
+            earthRadius = 6367.0
+            spatialDistance = earthRadius * np.arccos(CosD)
+            temporatDistance = time1 - time2
+            print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
+            for lo1, lo2, la1, la2, ds, dt in zip(lon1, lon2, lat1, lat2, spatialDistance, temporatDistance):
+                print "%+6.2f %+6.2f %+6.2f %+6.2f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
 
     if len(conflictIndices) == 1:
         ax.set_title("$k=%i, f_1=%i, f_2=%i$" % (conflictIndices[0], flights1[0], flights2[0]))
@@ -308,11 +240,11 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
     ax.set_autoscale_on(True)
 
 
-def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=False, red=False):
+def addFlightsAndConflicts(worldmap, flightIndices, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=False, red=False):
     """ Given a flight index, plot the trajectories of the involved flights and the conflicting trajectory points
 
     Arguments:
-        map: basemap object for plotting
+        worldmap: basemap object for plotting
         flightIndex: flight index
         trajectories: Pandas Dataframe containing all trajectories
         pointConflicts: Pandas Dataframe containing the point conflicts
@@ -327,14 +259,14 @@ def addFlightsAndConflicts(map, flightIndices, trajectories, pointConflicts, par
         conflicts = tools.getInvolvedConflicts(flights2Conflicts, flightIndex)
 
         for conflictIndex in conflicts:
-            addConflictPlot(map, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=red)
-        addPoints(map, trajectories.loc[flightIndex], color=col, markersize=6, marker='+')
+            addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=red)
+        addPoints(worldmap, trajectories.loc[flightIndex], color=col, markersize=6, marker='+')
 
-def addMostInvolvedFlightsAndConflicts(map, nfmin, nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts):
+def addMostInvolvedFlightsAndConflicts(worldmap, nfmin, nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts):
     """ Plot the trajectories and conflicts of flights with the highest number of conflicts
 
     Arguments:
-        map: basemap object for plotting
+        worldmap: basemap object for plotting
         nfmin: minimal index in the list of flights ordered by their conflicts to include
         nfmax: maximal index in the list of flights ordered by their conflicts to include
         trajectories: Pandas Dataframe containing all trajectories
@@ -344,7 +276,7 @@ def addMostInvolvedFlightsAndConflicts(map, nfmin, nfmax, trajectories, pointCon
     """
     # get the flights with the most number of conflicts
     mostInvolvedFlights = flights2Conflicts.count().T.sort_values('conflictIndex', ascending=False).index[nfmin:nfmax + 1].values
-    addFlightsAndConflicts(map, mostInvolvedFlights, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=True, red=True)
+    addFlightsAndConflicts(worldmap, mostInvolvedFlights, trajectories, pointConflicts, parallelConflicts, flights2Conflicts, blue=True, red=True)
 
 def getPartitions(G, partition):
     # number of partitions
@@ -758,10 +690,10 @@ def main():
     subparsers = parser.add_subparsers(help="Give a keyword", dest='mode')
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
-    parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
+    parser.add_argument('-t', '--mintime', default=18, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('--delayPerConflict', default=0, help='Delay introduced by each conflict avoiding maneuver', type=int)
     parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
-    parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
+    parser.add_argument('--maxDepartDelay', default=18, help='Maximum departure delay', type=int)
     parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
     parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
     parser.add_argument('--multiConflictFile', help='input file containing the conflicts between pairwise conflicts (overwrites -t and -d)')
@@ -774,6 +706,8 @@ def main():
     conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     conflict_parser.add_argument('--info', action='store_true', help='Show info for all conflicts without plotting')
     conflict_parser.add_argument('-k', '--conflictIndices', nargs='+', help='Conflict index to plot', type=int)
+    conflict_parser.add_argument('--allpoints', action='store_true', help='Plot all trajectory points')
+    conflict_parser.add_argument('--verbose', action='store_true', help='Show coordinates and distances')
 
     flight_parser = subparsers.add_parser("flight", help='Plot a special flight including all conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     flight_parser.add_argument('-i', '--flightIndex', default=None, help='flight index to plot', type=int)
@@ -816,9 +750,9 @@ def main():
 
     if args.mode == 'all':
         rawpointConflicts = pd.read_csv(rawPointConflictFile)
-        map = prepareWorldMapPlot()
-        addTrajectories(map, trajectories, eastWest=args.eastwest)
-        addPointConflicts(map, rawpointConflicts)
+        worldmap = prepareWorldMapPlot()
+        addTrajectories(worldmap, trajectories, eastWest=args.eastwest)
+        addPointConflicts(worldmap, rawpointConflicts)
         plt.show()
 
     if args.mode == 'conflict':
@@ -831,19 +765,24 @@ def main():
             print "Read paraellel conflicts from", parallelConflictFile
             print "Point conflict indices range from 0 to", NPointConflicts - 1
             print "Parallel conflict indices range from", NPointConflicts, " to", NParallelConflicts
+        elif args.allpoints:
+            worldmap = prepareWorldMapPlot()
+            for conflictIndex in args.conflictIndices:
+                addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts)
+            plt.show()
         else:
-            plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts)
+            plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts, verbose=args.verbose)
             plt.show()
 
     if args.mode == 'flight':
         pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
         parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
         flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
-        map = prepareWorldMapPlot()
+        worldmap = prepareWorldMapPlot()
         if args.flightIndex:
-            addFlightsAndConflicts(map, [args.flightIndex], trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
+            addFlightsAndConflicts(worldmap, [args.flightIndex], trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
         else:
-            addMostInvolvedFlightsAndConflicts(map, args.nfmin, args.nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
+            addMostInvolvedFlightsAndConflicts(worldmap, args.nfmin, args.nfmax, trajectories, pointConflicts, parallelConflicts, flights2Conflicts)
         plt.show()
     if args.mode == 'graph':
         if not args.multi:
