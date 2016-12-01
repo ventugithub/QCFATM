@@ -25,7 +25,7 @@ def main():
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
-    parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
+    parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver', type=int)
     parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
     args = parser.parse_args()
     solve_instances(instancefiles=[args.input],
@@ -84,41 +84,46 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
         solver = model.load("Mistral")
         if verbose:
             solver.setVerbosity(1)
+        if timeout:
+            solver.setTimeLimit(timeout)
 
         # solve
-        solver.solve()
+        success = solver.solve()
+        if success:
 
-        # parse solution
-        s = d.solution()
-        solution = [int(n) for n in s.strip("[]").split(', ')]
+            # parse solution
+            s = d.solution()
+            solution = [int(n) for n in s.strip("[]").split(', ')]
 
-        # check solution
-        valids = []
-        for k in range(Nk):
-            dtmin = int(inst.timeLimits[k][0])
-            dtmax = int(inst.timeLimits[k][0])
-            f1 = int(inst.conflicts[k][0])
-            f2 = int(inst.conflicts[k][1])
-            i = int(inst.flights.index(f1))
-            j = int(inst.flights.index(f2))
-            constraint1 = maxDelay * (solution[i] - solution[j]) >= Nd * (deltat - dtmin)
-            constraint2 = maxDelay * (solution[i] - solution[j]) <= - Nd * (deltat + dtmax)
-            valid = True if (constraint1 or constraint2) else False
-            valids.append(valid)
-        if not all(valids):
-            print "Solution is not valid. Will not be stored"
+            # check solution
+            valids = []
+            for k in range(Nk):
+                dtmin = int(inst.timeLimits[k][0])
+                dtmax = int(inst.timeLimits[k][0])
+                f1 = int(inst.conflicts[k][0])
+                f2 = int(inst.conflicts[k][1])
+                i = int(inst.flights.index(f1))
+                j = int(inst.flights.index(f2))
+                constraint1 = maxDelay * (solution[i] - solution[j]) >= Nd * (deltat - dtmin)
+                constraint2 = maxDelay * (solution[i] - solution[j]) <= - Nd * (deltat + dtmax)
+                valid = True if (constraint1 or constraint2) else False
+                valids.append(valid)
+            if not all(valids):
+                print "Solution is not valid. Will not be stored"
+            else:
+                print "Write valid solution to %s" % resultfile
+                delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
+                delayVariables = variable.IntegerVariable(delayValues)
+                delayVariables.save_hdf5(resultfile, name=cpsol)
+                # calculate objective function
+                totaldelay = 0
+                for k in range(Nf):
+                    totaldelay += delayValues[k]
+                f = h5py.File(resultfile, 'a')
+                f[cpsol].attrs['total delay'] = totaldelay
+                f.close()
         else:
-            print "Write valid solution to %s" % resultfile
-            delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
-            delayVariables = variable.IntegerVariable(delayValues)
-            delayVariables.save_hdf5(resultfile, name=cpsol)
-            # calculate objective function
-            totaldelay = 0
-            for k in range(Nf):
-                totaldelay += delayValues[k]
-            f = h5py.File(resultfile, 'a')
-            f[cpsol].attrs['total delay'] = totaldelay
-            f.close()
+            print "No solution found. Nothing will be stored. Timeout was %s" % timeout
 
 def solve_instances(instancefiles, numDelays, np=1, **kwargs):
     if np != 1:

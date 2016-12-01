@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--verbose', action='store_true', help='verbose output')
-    parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver')
+    parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver', type=int)
     parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
     parser.add_argument('--pmin', default=0, help='minimum index of partition to consider', type=int)
     parser.add_argument('--pmax', default=113, help='maximum index of partition to consider', type=int)
