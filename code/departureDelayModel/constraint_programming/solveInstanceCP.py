@@ -2,6 +2,7 @@
 import numpy as np
 import Numberjack as nj
 import multiprocessing
+import filelock
 import argparse
 import os
 import sys
@@ -111,17 +112,22 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
             if not all(valids):
                 print "Solution is not valid. Will not be stored"
             else:
-                print "Write valid solution to %s" % resultfile
                 delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
                 delayVariables = variable.IntegerVariable(delayValues)
-                delayVariables.save_hdf5(resultfile, name=cpsol)
                 # calculate objective function
                 totaldelay = 0
                 for k in range(Nf):
                     totaldelay += delayValues[k]
-                f = h5py.File(resultfile, 'a')
-                f[cpsol].attrs['total delay'] = totaldelay
-                f.close()
+                print "Write valid solution to %s" % resultfile
+                # use lock file to prevent simultaneous updates to inventory
+                # in the case of multiprocessing
+                lockfile = resultfile + ".lock"
+                lock = filelock.FileLock(lockfile)
+                with lock.acquire():
+                    delayVariables.save_hdf5(resultfile, name=cpsol)
+                    f = h5py.File(resultfile, 'a')
+                    f[cpsol].attrs['total delay'] = totaldelay
+                    f.close()
         else:
             print "No solution found. Nothing will be stored. Timeout was %s" % timeout
 
