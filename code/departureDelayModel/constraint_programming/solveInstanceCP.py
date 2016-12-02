@@ -129,7 +129,10 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
                     f[cpsol].attrs['total delay'] = totaldelay
                     f.close()
         else:
-            print "No solution found. Nothing will be stored. Timeout was %s" % timeout
+            if solver.is_unsat():
+                print "No solution found. Problem not satifiable"
+            else:
+                print "No solution found. Nothing will be stored. Runtime was %s. Timeout was %s" % (solver.getTime(), timeout)
 
 def solve_instances(instancefiles, numDelays, np=1, **kwargs):
     if np != 1:
