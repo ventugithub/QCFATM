@@ -8,7 +8,8 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--output', default='data/results/', help='result folder')
     parser.add_argument('-d', '--maxDelay', default=18, help='Maximum delay', type=int)
-    parser.add_argument('-n', '--numDelays', nargs='+', help='List of (number of delay steps - 1)', type=int)
+    parser.add_argument('-n', '--numDelays', nargs='+', help='List of (number of delay steps - 1) (ignored if allfactors is true)', type=int)
+    parser.add_argument('--allfactors', action='store_true', help='Use (number of delay steps - 1) = all factors of maxDelay ')
     parser.add_argument('--instanceFolder', default='data/instances', help='path to instance folder')
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
@@ -22,7 +23,12 @@ def main():
     parser.add_argument('--nmax', default=18, help='maximum number of delay steps - 1 (ignored if numDelays is given)', type=int)
     args = parser.parse_args()
 
-    if args.numDelays:
+    if args.allfactors:
+        numDelays = []
+        for n in range(1, args.maxDelay + 1):
+            if args.maxDelay % n == 0:
+                numDelays.append(n)
+    elif args.numDelays:
         numDelays = args.numDelays
     else:
         numDelays = range(args.nmin, args.nmax + 1)
