@@ -64,8 +64,8 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
         Nf = len(inst.flights)
         Nk = len(inst.conflicts)
 
-        # define Nf integer variables from [0, Nd - 1]
-        d = nj.VarArray(Nf, Nd)
+        # define Nf integer variables from [0, Nd]
+        d = nj.VarArray(Nf, Nd + 1)
 
         # create model
         model = nj.Model()
@@ -130,7 +130,7 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
                     f.close()
         else:
             if solver.is_unsat():
-                print "No solution found. Problem not satifiable"
+                print "No solution found. Problem not satisfiable"
             else:
                 print "No solution found. Nothing will be stored. Runtime was %s. Timeout was %s" % (solver.getTime(), timeout)
 
