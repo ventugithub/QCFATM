@@ -31,7 +31,7 @@ cdef mapToCoarseGrid(float lat, float lon, float time, float latMin, float lonMi
     cdef int T = int((time - timeMin) / deltaTime)
     return I, J, T
 
-cdef getCoarseRawPointConflict(vector[vector[vector[vector[vector[float]]]]] & coarseTraj, int I, int J, int K):
+cdef getCoarseRawPointConflict(vector[vector[vector[vector[vector[float]]]]] & coarseTraj, int I, int J, int K, int Imax, int Jmax, int Kmax):
     """
     Given a coarse grid cell (I, J, K), return all neighboring
     coarse grid cells which contain trajactory points
@@ -58,10 +58,13 @@ cdef getCoarseRawPointConflict(vector[vector[vector[vector[vector[float]]]]] & c
     I: coarse grid index in latitude direction
     J: coarse grid index in longitude direction
     K: coarse grid index in time direction
+    Imax: Maximum coarse grid index in latitude direction + 1
+    Jmax: Maximum coarse grid index in longitude direction + 1
+    Kmax: Maximum coarse grid index in time direction + 1
     """
-    rangeI = np.arange(I - 1, I + 2, dtype=int)
-    rangeJ = np.arange(J - 1, J + 2, dtype=int)
-    rangeK = np.arange(K - 1, K + 2, dtype=int)
+    rangeI = np.arange(max(I - 1, 0), min(I + 2, Imax - 1), dtype=int)
+    rangeJ = np.arange(max(J - 1, 0), min(J + 2, Jmax - 1), dtype=int)
+    rangeK = np.arange(max(K - 1, 0), min(K + 2, Kmax - 1), dtype=int)
     cdef int i
     cdef int j
     cdef int k
@@ -78,8 +81,8 @@ cdef getCoarseRawPointConflict(vector[vector[vector[vector[vector[float]]]]] & c
 
 cdef getRawPointConflict(float lat1, float lon1, float alt1, float time1,
                       float lat2, float lon2, float alt2, float time2,
-                      float spaceThreshold=55.56, float timeThreshold=60.0,
-                      float altitudeThreshold=1000, float earthRadius=6000,
+                      float spaceThreshold, float timeThreshold,
+                      float altitudeThreshold, float earthRadius,
                       float maxDelay1=0, float maxDelay2=0):
     """ Given two trajectory points (lat1, lon1, alt1, time1) and (lat2, lon2, alt2, time2)
     calculate if there is a conflict.
@@ -151,13 +154,13 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
     # constants
     #######################################################
     # grid discretization for latitude
-    cdef float deltaLat = 0.5
+    cdef float deltaLat = np.radians(2)
     # grid discretization for longitude
-    cdef float deltaLon = 0.5
+    cdef float deltaLon = np.radians(2)
     # grid discretizaiton for time
     cdef int deltaTime = 60
     # earth radius in kilometers
-    cdef float earthRadius = 6367.0
+    cdef float earthRadius = 6371.21
     # minimal acceptable altitude difference in feet
     cdef float altitudeThreshold = 1000.0
     # minimal acceptable distance in kilometers
@@ -264,9 +267,7 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
     #### mapping to coarse trajectory container #######
     ###################################################
     print "Map trajectory point to coarse grid ..."
-    for i in range(1, len(flights)):
-        #if i % 1000 == 0:
-            #print i, " of ",  len(flights)
+    for i in range(0, len(flights)):
         # mapping to coarse trajectory container
         I, J, K = mapToCoarseGrid(lat[i], lon[i], times[i], latMin, lonMin, timeMin, deltaLat, deltaLon, deltaTime)
         coarseTraj[I][J][K][0].push_back(flights[i])
@@ -293,26 +294,26 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
     # conflict number
     c = 0
     # progress bar
-    Nloops = (Nlat - 1) * (Nlon - 1) * (Ntime - 1)
+    Nloops = Nlat * Nlon * Ntime - 1
     print 'Calculate point conflicts'
     pbar = progressbar.ProgressBar().start()
     pbar.maxval = Nloops
     # looping over all coarse grid cells
     n = 0
-    for I in range(1, Nlat - 1):
-        for J in range(1, Nlon - 1):
-            for K in range(1, Ntime - 1):
+    for I in range(0, Nlat):
+        for J in range(0, Nlon):
+            for K in range(0, Ntime):
                 if n % 10000 == 0:
                     pbar.update(n)
                 n = n + 1
                 # get all coarse grid cells in vicinity of the
                 # current coarse grid cell (I, J, K) which contain
                 # trajectory point as a list of 3-tuples (i, j, k)
-                conflicts = getCoarseRawPointConflict(coarseTraj, I, J, K)
+                conflicts = getCoarseRawPointConflict(coarseTraj, I, J, K, Nlat, Nlon, Ntime)
                 if conflicts[0].size() != 0:
                     # loop over all trajectory point in the current coarse grid cell
                     for l in range(coarseTraj[I][J][K][0].size()):
-                        flight1 = int (coarseTraj[I][J][K][0][l])
+                        flight1 = int(coarseTraj[I][J][K][0][l])
                         lat1 = coarseTraj[I][J][K][2][l]
                         lon1 = coarseTraj[I][J][K][3][l]
                         alt1 = coarseTraj[I][J][K][4][l]
@@ -334,17 +335,30 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
                                                                   spaceThreshold=spaceThreshold, timeThreshold=temporalThreshold,
                                                                   altitudeThreshold=altitudeThreshold, earthRadius=earthRadius)
                                     if isConflict:
-                                        pcIndex.push_back(c)
-                                        pcFlight1.push_back(flight1)
-                                        pcFlight2.push_back(flight2)
-                                        pcLat1.push_back(lat1)
-                                        pcLon1.push_back(lon1)
-                                        pcAlt1.push_back(alt1)
-                                        pcTime1.push_back(time1)
-                                        pcLat2.push_back(lat2)
-                                        pcLon2.push_back(lon2)
-                                        pcAlt2.push_back(alt2)
-                                        pcTime2.push_back(time2)
+                                        if flight1 < flight2:
+                                            pcIndex.push_back(c)
+                                            pcFlight1.push_back(flight1)
+                                            pcFlight2.push_back(flight2)
+                                            pcLat1.push_back(lat1)
+                                            pcLon1.push_back(lon1)
+                                            pcAlt1.push_back(alt1)
+                                            pcTime1.push_back(time1)
+                                            pcLat2.push_back(lat2)
+                                            pcLon2.push_back(lon2)
+                                            pcAlt2.push_back(alt2)
+                                            pcTime2.push_back(time2)
+                                        else:
+                                            pcIndex.push_back(c)
+                                            pcFlight1.push_back(flight2)
+                                            pcFlight2.push_back(flight1)
+                                            pcLat1.push_back(lat2)
+                                            pcLon1.push_back(lon2)
+                                            pcAlt1.push_back(alt2)
+                                            pcTime1.push_back(time2)
+                                            pcLat2.push_back(lat1)
+                                            pcLon2.push_back(lon1)
+                                            pcAlt2.push_back(alt1)
+                                            pcTime2.push_back(time1)
                                         c = c + 1
     pbar.finish()
     np.array(pcIndex)
@@ -362,16 +376,8 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
                                    })
     pointConflicts = pointConflicts.set_index('conflictIndex')
     # remove duplicates
-    pointConflicts.drop_duplicates(inplace=True)
+    pointConflicts.drop_duplicates(subset=['flight1', 'flight2', 'time1', 'time2'], inplace=True)
 
-    # enforce flight1 < flight2 and remove duplicated
-    pc1 = pointConflicts[pointConflicts['flight1'] > pointConflicts['flight2']]
-    pc1.columns = ['alt2', 'alt1', 'flight2', 'flight1', 'lat2', 'lat1', 'lon2', 'lon1', 'time2', 'time1']
-    pc2 = pointConflicts[pointConflicts['flight1'] <= pointConflicts['flight2']]
-    pointConflicts = pd.concat([pc1, pc2])
-    pointConflicts.drop_duplicates(inplace=True)
-    # reset conflict index
-    pointConflicts.reset_index(drop=True, inplace=True)
     pointConflicts.index.rename('conflictIndex', inplace=True)
     pointConflicts.sort_values(by=['flight1', 'flight2', 'time1', 'time2'], inplace=True)
     return pointConflicts
@@ -820,7 +826,7 @@ def getMultiConflicts(pointConflicts, parallelConflicts, flight2Conflict, mindis
     # constants
     #######################################################
     # earth radius in kilometers
-    cdef float earthRadius = 6367.0
+    cdef float earthRadius = 6371.21
     # minimal acceptable altitude difference in feet
     cdef float altitudeThreshold = 1000.0
     # minimal acceptable distance in kilometers

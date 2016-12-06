@@ -42,7 +42,7 @@ def prepareWorldMapPlot(llcrnrlon=None, llcrnrlat=None, urcrnrlon=None, urcrnrla
     worldmap.drawmapboundary(fill_color='#f4f4f4')
     return worldmap
 
-def addPoints(worldmap, trajectory, markersize=2, color='b', marker='+', linewidth=1, linestyle='-', latitude='latitude', longitude='longitude'):
+def addPoints(worldmap, trajectory, markersize=2, color='b', marker='d', linewidth=1, linestyle='-', latitude='latitude', longitude='longitude'):
     """ Plot trajectory points
 
     Arguments:
@@ -55,26 +55,26 @@ def addPoints(worldmap, trajectory, markersize=2, color='b', marker='+', linewid
         latitude: name of the latitude column
         longitude: name of the longitude column
     """
-    x, y = worldmap(np.array(trajectory[longitude]), np.array(trajectory[latitude]))
+    x, y = worldmap(np.rad2deg(np.array(trajectory[longitude])), np.rad2deg(np.array(trajectory[latitude])))
     worldmap.plot(x, y, 'b', color=color, linestyle=linestyle, linewidth=linewidth, markersize=markersize, marker=marker)
 
 def addTrajectories(worldmap, trajectories, eastWest=False):
     if eastWest:
         for flightIndex in set(trajectories.index):
-            x, y = worldmap(trajectories[trajectories.index == flightIndex]['longitude'].values, trajectories[trajectories.index == flightIndex]['latitude'].values)
+            x, y = worldmap(np.rad2deg(trajectories[trajectories.index == flightIndex]['longitude'].values), np.rad2deg(trajectories[trajectories.index == flightIndex]['latitude'].values))
             if x[1] > x[0]:
                 worldmap.plot(x, y, 'b', markersize=2, marker='+')
             else:
                 worldmap.plot(x, y, color='brown', markersize=2, marker='+')
     else:
-        x, y = worldmap(trajectories['longitude'].values, trajectories['latitude'].values)
+        x, y = worldmap(np.rad2deg(trajectories['longitude'].values), np.rad2deg(trajectories['latitude'].values))
         worldmap.plot(x, y, 'b', markersize=2, marker='+')
 
 
 def addPointConflicts(worldmap, pointConflicts):
-    x, y = worldmap(pointConflicts['lon1'].values, pointConflicts['lat1'].values)
+    x, y = worldmap(np.rad2deg(pointConflicts['lon1'].values), np.rad2deg(pointConflicts['lat1'].values))
     worldmap.plot(x, y, 'r', markersize=6, marker='<', linestyle='None')
-    x, y = worldmap(pointConflicts['lon2'].values, pointConflicts['lat2'].values)
+    x, y = worldmap(np.rad2deg(pointConflicts['lon2'].values), np.rad2deg(pointConflicts['lat2'].values))
     worldmap.plot(x, y, 'g', markersize=6, marker='>', linestyle='None')
 
 def addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
@@ -91,8 +91,8 @@ def addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, paral
     # plot involved flight trajectories
     flight1, flight2, conflictTrajectoryPoints = tools.getInvolvedFlights(conflictIndex, pointConflicts, parallelConflicts)
 
-    addPoints(worldmap, trajectories.loc[flight1], markersize=4, marker='+')
-    addPoints(worldmap, trajectories.loc[flight2], markersize=4, marker='+')
+    addPoints(worldmap, trajectories.loc[flight1], markersize=4, marker='d')
+    addPoints(worldmap, trajectories.loc[flight2], markersize=4, marker='d')
     # point conflict
     col = 'r' if red else 'g'
     addPoints(worldmap, conflictTrajectoryPoints, color=col, markersize=6, linewidth=6, marker='o', linestyle='-', latitude='lat1', longitude='lon1')
@@ -126,16 +126,16 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
             maxtime1 = conflictTrajectoryPoints.time1
             mintime2 = conflictTrajectoryPoints.time2
             maxtime2 = conflictTrajectoryPoints.time2
-            centerLon = 0.5 * (conflictTrajectoryPoints.lon1 + conflictTrajectoryPoints.lon2)
-            centerLat = 0.5 * (conflictTrajectoryPoints.lat1 + conflictTrajectoryPoints.lat2)
+            centerLon = np.rad2deg(0.5 * (conflictTrajectoryPoints.lon1 + conflictTrajectoryPoints.lon2))
+            centerLat = np.rad2deg(0.5 * (conflictTrajectoryPoints.lat1 + conflictTrajectoryPoints.lat2))
 
         elif isinstance(conflictTrajectoryPoints, pd.core.frame.DataFrame):
             mintime1 = conflictTrajectoryPoints.time1.min()
             maxtime1 = conflictTrajectoryPoints.time1.max()
             mintime2 = conflictTrajectoryPoints.time2.min()
             maxtime2 = conflictTrajectoryPoints.time2.max()
-            centerLon = 0.5 * (conflictTrajectoryPoints.lon1.mean() + conflictTrajectoryPoints.lon2.mean())
-            centerLat = 0.5 * (conflictTrajectoryPoints.lat1.mean() + conflictTrajectoryPoints.lat2.mean())
+            centerLon = np.rad2deg(0.5 * (conflictTrajectoryPoints.lon1.mean() + conflictTrajectoryPoints.lon2.mean()))
+            centerLat = np.rad2deg(0.5 * (conflictTrajectoryPoints.lat1.mean() + conflictTrajectoryPoints.lat2.mean()))
 
         else:
             raise ValueError('plotConflict: conflictTrajectoryPoints is neither pandas series nor dataframe')
@@ -191,7 +191,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
                        # Center
                        lat_0=centerLat, lon_0=centerLon)
     for i in range(len(conflictIndices)):
-        x, y = worldmap(np.array(t1[i]['longitude']), np.array(t1[i]['latitude']))
+        x, y = worldmap(np.rad2deg(np.array(t1[i]['longitude'])), np.rad2deg(np.array(t1[i]['latitude'])))
         for k in range(1, len(x)):
             ax.annotate("",
                         xytext=(x[k - 1], y[k - 1]), xycoords='data',
@@ -199,7 +199,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
                         arrowprops=dict(arrowstyle="-|>", color='b', connectionstyle="arc3"),
                         )
         ax.plot(x, y, color='b', linestyle='-')
-        x, y = worldmap(np.array(t2[i]['longitude']), np.array(t2[i]['latitude']))
+        x, y = worldmap(np.rad2deg(np.array(t2[i]['longitude'])), np.rad2deg(np.array(t2[i]['latitude'])))
         for k in range(1, len(x)):
             ax.annotate("",
                         xytext=(x[k - 1], y[k - 1]), xycoords='data',
@@ -210,9 +210,9 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
 
         ax.plot(x, y, color='g', linestyle='-')
         # point conflict
-        x, y = worldmap(np.array(conflictTrajectoryPoints['lon1']), np.array(conflictTrajectoryPoints['lat1']))
+        x, y = worldmap(np.rad2deg(np.array(conflictTrajectoryPoints['lon1'])), np.rad2deg(np.array(conflictTrajectoryPoints['lat1'])))
         ax.plot(x, y, color='r',  markersize=5, marker='o')
-        x, y = worldmap(np.array(conflictTrajectoryPoints['lon2']), np.array(conflictTrajectoryPoints['lat2']))
+        x, y = worldmap(np.rad2deg(np.array(conflictTrajectoryPoints['lon2'])), np.rad2deg(np.array(conflictTrajectoryPoints['lat2'])))
         ax.plot(x, y, color='violet',  markersize=5, marker='o')
 
         if verbose:
@@ -222,15 +222,23 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
             lat2 = t2[i]['latitude'].values
             time1 = t1[i]['time'].values
             time2 = t2[i]['time'].values
+            N = min(len(lon1), len(lon2))
+            # truncate
+            lon1 = lon1[:N]
+            lon2 = lon2[:N]
+            lat1 = lat1[:N]
+            lat2 = lat2[:N]
+            time1 = time1[:N]
+            time2 = time2[:N]
             CosD = np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * (np.cos(lon1) * np.cos(lon2) + np.sin(lon1) * np.sin(lon2))
             CosD = np.minimum(CosD, np.ones_like(CosD))
             CosD = np.maximum(CosD, -np.ones_like(CosD))
-            earthRadius = 6367.0
+            earthRadius = 6371.210
             spatialDistance = earthRadius * np.arccos(CosD)
             temporatDistance = time1 - time2
             print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
             for lo1, lo2, la1, la2, ds, dt in zip(lon1, lon2, lat1, lat2, spatialDistance, temporatDistance):
-                print "%+6.2f %+6.2f %+6.2f %+6.2f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
+                print "%+6.3f %+6.3f %+6.3f %+6.3f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
 
     if len(conflictIndices) == 1:
         ax.set_title("$k=%i, f_1=%i, f_2=%i$" % (conflictIndices[0], flights1[0], flights2[0]))
@@ -308,24 +316,24 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     # reduce parallel conflicts to one row for each flight combination
     # keep the one with the lowest absolute time difference
     plc = parallelConflicts.loc[:, ['flight1', 'flight2', 'time1', 'time2']].reset_index(level='parallelConflict')
-    plc['deltaT'] = np.abs(plc.time1-plc.time2)
-    plc = plc.sort_values(by=['parallelConflict', 'flight1', 'flight2', 'deltaT'])
+    plc['timediff'] = plc['time1'] - plc['time2']
+    plc = plc.sort_values(by=['parallelConflict', 'flight1', 'flight2'])
     plc = plc.drop_duplicates(['parallelConflict', 'flight1', 'flight2'])
     plc = plc.set_index('parallelConflict', drop=True)
-    plc = plc.sort_values(by=['flight1', 'flight2', 'deltaT'])
+    plc = plc.sort_values(by=['flight1', 'flight2'])
     plc = plc.drop_duplicates(['flight1', 'flight2'])
     plc.loc[:, 'isParallelConflict'] = True
 
     # reduce point conflicts to one row for each flight combination
     # and add absolute time difference to the data
     poc = pointConflicts.loc[:, ['flight1', 'flight2', 'time1', 'time2']]
-    poc['deltaT'] = np.abs(poc.time1-poc.time2)
+    poc['timediff'] = poc['time1'] - poc['time2']
     poc.sort_values(by=['flight1', 'flight2'])
     poc = poc.drop_duplicates(['flight1', 'flight2'])
     poc.loc[:, 'isParallelConflict'] = False
 
     # concatenate point and parallel conflicts
-    conflicts = pd.concat([poc.loc[:, ['flight1', 'flight2', 'deltaT', 'isParallelConflict']], plc.loc[:, ['flight1', 'flight2', 'deltaT', 'isParallelConflict']]])
+    conflicts = pd.concat([poc.loc[:, ['flight1', 'flight2', 'timediff', 'isParallelConflict']], plc.loc[:, ['flight1', 'flight2', 'timediff', 'isParallelConflict']]])
     # reduce conflicts to one row for each flight combination and set the
     # conflict type to 'parallel', 'point' or 'mixed'
     grouped = conflicts.groupby([conflicts['flight1'], conflicts['flight2']])
@@ -337,7 +345,12 @@ def getConflictGraph(pointConflicts, parallelConflicts):
             return 0.0
         else:
             return 0.5
-    conflicts = grouped.agg({'deltaT': min, 'isParallelConflict': getType})
+    # conflicts = grouped.agg({'timediff': min, 'timediff': max, 'isParallelConflict': getType})
+    con1 = grouped['timediff'].agg(min)
+    con2 = grouped['timediff'].agg(max)
+    con3 = grouped['isParallelConflict'].agg(getType)
+    conflicts = pd.concat([con1, con2, con3], axis=1)
+    conflicts.columns = ['minTimeDiffWithPartner', 'maxTimeDiffWithPartner', 'conflictType']
     conflicts.reset_index(level=['flight1', 'flight2'], inplace=True)
 
     # get edge tuples defining a graph
@@ -346,25 +359,19 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     # extract nodes from graph
     nodes = np.unique(np.array([n1 for n1, n2 in l] + [n2 for n1, n2 in l]))
     # edge weights
-    weights = conflicts['deltaT'].values.tolist()
+    minTimeDiffWithPartner = conflicts['minTimeDiffWithPartner'].values.tolist()
+    maxTimeDiffWithPartner = conflicts['maxTimeDiffWithPartner'].values.tolist()
     # edge colors
-    conflictType = conflicts['isParallelConflict'].values.tolist()
-    # graph info
-    info = {}
-    info['nodeColorName'] = 'flights'
-    info['edgeColorName'] = 'conflict type'
-    info['edgeColorValues'] = {0.0: 'point', 0.5: 'mixed', 1.0: 'parallel'}
-    info['edgeWeightName'] = 'time difference'
-    info['edgeWeightValues'] = list(set(weights))
+    conflictType = conflicts['conflictType'].values.tolist()
     # create networkx graph
-    G = nx.Graph(**info)
+    G = nx.Graph()
     # add nodes
     for node in nodes:
         G.add_node(node)
     # add edges
     for i in range(len(l)):
         edge = l[i]
-        G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
+        G.add_edge(edge[0], edge[1], minTimeDiffWithPartner=minTimeDiffWithPartner[i], maxTimeDiffWithPartner=maxTimeDiffWithPartner[i], conflictType=conflictType[i])
     return G
 
 def getMultiConflictGraph(multiConflicts):
@@ -416,208 +423,48 @@ def getMultiConflictGraph(multiConflicts):
         G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
     return G
 
-def plotGraph(G, nparts=None, partition=None, grid=False, separate=False, connectedComponents=False, font_size=8):
-    """ Plot the a graph
+def plotConflictGraph(G, component=None, connectedComponents=False, font_size=8):
+    """ Plot the a conflict graph
 
     Arguments:
         edges: list of tuples defining the graph
-        nparts: number of partitions
-        partition: partition number to highlight
-        grid: plot each partition as highlighted region in the whole graph as a individual subplot
-        separate: plot the whole graph with partitions separated
         connectedComponents: find all connected components and plot them spatially separated
+        component: plot a single connected component. Select by index orderd by the number of flights involved
         font_size: font size (default: 8)
     """
 
-    # extract weights and color for edges and nodes
-    # default values
-    width = 1.0
-    color = 'r'
-    node_color = 'r'
-    width_max = 3.0
+    # get width of edges
     width_min = 0.5
+    width_max = 3.0
+    width_mid = 0.5 * (width_max + width_min)
+    maxTimeDiffWithPartner = [l[2] for l in list(G.edges_iter(data='maxTimeDiffWithPartner'))]
+    minTimeDiffWithPartner = [l[2] for l in list(G.edges_iter(data='minTimeDiffWithPartner'))]
+    width = np.minimum(np.abs(np.array(minTimeDiffWithPartner)), np.abs(np.array(maxTimeDiffWithPartner)))
+    normalized_width = (width_max - width_min) * ((np.max(width) - width) / (np.max(width) - np.min(width))) + width_min
+    print np.unique(normalized_width)
+    conflictType = [l[2] for l in list(G.edges_iter(data='conflictType'))]
+    color = conflictType
 
-    if G.edges():
-        if 'weight' in G.edges(data=True)[0][2]:
-            weights = [l[2] for l in list(G.edges_iter(data='weight'))]
-            # normalize
-            width = np.array(weights)
-            width = (width_max - width_min) * ((np.max(weights) - weights) / (np.max(weights) - np.min(weights))) + width_min
-        if 'color' in G.edges(data=True)[0][2]:
-            color = [l[2] for l in list(G.edges_iter(data='color'))]
-    hasNodeColor = False
-    if G.nodes() and 'color' in G.nodes(data=True)[0][1]:
-        hasNodeColor = True
-        node_color = [l[1]['color'] for l in list(G.nodes_iter(data='color'))]
-
-    partition_colors = []
-    if not nparts and not connectedComponents:
-        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=width, edge_color=color)
-    elif nparts:
-        try:
-            import metis
-        except:
-            print "Unable to plot partitioned graph without metis installed"
-            raise
-
-        p = metis.part_graph(G, nparts=nparts)
-        partition_color = np.array(p[1])
-        if not grid and not separate:
-            if partition:
-                assert(partition < nparts)
-                partition_color = partition_color == partition
-            else:
-                partition_color = np.array(partition_color)/float(nparts)
-            current_node_color = node_color if hasNodeColor else partition_color
-            partition_colors = partition_color
-            nx.draw_networkx(G, node_color=current_node_color, node_size=300, font_size=font_size, width=width, edge_color=color)
-        elif grid:
-            fig = plt.figure(figsize=(6, 3*nparts))
-            # initial positioning
-            init_pos = nx.spring_layout(G)
-            ax = []
-            npartsEven = (nparts % 2 == 1) + nparts
-            for i in range(nparts):
-                ax.append(fig.add_subplot(int(0.5 * npartsEven), 2, i + 1))
-                partition_color = np.array(p[1])
-                partition_color_i = partition_color == i
-                current_node_color = node_color if hasNodeColor else partition_color_i
-                partition_colors.append(partition_color_i)
-                nx.draw_networkx(G, node_color=current_node_color, node_size=300, ax=ax[i], pos=init_pos, font_size=font_size, width=width, edge_color=color)
-        elif separate:
-            graphs = getPartitions(G, p[1])
-            partition_color = np.array(p[1])
-            # partition_color = np.array(partition_color)/float(nparts)
-            perm = np.random.permutation(nparts)
-            partition_color = np.apply_along_axis(lambda x: perm[x], axis=0, arr=partition_color)
-            colormax = np.max(np.array(partition_color))
-            partition_color = np.array(partition_color) / float(colormax)
-            layout = {}
-            nrow = 3
-            ncol = 5
-            nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
-            nrows = nmulti * nrow
-            scale = 4
-            for n in range(nparts):
-                xpos = scale * (n % nrows)
-                ypos = scale * (n - n % nrows) / nrows
-                d = nx.circular_layout(graphs[n], center=(xpos, ypos), scale=1.0)
-                layout = dict(layout.items() + d.items())
-            current_node_color = node_color if hasNodeColor else partition_color
-            partition_colors = partition_color
-            nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=width, edge_color=color)
-    elif connectedComponents:
-        compgen = nx.connected_components(G)
-        NNodes = len(G.nodes())
-        partitionList = np.empty((NNodes), dtype=int)
-        ipart = 0
-        ipart_max = 0
-        max_comp = 0
-        for c in compgen:
-            if len(c) > max_comp:
-                max_comp = len(c)
-                ipart_max = ipart
-            for node in c:
-                partitionList[list(G.nodes()).index(int(node))] = ipart
-            ipart = ipart + 1
-        nparts = ipart
-        partition_color = np.array(partitionList)
-        partition_color = partition_color == ipart_max
-        layout = {}
-        nrow = 3
-        ncol = 5
-        nmulti = (nparts - nparts % (nrow * ncol)) / (nrow * ncol) + 1
-        nrows = nmulti * nrow
-        scale = 2
-        graphs = getPartitions(G, partitionList)
-        for n in range(nparts):
-            xpos = scale * (n % nrows)
-            ypos = scale * (n - n % nrows) / nrows
-            d = nx.spring_layout(graphs[n], center=(xpos, ypos))
-            layout = dict(layout.items() + d.items())
-        current_node_color = node_color if hasNodeColor else partition_color
-        partition_colors = partition_color
-        nx.draw_networkx(G, node_size=300, pos=layout, node_color=current_node_color, font_size=font_size, width=width, edge_color=color)
-    else:
-        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color=node_color, font_size=font_size, width=width, edge_color=color)
-
-    ###################################################################################
     # Add legend
-    ###################################################################################
     # container for legend entries
     labels = []
-
-    # get graph information
-    info = G.graph
-    hasNodeColorInfo = 'nodeColorName' in info and 'nodeColorValues' in info
-    hasEdgeColorInfo = 'edgeColorName' in info and 'edgeColorValues' in info
-    hasEdgeWeightInfo = 'edgeWeightName' in info and 'edgeWeightValues' in info
-    if hasNodeColorInfo:
-        nodeColorName = info['nodeColorName']
-        nodeColorValues = info['nodeColorValues']
-        # create legend entry
-        sm = matplotlib.cm.ScalarMappable()
-        rgb_nodecolor = sm.to_rgba(np.unique(np.array(node_color)))
-        label_nodecolor = ["%s = %s" % (nodeColorName, nodeColorValues[c]) for c in set(node_color)]
-        for i in range(len(rgb_nodecolor)):
-            labels.append(matplotlib.lines.Line2D([], [], color=rgb_nodecolor[i], marker='o', markersize=15, linewidth=0, label=label_nodecolor[i]))
-    elif len(partition_colors):
-        partition_colors = list(np.unique(np.array(partition_colors)))
-        sm = matplotlib.cm.ScalarMappable()
-        rgb_color = sm.to_rgba(partition_colors)
-        if grid or partition or connectedComponents:
-            if grid:
-                labelname1 = 'other partitions'
-                labelname2 = 'highlighted partition'
-            elif partition:
-                labelname1 = 'other partitions'
-                labelname2 = 'partition %i' % partition
-            elif connectedComponents:
-                labelname1 = 'other partitions'
-                labelname2 = 'most connected partition'
-            if 'nodeColorName' in info:
-                labelname1 = "%s,  %s" % (info['nodeColorName'], labelname1)
-                labelname2 = "%s,  %s" % (info['nodeColorName'], labelname2)
-            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[0], marker='o', markersize=15, linewidth=0, label=labelname1))
-            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[1], marker='o', markersize=15, linewidth=0, label=labelname2))
-        else:
-            for i in range(len(partition_colors)):
-                if 'nodeColorName' in info:
-                    labelname = "%s, partition %i" % (info['nodeColorName'], i)
-                else:
-                    labelname = "partition %i" % i
-                labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[i], marker='o', markersize=15, linewidth=0, label=labelname))
-    elif 'nodeColorName' in info:
-        nodeColorName = info['nodeColorName']
-        labels.append(matplotlib.lines.Line2D([], [], color=node_color, marker='o', markersize=15, linewidth=0, label=nodeColorName))
-    if hasEdgeColorInfo:
-        edgeColorName = info['edgeColorName']
-        edgeColorValues = info['edgeColorValues']
-        # create legend entry
-        colorValues = np.sort(np.unique(np.array(color)))
-        sm = matplotlib.cm.ScalarMappable()
-        rgb_color = sm.to_rgba(colorValues)
-        label_color = ["%s = %s" % (edgeColorName, edgeColorValues[c]) for c in colorValues]
-        for i in range(len(rgb_color)):
-            labels.append(matplotlib.lines.Line2D([], [], color=rgb_color[i], linewidth=5, label=label_color[i]))
-    if hasEdgeWeightInfo:
-        edgeWeightName = info['edgeWeightName']
-        edgeWeightValuesFull = info['edgeWeightValues']
-        # reduce to 3 values to keep legend small
-        edgeWeightValuesMax = np.max(np.array(edgeWeightValuesFull))
-        edgeWeightValuesMin = np.min(np.array(edgeWeightValuesFull))
-        edgeWeightValues = []
-        edgeWeightValues.append(edgeWeightValuesMin)
-        edgeWeightValues.append(0.5 * (edgeWeightValuesMax - edgeWeightValuesMin))
-        edgeWeightValues.append(edgeWeightValuesMax)
-        edgeWeightLineWidths = [width_max, 0.5 * (width_min + width_max), width_min]
-
-        # create legend entry
-        label_weight = ["%s = %s" % (edgeWeightName, c) for c in set(edgeWeightValues)]
-        for i in range(len(edgeWeightValues)):
-            labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=edgeWeightLineWidths[i], label=label_weight[i]))
+    # conflict type entries
+    sm = matplotlib.cm.ScalarMappable()
+    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(0.0), linewidth=5, label="Point conflict"))
+    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(0.5), linewidth=5, label="Mixed conflict"))
+    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(1.0), linewidth=5, label="Parallel conflict"))
+    # time diff entries
+    minwidth = np.min(width)
+    maxwidth = np.max(width)
+    midwidth = 0.5 * (minwidth + maxwidth)
+    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_min, label="%.2f" % minwidth))
+    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_mid, label="%.2f" % midwidth))
+    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_mid, label="%.2f" % np.max(width)))
 
     plt.legend(handles=labels)
+
+    if not component and not connectedComponents:
+        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color='lightblue', font_size=font_size, width=normalized_width, edge_color=color)
 
 def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plot=True):
     """ Calculate the partition of a given graph with maximal cluster coefficient
@@ -715,13 +562,9 @@ def main():
     flight_parser.add_argument('--nfmax', default=1, help='maximal index in the list of flights ordered by their conflicts to include', type=int)
 
     graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    graph_parser.add_argument('-n', '--nparts', default=None, help='Number of partitions to plot', type=int)
     graph_parser.add_argument('--multi', action='store_true', help='Plot conflicts between pairwise conflicts instead of pairwise conflicts only')
-    group_graph = graph_parser.add_mutually_exclusive_group()
-    group_graph.add_argument('-p', '--partition', default=None, help='Plot whole graph and highlight a special partition', type=int)
-    group_graph.add_argument('--grid', action='store_true', help='Plot several subplots, each highlighting another partition in the whole graph')
-    group_graph.add_argument('--separate', action='store_true', help='Spatially separate partitions in plot')
-    group_graph.add_argument('--component', action='store_true', help='Plot all connected components of the graph')
+    graph_parser.add_argument('-p', '--componentIndex', default=None, help='Plot a single connected component of the conflict graph. Select by index of increasing number of flights involved', type=int)
+    graph_parser.add_argument('--connectedComponents', action='store_true', help='Plot all connected components')
 
     subset_parser = subparsers.add_parser("subset", help='Calculate disjunct subset with maximal internal cluster coefficient', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subset_parser.add_argument('-n', '--npmin', default=2, help='Minimal number of partitions to search', type=int)
@@ -789,12 +632,12 @@ def main():
             pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
             parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
             G = getConflictGraph(pointConflicts, parallelConflicts)
-            plotGraph(G, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component)
+            plotConflictGraph(G, component=args.componentIndex, connectedComponents=args.connectedComponents)
         else:
             pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
             multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
             G = getMultiConflictGraph(multiConflicts)
-            plotGraph(G, nparts=args.nparts, partition=args.partition, separate=args.separate, grid=args.grid, connectedComponents=args.component)
+            plotConflictGraph(G, component=args.componentIndex, connectedComponents=args.connectedComponents)
         plt.show()
 
     if args.mode == 'subset':

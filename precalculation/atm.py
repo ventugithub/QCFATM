@@ -9,10 +9,10 @@ def main():
     parser = argparse.ArgumentParser(description='Calculate point conflicts from trajectory data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-i', '--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=60, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
-    parser.add_argument('--delayPerConflict', default=3, help='Delay introduced by each conflict avoiding maneuver', type=int)
+    parser.add_argument('-t', '--mintime', default=18, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('--delayPerConflict', default=0, help='Delay introduced by each conflict avoiding maneuver', type=int)
     parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
-    parser.add_argument('--maxDepartDelay', default=10, help='Maximum departure delay', type=int)
+    parser.add_argument('--maxDepartDelay', default=18, help='Maximum departure delay', type=int)
     parser.add_argument('--maxIter', default=50, help='Maximal number of iterations used in reduction of conflicts', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
     parser.add_argument('--multi', action='store_true', help='Calculate non-pairwise conflicts')
@@ -38,6 +38,9 @@ def main():
                                    names=('flight', 'date', 'wind', 'time', 'speed', 'altitude', 'latitude', 'longitude', 'nan'),
                                    usecols=('flight', 'date', 'wind', 'time', 'speed', 'altitude', 'latitude', 'longitude')
                                    )
+        print "Change latitude and longitude to radians"
+        trajectories['latitude'] = trajectories['latitude'].apply(np.radians)
+        trajectories['longitude'] = trajectories['longitude'].apply(np.radians)
         print "Add consecutive flight index to data ..."
         # add consecutive flight index to the data
         flightNames = trajectories['flight'].unique()
