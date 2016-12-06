@@ -224,21 +224,28 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
             time2 = t2[i]['time'].values
             N = min(len(lon1), len(lon2))
             # truncate
-            lon1 = lon1[:N]
-            lon2 = lon2[:N]
-            lat1 = lat1[:N]
-            lat2 = lat2[:N]
-            time1 = time1[:N]
-            time2 = time2[:N]
-            CosD = np.sin(lat1) * np.sin(lat2) + np.cos(lat1) * np.cos(lat2) * (np.cos(lon1) * np.cos(lon2) + np.sin(lon1) * np.sin(lon2))
+            CosD = np.sin(lat1[:N]) * np.sin(lat2[:N]) + np.cos(lat1[:N]) * np.cos(lat2[:N]) * (np.cos(lon1[:N]) * np.cos(lon2[:N]) + np.sin(lon1[:N]) * np.sin(lon2[:N]))
             CosD = np.minimum(CosD, np.ones_like(CosD))
             CosD = np.maximum(CosD, -np.ones_like(CosD))
             earthRadius = 6371.210
             spatialDistance = earthRadius * np.arccos(CosD)
-            temporatDistance = time1 - time2
+            temporatDistance = time1[:N] - time2[:N]
+            print "First %i trajectory points in the plot:" % (npoints + 1)
             print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
-            for lo1, lo2, la1, la2, ds, dt in zip(lon1, lon2, lat1, lat2, spatialDistance, temporatDistance):
+            for lo1, lo2, la1, la2, ds, dt in zip(lon1[:N], lon2[:N], lat1[:N], lat2[:N], spatialDistance, temporatDistance):
                 print "%+6.3f %+6.3f %+6.3f %+6.3f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
+            if len(lon1) != len(lon2):
+                # truncate
+                CosD = np.sin(lat1[-N:]) * np.sin(lat2[-N:]) + np.cos(lat1[-N:]) * np.cos(lat2[-N:]) * (np.cos(lon1[-N:]) * np.cos(lon2[-N:]) + np.sin(lon1[-N:]) * np.sin(lon2[-N:]))
+                CosD = np.minimum(CosD, np.ones_like(CosD))
+                CosD = np.maximum(CosD, -np.ones_like(CosD))
+                earthRadius = 6371.210
+                spatialDistance = earthRadius * np.arccos(CosD)
+                temporatDistance = time1[-N:] - time2[-N:]
+                print "Last %i trajectory points in the plot:" % (npoints + 1)
+                print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
+                for lo1, lo2, la1, la2, ds, dt in zip(lon1[-N:], lon2[-N:], lat1[-N:], lat2[-N:], spatialDistance, temporatDistance):
+                    print "%+6.3f %+6.3f %+6.3f %+6.3f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
 
     if len(conflictIndices) == 1:
         ax.set_title("$k=%i, f_1=%i, f_2=%i$" % (conflictIndices[0], flights1[0], flights2[0]))

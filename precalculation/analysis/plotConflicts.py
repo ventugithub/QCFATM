@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--kmax', default=None, help='Maximum conflict index to plot (default: maximum available)', type=int)
     parser.add_argument('--ncols', default=5, help='Number of columns', type=int)
     parser.add_argument('--nrows', default=7, help='Number of rows per page', type=int)
+    parser.add_argument('--max', help='plot only up to max number of conflicts', type=int)
     parser.add_argument('--output', default='conflicts.pdf', help='Output PDF file name')
     args = parser.parse_args()
 
@@ -44,6 +45,8 @@ def main():
     kmax = args.kmax
     if not kmax:
         kmax = NconflictsPoint + NconflictsPara - 1
+    if args.max:
+        kmax = kmin + args.max
 
     title = 'Conflicts in real space (from conflict %i to %i)' % (kmin, kmax)
     repoversion = subprocess.check_output(['git', 'rev-parse', 'HEAD']).rstrip('\n')
