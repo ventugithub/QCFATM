@@ -158,6 +158,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
 
+    # get trajectory points before and after the conflict
     t1 = [] * len(conflictIndices)
     t2 = [] * len(conflictIndices)
     t = trajectories.reset_index()
@@ -182,6 +183,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
         maxindex = min(subset.index[-1], maxindex + npoints)
         t2.append(subset.loc[minindex:maxindex])
 
+    # plotting
     from mpl_toolkits.basemap import Basemap
     worldmap = Basemap(projection='gall',
                        # with low resolution,
@@ -230,7 +232,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
             earthRadius = 6371.210
             spatialDistance = earthRadius * np.arccos(CosD)
             temporatDistance = time1[:N] - time2[:N]
-            print "First %i trajectory points in the plot:" % (npoints + 1)
+            print "Conflict %i, first %i trajectory points in the plot:" % (conflictIndices[i], npoints + 1)
             print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
             for lo1, lo2, la1, la2, ds, dt in zip(lon1[:N], lon2[:N], lat1[:N], lat2[:N], spatialDistance, temporatDistance):
                 print "%+6.3f %+6.3f %+6.3f %+6.3f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
@@ -242,7 +244,7 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
                 earthRadius = 6371.210
                 spatialDistance = earthRadius * np.arccos(CosD)
                 temporatDistance = time1[-N:] - time2[-N:]
-                print "Last %i trajectory points in the plot:" % (npoints + 1)
+                print "Conflict %i, last %i trajectory points in the plot:" % (conflictIndices[i], npoints + 1)
                 print "  lon1   lon2   lat1   lat2 spatialDistance(km) temporalDistance(min)"
                 for lo1, lo2, la1, la2, ds, dt in zip(lon1[-N:], lon2[-N:], lat1[-N:], lat2[-N:], spatialDistance, temporatDistance):
                     print "%+6.3f %+6.3f %+6.3f %+6.3f %+19.2f %+21.2f" % (lo1, lo2, la1, la2, ds, dt)
@@ -358,6 +360,7 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     con3 = grouped['isParallelConflict'].agg(getType)
     conflicts = pd.concat([con1, con2, con3], axis=1)
     conflicts.columns = ['minTimeDiffWithPartner', 'maxTimeDiffWithPartner', 'conflictType']
+    conflicts['minAbsTimeDiffWithPartner'] = np.minimum(np.abs(conflicts['minTimeDiffWithPartner']), np.abs(conflicts['maxTimeDiffWithPartner']))
     conflicts.reset_index(level=['flight1', 'flight2'], inplace=True)
 
     # get edge tuples defining a graph
@@ -368,6 +371,7 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     # edge weights
     minTimeDiffWithPartner = conflicts['minTimeDiffWithPartner'].values.tolist()
     maxTimeDiffWithPartner = conflicts['maxTimeDiffWithPartner'].values.tolist()
+    minAbsTimeDiffWithPartner = conflicts['minAbsTimeDiffWithPartner'].values.tolist()
     # edge colors
     conflictType = conflicts['conflictType'].values.tolist()
     # create networkx graph
@@ -378,7 +382,7 @@ def getConflictGraph(pointConflicts, parallelConflicts):
     # add edges
     for i in range(len(l)):
         edge = l[i]
-        G.add_edge(edge[0], edge[1], minTimeDiffWithPartner=minTimeDiffWithPartner[i], maxTimeDiffWithPartner=maxTimeDiffWithPartner[i], conflictType=conflictType[i])
+        G.add_edge(edge[0], edge[1], minAbsTimeDiffWithPartner=minAbsTimeDiffWithPartner[i], minTimeDiffWithPartner=minTimeDiffWithPartner[i], maxTimeDiffWithPartner=maxTimeDiffWithPartner[i], conflictType=conflictType[i])
     return G
 
 def getMultiConflictGraph(multiConflicts):
@@ -430,48 +434,90 @@ def getMultiConflictGraph(multiConflicts):
         G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
     return G
 
-def plotConflictGraph(G, component=None, connectedComponents=False, font_size=8):
+def plotConflictGraph(G, component=None, ax=None, font_size=8, flightNumbers=False, node_size=100):
     """ Plot the a conflict graph
 
     Arguments:
         edges: list of tuples defining the graph
-        connectedComponents: find all connected components and plot them spatially separated
         component: plot a single connected component. Select by index orderd by the number of flights involved
-        font_size: font size (default: 8)
+        font_size: font size of the node labels (flight numbers)
+        flightNumbers: show the flight numbers as node labels
+        node_size: size of the nodes
+        ax: matplotlib axes object (optional)
     """
 
+    # select graph to plot
+    graphToPlot = None
+    if component is None:
+        graphToPlot = G
+    else:
+        components = nx.connected_component_subgraphs(G)
+        sortedComponents = sorted(list(components), key=lambda x: len(x.nodes()))
+        Nc = len(sortedComponents), "connected components"
+        if component >= Nc:
+            raise ValueError('Unable to plot component %i. There are only %i components' % (component, Nc))
+        graphToPlot = sortedComponents[component]
+
     # get width of edges
-    width_min = 0.5
-    width_max = 3.0
-    width_mid = 0.5 * (width_max + width_min)
-    maxTimeDiffWithPartner = [l[2] for l in list(G.edges_iter(data='maxTimeDiffWithPartner'))]
-    minTimeDiffWithPartner = [l[2] for l in list(G.edges_iter(data='minTimeDiffWithPartner'))]
-    width = np.minimum(np.abs(np.array(minTimeDiffWithPartner)), np.abs(np.array(maxTimeDiffWithPartner)))
-    normalized_width = (width_max - width_min) * ((np.max(width) - width) / (np.max(width) - np.min(width))) + width_min
-    print np.unique(normalized_width)
-    conflictType = [l[2] for l in list(G.edges_iter(data='conflictType'))]
-    color = conflictType
+    maxTimeDiffWithPartner = [l[2] for l in list(graphToPlot.edges_iter(data='maxTimeDiffWithPartner'))]
+    minTimeDiffWithPartner = [l[2] for l in list(graphToPlot.edges_iter(data='minTimeDiffWithPartner'))]
+    # width range to draw
+    widthToDraw_min = 0.5
+    widthToDraw_max = 3.0
+    widthToDraw_mid = 0.5 * (widthToDraw_max + widthToDraw_min)
+    # width = minimum absolute time difference
+    minAbsTimeDiff = np.minimum(np.abs(np.array(minTimeDiffWithPartner)), np.abs(np.array(maxTimeDiffWithPartner)))
+    minMinAbsTimeDiff = np.min(minAbsTimeDiff)
+    maxMinAbsTimeDiff = np.max(minAbsTimeDiff)
+    midMinAbsTimeDiff = 0.5 * (minMinAbsTimeDiff + maxMinAbsTimeDiff)
+    if maxMinAbsTimeDiff > minMinAbsTimeDiff:
+        widthToDraw = (widthToDraw_min - widthToDraw_max) * (minAbsTimeDiff - minMinAbsTimeDiff) / (maxMinAbsTimeDiff - minMinAbsTimeDiff) + widthToDraw_max
+    else:
+        widthToDraw = widthToDraw_max
+    conflictType = [l[2] for l in list(graphToPlot.edges_iter(data='conflictType'))]
+    edgeColorMap = matplotlib.colors.LinearSegmentedColormap.from_list('edgeColorMap', ['gray', 'blue', 'lightblue'], N=3)
 
     # Add legend
     # container for legend entries
     labels = []
     # conflict type entries
-    sm = matplotlib.cm.ScalarMappable()
-    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(0.0), linewidth=5, label="Point conflict"))
-    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(0.5), linewidth=5, label="Mixed conflict"))
-    labels.append(matplotlib.lines.Line2D([], [], color=sm.to_rgba(1.0), linewidth=5, label="Parallel conflict"))
+    edgeColors = edgeColorMap([0, 0.5, 1])
+    labels.append(matplotlib.lines.Line2D([], [], color=edgeColors[0], linewidth=5, label="Point conflict"))
+    labels.append(matplotlib.lines.Line2D([], [], color=edgeColors[1], linewidth=5, label="Mixed conflict"))
+    labels.append(matplotlib.lines.Line2D([], [], color=edgeColors[2], linewidth=5, label="Parallel conflict"))
     # time diff entries
-    minwidth = np.min(width)
-    maxwidth = np.max(width)
-    midwidth = 0.5 * (minwidth + maxwidth)
-    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_min, label="%.2f" % minwidth))
-    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_mid, label="%.2f" % midwidth))
-    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=width_mid, label="%.2f" % np.max(width)))
+    if maxMinAbsTimeDiff > minMinAbsTimeDiff:
+        labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=widthToDraw_max, label="$|\Delta t|_{min}=%.2f$" % minMinAbsTimeDiff))
+        labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=widthToDraw_mid, label="$|\Delta t|_{min}=%.2f$" % midMinAbsTimeDiff))
+    labels.append(matplotlib.lines.Line2D([], [], color='black', linewidth=widthToDraw_min, label="$|\Delta t|_{min}=%.2f$" % maxMinAbsTimeDiff))
 
-    plt.legend(handles=labels)
+    # new figure if no axes object was provided
+    if not ax:
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+    ax.legend(handles=labels)
+    # remove ticks
+    ax.set_xticks([])
+    ax.set_yticks([])
+    # add title
+    if component is None:
+        title = 'Conflict graph, $N_f=%i, N_c=%i$' % (len(graphToPlot.nodes()), len(graphToPlot.edges()))
+    else:
+        title = 'Conflict graph, Partition %i ($N_f=%i, N_c=%i$)' % (component, len(graphToPlot.nodes()), len(graphToPlot.edges()))
+    ax.set_title(title)
 
-    if not component and not connectedComponents:
-        nx.draw_networkx(G, pos=nx.spring_layout(G), node_size=300, node_color='lightblue', font_size=font_size, width=normalized_width, edge_color=color)
+    nx.draw_networkx(graphToPlot,
+                     ax=ax,
+                     pos=nx.spring_layout(G, weight='minAbsTimeDiffWithPartner'),
+                     node_size=node_size,
+                     node_color='lightblue',
+                     font_size=font_size,
+                     font_color='slategray',
+                     linewidths=0.2,
+                     width=widthToDraw,
+                     edge_color=conflictType,
+                     edge_cmap=edgeColorMap,
+                     with_labels=flightNumbers)
 
 def getConflictCluster(pointConflicts, parallelConflicts, npmin=2, npmax=10, plot=True):
     """ Calculate the partition of a given graph with maximal cluster coefficient
@@ -560,6 +606,7 @@ def main():
     conflict_parser = subparsers.add_parser("conflict", help='Plot a special conflicts', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     conflict_parser.add_argument('--info', action='store_true', help='Show info for all conflicts without plotting')
     conflict_parser.add_argument('-k', '--conflictIndices', nargs='+', help='Conflict index to plot', type=int)
+    conflict_parser.add_argument('--npoints', default=3, help='Number of points to plot before and after the conflicting points', type=int)
     conflict_parser.add_argument('--allpoints', action='store_true', help='Plot all trajectory points')
     conflict_parser.add_argument('--verbose', action='store_true', help='Show coordinates and distances')
 
@@ -571,7 +618,6 @@ def main():
     graph_parser = subparsers.add_parser("graph", help='Plot a conflicting flights as graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     graph_parser.add_argument('--multi', action='store_true', help='Plot conflicts between pairwise conflicts instead of pairwise conflicts only')
     graph_parser.add_argument('-p', '--componentIndex', default=None, help='Plot a single connected component of the conflict graph. Select by index of increasing number of flights involved', type=int)
-    graph_parser.add_argument('--connectedComponents', action='store_true', help='Plot all connected components')
 
     subset_parser = subparsers.add_parser("subset", help='Calculate disjunct subset with maximal internal cluster coefficient', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subset_parser.add_argument('-n', '--npmin', default=2, help='Minimal number of partitions to search', type=int)
@@ -621,7 +667,7 @@ def main():
                 addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts)
             plt.show()
         else:
-            plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts, verbose=args.verbose)
+            plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts, npoints=args.npoints, verbose=args.verbose)
             plt.show()
 
     if args.mode == 'flight':
@@ -639,12 +685,12 @@ def main():
             pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
             parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
             G = getConflictGraph(pointConflicts, parallelConflicts)
-            plotConflictGraph(G, component=args.componentIndex, connectedComponents=args.connectedComponents)
+            plotConflictGraph(G, component=args.componentIndex)
         else:
             pointConflicts = pd.read_csv(pointConflictFile, index_col='conflictIndex')
             multiConflicts = pd.read_csv(multiConflictFile, index_col='multiConflictIndex')
             G = getMultiConflictGraph(multiConflicts)
-            plotConflictGraph(G, component=args.componentIndex, connectedComponents=args.connectedComponents)
+            plotConflictGraph(G, component=args.componentIndex)
         plt.show()
 
     if args.mode == 'subset':
