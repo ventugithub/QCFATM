@@ -18,20 +18,31 @@ def main():
     parser.add_argument('--multi', action='store_true', help='Calculate non-pairwise conflicts')
     args = parser.parse_args()
 
+    precalculateConflicts(inputFile=args.input,
+                          mindistance=args.mindistance,
+                          mintime=args.mintime,
+                          delayPerConflict=args.delayPerConflict,
+                          dthreshold=args.dthreshold,
+                          maxDepartDelay=args.maxDepartDelay,
+                          maxIter=args.maxIter,
+                          use_snapshots=args.use_snapshots,
+                          multi=args.multi)
+
+def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dthreshold, maxDepartDelay, maxIter, use_snapshots, multi):
     # nautic mile in kilometers
     nautic = 1.852
 
     # minimal acceptable distance in kilometers
-    mindistance = args.mindistance * nautic
+    mindistance = mindistance * nautic
 
     # minimal acceptable time difference
-    mintime = args.mintime
+    mintime = mintime
 
-    inputDataFile = args.input
-    filename = "%s.mindist%05.1f_mintime%03i" % (inputDataFile, args.mindistance, args.mintime)
-    trajectoryFile = args.input + ".csv"
+    inputDataFile = inputFile
+    filename = "%s.mindist%05.1f_mintime%03i" % (inputDataFile, mindistance, mintime)
+    trajectoryFile = inputFile + ".csv"
     trajectories = None
-    if not os.path.exists(trajectoryFile) or not args.use_snapshots:
+    if not os.path.exists(trajectoryFile) or not use_snapshots:
         print "Read in trajectories ..."
         trajectories = pd.read_csv(inputDataFile,
                                    delimiter="\t",
@@ -54,7 +65,7 @@ def main():
 
     # calulate point conflicts
     rawPointConflictFile = filename + ".rawPointConflicts.csv"
-    if not os.path.exists(rawPointConflictFile) or not args.use_snapshots:
+    if not os.path.exists(rawPointConflictFile) or not use_snapshots:
         rawPointConflicts = conflict.detectRawConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, trajectories.altitude, mindistance, mintime)
         # save to csv file
         rawPointConflicts.to_csv(rawPointConflictFile, mode='w')
@@ -67,7 +78,7 @@ def main():
     print "parse conflicts ..."
     pointConflictFile = filename + ".pointConflicts.csv"
     parallelConflictFile = filename + ".parallelConflicts.csv"
-    if not os.path.exists(pointConflictFile) or not os.path.exists(parallelConflictFile) or not args.use_snapshots:
+    if not os.path.exists(pointConflictFile) or not os.path.exists(parallelConflictFile) or not use_snapshots:
         pointConflicts, parallelConflicts = conflict.parseRawPointConflicts(rawPointConflicts, deltaT=2)
         pointConflicts.to_csv(pointConflictFile, mode='w')
         print "Point conflict data written to", pointConflictFile
@@ -80,21 +91,21 @@ def main():
     print len(parallelConflicts.index.unique()), "parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
     # calulate mapping of flight index to temporal sorted conflicts and reduce number of conflicts
-    flights2ConflictsFile = filename + ".flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
-    reducedPointConflictFile = filename + ".reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
-    reducedParallelConflictFile = filename + ".reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
-    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(reducedPointConflictFile) or not os.path.exists(reducedParallelConflictFile) or not args.use_snapshots:
+    flights2ConflictsFile = filename + ".flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (delayPerConflict, dthreshold, maxDepartDelay)
+    reducedPointConflictFile = filename + ".reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
+    reducedParallelConflictFile = filename + ".reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
+    if not os.path.exists(flights2ConflictsFile) or not os.path.exists(reducedPointConflictFile) or not os.path.exists(reducedParallelConflictFile) or not use_snapshots:
         diff = 1
         count = 0
-        iterMax = args.maxIter
-        logfile = filename + ".reduceConflicts_delay%03i_thres%03i_depart%03i.log" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+        iterMax = maxIter
+        logfile = filename + ".reduceConflicts_delay%03i_thres%03i_depart%03i.log" % (delayPerConflict, dthreshold, maxDepartDelay)
         f = open(logfile, 'w')
         f.write('# count\tnumber of conflicts\n')
         while not diff == 0 and count < iterMax:
             flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
             flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
             NConflicts = len(pointConflicts) + len(parallelConflicts)
-            pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+            pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, delayPerConflict, dthreshold, maxDepartDelay)
             NConflictsNew = len(pointConflicts) + len(parallelConflicts)
             diff = NConflicts - NConflictsNew
             f.write('%i\t%i\n' % (count, NConflicts))
@@ -121,10 +132,10 @@ def main():
     print pointConflicts.shape[0], "reduced point conflicts identified"
     print len(parallelConflicts.index.unique()), "reduced parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
-    if args.multi:
-        multiConflictFile = filename + ".multiConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
-        if not os.path.exists(multiConflictFile) or not args.use_snapshots:
-            multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, flights2Conflicts, mindistance, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
+    if multi:
+        multiConflictFile = filename + ".multiConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
+        if not os.path.exists(multiConflictFile) or not use_snapshots:
+            multiConflicts = conflict.getMultiConflicts(pointConflicts, parallelConflicts, flights2Conflicts, mindistance, delayPerConflict, dthreshold, maxDepartDelay)
             # save to csv file
             multiConflicts.to_csv(multiConflictFile, mode='w')
             print "Multi conflict data written to", multiConflictFile
