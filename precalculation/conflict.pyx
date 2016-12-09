@@ -294,72 +294,72 @@ def detectRawConflicts(flightIndices, times, lat, lon, alt, mindistance, mintime
     # conflict number
     c = 0
     # progress bar
-    Nloops = Nlat * Nlon * Ntime - 1
+    Nloops = Nlat * Nlon * Ntime
     print 'Calculate point conflicts'
     pbar = progressbar.ProgressBar().start()
     pbar.maxval = Nloops
+    pbarstep = Nloops/100
     # looping over all coarse grid cells
     n = 0
     for I in range(0, Nlat):
         for J in range(0, Nlon):
             for K in range(0, Ntime):
-                if n % 10000 == 0:
+                if n % pbarstep == 0:
                     pbar.update(n)
                 n = n + 1
                 # get all coarse grid cells in vicinity of the
                 # current coarse grid cell (I, J, K) which contain
                 # trajectory point as a list of 3-tuples (i, j, k)
                 conflicts = getCoarseRawPointConflict(coarseTraj, I, J, K, Nlat, Nlon, Ntime)
-                if conflicts[0].size() != 0:
-                    # loop over all trajectory point in the current coarse grid cell
-                    for l in range(coarseTraj[I][J][K][0].size()):
-                        flight1 = int(coarseTraj[I][J][K][0][l])
-                        lat1 = coarseTraj[I][J][K][2][l]
-                        lon1 = coarseTraj[I][J][K][3][l]
-                        alt1 = coarseTraj[I][J][K][4][l]
-                        time1 = coarseTraj[I][J][K][5][l]
-                        # loop over all trajectory points in the neigboring coarse gri cells
-                        for i in range(conflicts[0].size()):
-                            Ip = conflicts[0][i]
-                            Jp = conflicts[1][i]
-                            Kp = conflicts[2][i]
-                            for m in range(coarseTraj[Ip][Jp][Kp][0].size()):
-                                flight2 = int(coarseTraj[Ip][Jp][Kp][0][m])
-                                lat2 = coarseTraj[Ip][Jp][Kp][2][m]
-                                lon2 = coarseTraj[Ip][Jp][Kp][3][m]
-                                alt2 = coarseTraj[Ip][Jp][Kp][4][m]
-                                time2 = coarseTraj[Ip][Jp][Kp][5][m]
-                                # if the flight number is different, check if there is a point conflict and write the information to a text file
-                                if flight1 != flight2:
-                                    isConflict = getRawPointConflict(lat1, lon1, alt1, time1, lat2, lon2, alt2, time2,
-                                                                  spaceThreshold=spaceThreshold, timeThreshold=temporalThreshold,
-                                                                  altitudeThreshold=altitudeThreshold, earthRadius=earthRadius)
-                                    if isConflict:
-                                        if flight1 < flight2:
-                                            pcIndex.push_back(c)
-                                            pcFlight1.push_back(flight1)
-                                            pcFlight2.push_back(flight2)
-                                            pcLat1.push_back(lat1)
-                                            pcLon1.push_back(lon1)
-                                            pcAlt1.push_back(alt1)
-                                            pcTime1.push_back(time1)
-                                            pcLat2.push_back(lat2)
-                                            pcLon2.push_back(lon2)
-                                            pcAlt2.push_back(alt2)
-                                            pcTime2.push_back(time2)
-                                        else:
-                                            pcIndex.push_back(c)
-                                            pcFlight1.push_back(flight2)
-                                            pcFlight2.push_back(flight1)
-                                            pcLat1.push_back(lat2)
-                                            pcLon1.push_back(lon2)
-                                            pcAlt1.push_back(alt2)
-                                            pcTime1.push_back(time2)
-                                            pcLat2.push_back(lat1)
-                                            pcLon2.push_back(lon1)
-                                            pcAlt2.push_back(alt1)
-                                            pcTime2.push_back(time1)
-                                        c = c + 1
+                # loop over all trajectory point in the current coarse grid cell
+                for l in range(coarseTraj[I][J][K][0].size()):
+                    flight1 = int(coarseTraj[I][J][K][0][l])
+                    lat1 = coarseTraj[I][J][K][2][l]
+                    lon1 = coarseTraj[I][J][K][3][l]
+                    alt1 = coarseTraj[I][J][K][4][l]
+                    time1 = coarseTraj[I][J][K][5][l]
+                    # loop over all trajectory points in the neigboring coarse gri cells
+                    for i in range(conflicts[0].size()):
+                        Ip = conflicts[0][i]
+                        Jp = conflicts[1][i]
+                        Kp = conflicts[2][i]
+                        for m in range(coarseTraj[Ip][Jp][Kp][0].size()):
+                            flight2 = int(coarseTraj[Ip][Jp][Kp][0][m])
+                            lat2 = coarseTraj[Ip][Jp][Kp][2][m]
+                            lon2 = coarseTraj[Ip][Jp][Kp][3][m]
+                            alt2 = coarseTraj[Ip][Jp][Kp][4][m]
+                            time2 = coarseTraj[Ip][Jp][Kp][5][m]
+                            # if the flight number is different, check if there is a point conflict and write the information to a text file
+                            if flight1 != flight2:
+                                isConflict = getRawPointConflict(lat1, lon1, alt1, time1, lat2, lon2, alt2, time2,
+                                                                    spaceThreshold=spaceThreshold, timeThreshold=temporalThreshold,
+                                                                    altitudeThreshold=altitudeThreshold, earthRadius=earthRadius)
+                                if isConflict:
+                                    if flight1 < flight2:
+                                        pcIndex.push_back(c)
+                                        pcFlight1.push_back(flight1)
+                                        pcFlight2.push_back(flight2)
+                                        pcLat1.push_back(lat1)
+                                        pcLon1.push_back(lon1)
+                                        pcAlt1.push_back(alt1)
+                                        pcTime1.push_back(time1)
+                                        pcLat2.push_back(lat2)
+                                        pcLon2.push_back(lon2)
+                                        pcAlt2.push_back(alt2)
+                                        pcTime2.push_back(time2)
+                                    else:
+                                        pcIndex.push_back(c)
+                                        pcFlight1.push_back(flight2)
+                                        pcFlight2.push_back(flight1)
+                                        pcLat1.push_back(lat2)
+                                        pcLon1.push_back(lon2)
+                                        pcAlt1.push_back(alt2)
+                                        pcTime1.push_back(time2)
+                                        pcLat2.push_back(lat1)
+                                        pcLon2.push_back(lon1)
+                                        pcAlt2.push_back(alt1)
+                                        pcTime2.push_back(time1)
+                                    c = c + 1
     pbar.finish()
     np.array(pcIndex)
     pointConflicts = pd.DataFrame({'conflictIndex': np.array(pcIndex),
