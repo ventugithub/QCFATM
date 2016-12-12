@@ -16,6 +16,8 @@ def main():
     parser.add_argument('--maxIter', default=50, help='Maximal number of iterations used in reduction of conflicts', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='Force recalulation of intermediate step of caluclatin consecutive flight indices in the data')
     parser.add_argument('--multi', action='store_true', help='Calculate non-pairwise conflicts')
+    parser.add_argument('--coarseGridLat', default=2, help='Latitude grid step in degrees for coarse grid during raw conflict detection', type=float)
+    parser.add_argument('--coarseGridLon', default=2, help='Longitude grid step in degrees for coarse grid during raw conflict detection', type=float)
     args = parser.parse_args()
 
     precalculateConflicts(inputFile=args.input,
@@ -26,22 +28,21 @@ def main():
                           maxDepartDelay=args.maxDepartDelay,
                           maxIter=args.maxIter,
                           use_snapshots=args.use_snapshots,
+                          coarseGridLat=args.coarseGridLat,
+                          coarseGridLon=args.coarseGridLon,
                           multi=args.multi)
 
-def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dthreshold, maxDepartDelay, maxIter, use_snapshots, multi):
+def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dthreshold, maxDepartDelay, maxIter, use_snapshots, multi, coarseGridLat, coarseGridLon):
     # nautic mile in kilometers
     nautic = 1.852
-
-    # minimal acceptable distance in kilometers
-    mindistance = mindistance * nautic
-
-    # minimal acceptable time difference
-    mintime = mintime
 
     inputDataFile = inputFile
     filename = "%s.mindist%05.1f_mintime%03i" % (inputDataFile, mindistance, mintime)
     trajectoryFile = inputFile + ".csv"
     trajectories = None
+
+    # minimal acceptable distance in kilometers
+    mindistance = mindistance * nautic
     if not os.path.exists(trajectoryFile) or not use_snapshots:
         print "Read in trajectories ..."
         trajectories = pd.read_csv(inputDataFile,
@@ -66,7 +67,7 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
     # calulate point conflicts
     rawPointConflictFile = filename + ".rawPointConflicts.csv"
     if not os.path.exists(rawPointConflictFile) or not use_snapshots:
-        rawPointConflicts = conflict.detectRawConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, trajectories.altitude, mindistance, mintime)
+        rawPointConflicts = conflict.detectRawConflicts(trajectories.index, trajectories.time, trajectories.latitude, trajectories.longitude, trajectories.altitude, mindistance, mintime, coarseGridLat, coarseGridLon)
         # save to csv file
         rawPointConflicts.to_csv(rawPointConflictFile, mode='w')
         print "Point conflict data written to", rawPointConflictFile
