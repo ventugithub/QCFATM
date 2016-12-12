@@ -434,7 +434,7 @@ def getMultiConflictGraph(multiConflicts):
         G.add_edge(edge[0], edge[1], weight=weights[i], color=conflictType[i])
     return G
 
-def plotConflictGraph(G, component=None, ax=None, font_size=8, flightNumbers=False, node_size=100):
+def plotConflictGraph(G, component=None, ax=None, font_size=4, flightNumbers=False, node_size=100):
     """ Plot the a conflict graph
 
     Arguments:
@@ -508,7 +508,7 @@ def plotConflictGraph(G, component=None, ax=None, font_size=8, flightNumbers=Fal
 
     nx.draw_networkx(graphToPlot,
                      ax=ax,
-                     pos=nx.spring_layout(G, weight='minAbsTimeDiffWithPartner'),
+                     pos=nx.spring_layout(G),
                      node_size=node_size,
                      node_color='lightblue',
                      font_size=font_size,
