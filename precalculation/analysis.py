@@ -77,6 +77,37 @@ def addPointConflicts(worldmap, pointConflicts):
     x, y = worldmap(np.rad2deg(pointConflicts['lon2'].values), np.rad2deg(pointConflicts['lat2'].values))
     worldmap.plot(x, y, 'g', markersize=6, marker='>', linestyle='None')
 
+def addConflictPlots(worldmap, conflictIndices, trajectories, pointConflicts, parallelConflicts, red=False):
+    """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
+
+    Arguments:
+        worldmap: basemap object for plotting
+        conflictIndices: conflict indices
+        trajectories: Pandas Dataframe containing all trajectories
+        pointConflicts: Pandas Dataframe containing the point conflicts
+        parallelConflicts: Pandas Dataframe containing the parallel conflicts
+        red: plot all conflict points in red (default false)
+    """
+    # plot involved flight trajectories
+    N = len(conflictIndices)
+    flight1 = []
+    flight2 = []
+    conflictTrajectoryPoints = []
+    for i in range(N):
+        f1, f2, ctp = tools.getInvolvedFlights(conflictIndices[i], pointConflicts, parallelConflicts)
+        flight1.append(f1)
+        flight2.append(f2)
+        conflictTrajectoryPoints.append(ctp)
+
+    for i in range(N):
+        addPoints(worldmap, trajectories.loc[flight1[i]], markersize=4, marker='d')
+        addPoints(worldmap, trajectories.loc[flight2[i]], markersize=4, marker='d')
+    for i in range(N):
+        # point conflict
+        col = 'r' if red else 'g'
+        addPoints(worldmap, conflictTrajectoryPoints[i], color=col, markersize=6, linewidth=6, marker='o', linestyle='-', latitude='lat1', longitude='lon1')
+        addPoints(worldmap, conflictTrajectoryPoints[i], color='r', markersize=6, linewidth=6, marker='o', linestyle='-', latitude='lat2', longitude='lon2')
+
 def addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts, red=False):
     """ Given a conflict index, plot the trajectories of the involved flights and the conflicting trajectory points
 
@@ -209,8 +240,10 @@ def plotConflicts(conflictIndices, trajectories, pointConflicts, parallelConflic
                         xy=(x[k], y[k]), textcoords='data',
                         arrowprops=dict(arrowstyle="-|>", color='g', connectionstyle="arc3"),
                         )
-
         ax.plot(x, y, color='g', linestyle='-')
+
+    for i in range(len(conflictIndices)):
+        conflictTrajectoryPoints = conflictTrajectoryPointsContainer[i]
         # point conflict
         x, y = worldmap(np.rad2deg(np.array(conflictTrajectoryPoints['lon1'])), np.rad2deg(np.array(conflictTrajectoryPoints['lat1'])))
         ax.plot(x, y, color='r',  markersize=5, marker='o')
@@ -663,8 +696,7 @@ def main():
             print "Parallel conflict indices range from", NPointConflicts, " to", NParallelConflicts
         elif args.allpoints:
             worldmap = prepareWorldMapPlot()
-            for conflictIndex in args.conflictIndices:
-                addConflictPlot(worldmap, conflictIndex, trajectories, pointConflicts, parallelConflicts)
+            addConflictPlots(worldmap, args.conflictIndices, trajectories, pointConflicts, parallelConflicts)
             plt.show()
         else:
             plotConflicts(args.conflictIndices, trajectories, pointConflicts, parallelConflicts, npoints=args.npoints, verbose=args.verbose)
