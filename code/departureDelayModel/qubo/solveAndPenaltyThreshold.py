@@ -259,7 +259,7 @@ def main():
 
     solve_instance_args = {'num_embed': 0,
                            'outputFolder': output,
-                           'use_snapshots': True,
+                           'use_snapshots': args.use_snapshots,
                            'unary': True,
                            'verbose': False,
                            'timeout': timeout,
