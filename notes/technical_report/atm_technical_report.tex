@@ -1,0 +1,93 @@
+\documentclass{article}
+
+\usepackage{mathtools}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{pgf}
+
+\date{\today}
+\author{NASA QuAIL \and DLR}
+\title{Quantum annealing for ATM: Preliminary Technical Report}
+
+\newcommand{\func}[1]{f^{(\mathrm{#1})}}
+\newcommand{\penweight}[1]{\lambda^{(\mathrm{#1})}}
+\newcommand{\dmax}{d_{\max}}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\begin{document}
+\maketitle
+
+\section{Preprocessing of the Trajectory Data}
+In the delay only model, a potential conflict is defined by both involved flights, the minimum and the maximum of the time differences of the involved trajectory points 
+\footnote{See \url{https://babelfish.arc.nasa.gov/trac/qcfatm/browser/notes/delay_only} for details}
+.
+We used the raw trajectory data
+\footnote{from \url{https://babelfish.arc.nasa.gov/trac/qcfatm/attachment/wiki/WikiStart/20120728-29-trajectories.zip}}
+for July 29, 2012.
+For the delay only model we consider a maximum departure delay of 18 minutes. 
+A spatial conflict is real if temporal difference is below 3 minutes.
+Therefore we consider a spatial conflict a potential conflict if the temporal difference is below 21 minutes.
+
+\begin{figure}[htpb]
+    \centering
+    \scalebox{0.4}{\input{pics/pre_connected_component_41.pgf}}
+    \scalebox{0.4}{\input{pics/pre_connected_component_49.pgf}}
+    \caption{Two connected components of the conflict graph. The connected components or partitions are label by increasing number of flights involved. Partition 41 involves $N_f=11$ flights and $N_c=40$ conflicts. Partition $49$ involved $N_f=148$ flights and $N_c=513$ conflicts. The thickness of the edges indicates the minimum absolute value of the time difference between trajectory points in conflict $|\Delta t|_\text{min}$. Subsequent point conflicts are grouped together as parallel conflicts. If a pair of flights has both point and parallel conflicts the corresponding edge is marked as a mixed conflict.}
+    \label{fig:pre_connected_components}
+\end{figure}
+
+The precalculation yields 3663 potential conflicts between 889 flights.
+In order to identify possible subsets of the problem, we inspect the conflict graph: Each edge in the conflict graph indicates one ore more potential conflicts between two flights which are represented by the graph vertices.
+The natural subsets of the conflict graph are the connected components.
+Two examples of these connected components of the conflict graph are shown in \ref{fig:pre_connected_components}.
+There are 51 connected components. 
+Figure \ref{fig:pre_connected_components_statistics} displays statistics of the connected components.
+The number of flights and conflicts involved is very high for a few connected components and fairly low for most of the connected components.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/conflict_graph_connected_components_analysis.pdf}
+    %\scalebox{0.4}{\input{pics/conflict_graph_connected_components_analysis.pgf}}
+    \caption{The treewidth, the number of flights and the number of conflicts for the connected components of the conflicts graph}
+    \label{fig:pre_connected_components_statistics}
+\end{figure}
+
+\subsection{Multiple conflicts between two flights}
+For each pair of flights, more than one conflict may occur (see figure \ref{fig:pre_overlapping_time_intervals}).
+There are 441 of 3183 pairs of flights with more than one conflict.
+But only 45 of these 441 pairs of flights have non-overlapping time intervals.
+For the delay only model, one could merge the conflicts for the other 397 pairs of flights.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/potential_conflicts_non_overlapping_time_intervals_statistics.pdf}
+    \includegraphics[width=1.0\linewidth]{pics/potential_conflicts_non_overlapping_time_intervals_gap_sizes.pdf}
+    \caption{Top: Number of conflicts between pairs of flights. Bottom: Maximum gap sizes between non-overlapping conflict time intervals}
+    \label{fig:pre_overlapping_time_intervals}
+\end{figure}
+
+Figure \ref{fig:pre_flight_pair_with_two_conflicts} shows an example of a pair of flights with two conflicts.
+The two conflicts ($k=69$ and $k=70$) are between flights $i=10$ and $i=12$.
+For the first conflict $k=69$ the time interval reads $[-8, -1]$ and for the second conflict $k=70$ it reads $[1, 7]$.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/pre_flight_pair_with_two_conflicts.pdf}
+    \caption{Example of two conflicts between two flights}
+    \label{fig:pre_flight_pair_with_two_conflicts}
+\end{figure}
+
+In contrast, figure \ref{fig:pre_flight_pair_with_five_conflicts} shows a pair of flights with five conflicts.
+The time interval reads $[-20, -20]$ for all five conflicts.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/pre_flight_pair_with_five_conflicts.pdf}
+    \caption{Example of five conflicts between two flights}
+    \label{fig:pre_flight_pair_with_five_conflicts}
+\end{figure}
+
+
+\section{Exact Solution of the Delay Only Model}
+\section{Exact Solution of the QUBO Formulation of the Delay Only Model}
+\section{Quantum Annealing Solution of the Delay Only Model}
+
+\end{document}
