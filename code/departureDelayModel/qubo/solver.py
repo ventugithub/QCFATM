@@ -42,7 +42,7 @@ class Solver:
             try:
                 self.conn = remote.RemoteConnection(myToken.myUrl, myToken.myToken)
                 # get the solver
-                self.solver = self.conn.get_solver('C12')
+                self.solver = self.conn.get_solver('C12-DWAVE')
             except:
                 print "Unable to establich connection to %s" % myToken.myUrl
                 print "Did you set up the connection?"
