@@ -52,21 +52,21 @@ class testInstance(unittest.TestCase):
             while (j == i):
                 j = flights[random.randint(1, Nf)]
             conflicts.append((i, j))
-        arrivalTimes = zip([flights[t] for t in np.random.randint(0, Nf, Nc)], [flights[t] for t in np.random.randint(1, Nf, Nc)])
+        timeLimits = zip([flights[t] for t in np.random.randint(0, Nf, Nc)], [flights[t] for t in np.random.randint(1, Nf, Nc)])
         delays = [int(d) for d in np.arange(0, 18 + 1, 3)]
 
-        inst = instance.Instance(flights, conflicts, arrivalTimes, delays)
+        inst = instance.Instance(flights, conflicts, timeLimits, delays)
         inst.save_txt(self.filename)
         inst2 = instance.Instance(self.filename, hdf5=False)
         self.assertEqual(flights, inst2.flights)
         self.assertEqual(conflicts, inst2.conflicts)
-        self.assertEqual(arrivalTimes, inst2.arrivalTimes)
+        self.assertEqual(timeLimits, inst2.timeLimits)
         self.assertEqual(delays, inst2.delays)
         inst.save_hdf5(self.filename)
         inst2 = instance.Instance(self.filename, hdf5=True)
         self.assertEqual(flights, inst2.flights)
         self.assertEqual(conflicts, inst2.conflicts)
-        self.assertEqual(arrivalTimes, inst2.arrivalTimes)
+        self.assertEqual(timeLimits, inst2.timeLimits)
         self.assertEqual(delays, inst2.delays)
 
     def tearDown(self):
