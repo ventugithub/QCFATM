@@ -39,11 +39,10 @@ Therefore we consider a spatial conflict a potential conflict if the temporal di
 \end{figure}
 
 The precalculation yields 3663 potential conflicts between 889 flights.
-In order to identify possible subsets of the problem, we inspect the conflict graph: Each edge in the conflict graph indicates one ore more potential conflicts between two flights which are represented by the graph vertices.
+In order to identify possible subsets of the problem, we inspect the conflict graph: Each edge in the conflict graph indicates one or more potential conflicts between two flights which are represented by the graph vertices.
 The natural subsets of the conflict graph are the connected components.
-Two examples of these connected components of the conflict graph are shown in \ref{fig:pre_connected_components}.
-There are 51 connected components. 
-Figure \ref{fig:pre_connected_components_statistics} displays statistics of the connected components.
+Two examples of these connected components of the conflict graph are shown in figure \ref{fig:pre_connected_components}.
+Figure \ref{fig:pre_connected_components_statistics} displays statistics of the 51 connected components.
 The number of flights and conflicts involved is very high for a few connected components and fairly low for most of the connected components.
 \begin{figure}[htpb]
     \centering
@@ -86,8 +85,35 @@ The time interval reads $[-20, -20]$ for all five conflicts.
 \end{figure}
 
 
+\newpage
 \section{Exact Solution of the Delay Only Model}
+We want to investigate the influence of departure delay discretization in the delay only model.
+Therefore we used a constraint programming solver to solve most of the connected component subsets of the problem.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/totalDelayVsDelayStep_examples.pdf}
+    \caption{Influence of the discretization on the solution of the two instances extracted from connected components of the conflict graph}
+    \label{fig:totalDelayVsDelayStep}
+\end{figure}
+Figure \ref{fig:totalDelayVsDelayStep} shows the total delay of the solution in dependence of the number of delay steps used.
+We can see that a fairly low maximum delay step $d_\text{max}$ is sufficient.
+On the other hand, the solutions get better for smaller the delay step sizes $\Delta d$.
+
 \section{Exact Solution of the QUBO Formulation of the Delay Only Model}
+The QUBO formulation of the problem requires the reformulation of constraints as additional penalty terms in the objective function.
+If these penalty weights are chosen too large the original objective might get suppressed. 
+On the other hand, if the penalty weights are too small the resulting solution can become invalid due to non-vanishing penalty terms.
+Therefore we investigate the solution to the QUBO formulation of the delay only model checking the validity of the exact solution for various penalty weights.
+In the course of this we used an algorithm which tracks the boundary between valid and invalid solutions.
+Figure \ref{fig:validityMaps} shows an example for the validity of the solution in dependence of the penalty weights.
+In all observed cases there is a box like shape of the validity boundary.
+Moreover the validity boundary moves to higher penalty weights for decreasing number of delay steps.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/validity_maps_examples.pdf}
+    \caption{Validity of the solution to the QUBO formulation of the delay only model in dependence of the penalty weights for various values of the delay step size $\Delta d$. The instance was extracted from partition 41 and $d_\text{max}=18$.}
+    \label{fig:validityMaps}
+\end{figure}
 \section{Quantum Annealing Solution of the Delay Only Model}
 
 \end{document}
