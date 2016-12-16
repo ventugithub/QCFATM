@@ -16,7 +16,7 @@ import pandas as pd
 
 def main():
     parser = argparse.ArgumentParser(description='Map ATM instance to qubo and solve it')
-    parser.add_argument('-i', '--input', required=True, help='input instance yaml file')
+    parser.add_argument('-i', '--input', required=True, help='input instance file')
     parser.add_argument('-o', '--output', help='result folder')
     parser.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--chimera_t', default=None, help='Half number of qubits in unit cell of Chimera', type=int)
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
     parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
-    parser.add_argument('--inventory', default='data/inventory.csv', help='Inventory file')
+    parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
     parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
     parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
     args = parser.parse_args()
