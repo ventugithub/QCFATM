@@ -1,7 +1,8 @@
-personal_ws-1.1 en 47 
+personal_ws-1.1 en 49 
 jk
 ip
 IDM
+annealer
 QUBO
 iq
 notational
@@ -9,6 +10,7 @@ avoidances
 precalculation
 parameterization
 jq
+embeddings
 spacetime
 al
 QuAIL

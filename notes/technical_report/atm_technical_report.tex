@@ -115,5 +115,28 @@ Moreover the validity boundary moves to higher penalty weights for decreasing nu
     \label{fig:validityMaps}
 \end{figure}
 \section{Quantum Annealing Solution of the Delay Only Model}
+So far, we solved the first 42 partitions with the quantum annealer.
+We used 5 different embeddings and 10000 annealing runs per embedding.
+As penalty weights we used $(\lambda_\text{unique}, \lambda_\text{conflict}) = \left\{(0.5, 0.5), (1, 1), (2, 2)\right\}$.
 
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/annealing_results_success_vs_flights_and_conflicts.pdf}
+    \caption{Success probability versus number of flights and conflicts for various delay step sizes. The data includes the first 42 partitions of the conflict graph.}
+    \label{fig:qa_success_vs_flights_and_conflicts}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/annealing_results_coefficent_range_ratio_vs_flights_and_conflicts.pdf}
+    \caption{Maximum coefficient range ratio for number of flights and conflicts for various delay step sizes. The data includes the first 42 partitions of the conflict graph.}
+    \label{fig:qa_coefficient_range_ratio_vs_flights_and_conflicts}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=1.0\linewidth]{pics/annealing_results_success_vs_cooefficent_range_ratio.pdf}
+    \caption{Success probability versus the maximum coefficient range ratio. The data includes the first 42 partitions of the conflict graph.}
+    \label{fig:qa_coefficient_range_ratio_vs_flights_and_conflicts}
+\end{figure}
 \end{document}
