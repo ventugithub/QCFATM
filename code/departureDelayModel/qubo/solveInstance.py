@@ -443,10 +443,13 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
             inventory.to_hdf(inventoryfile, 'inventory', mode='w')
 
 def solve_instances(instancefiles, penalty_weights, np=1, **kwargs):
+    pwstr = ""
+    for k, v in penalty_weights.items():
+        pwstr = pwstr + "%s: %0.3f, " % (k, v)
     if np != 1:
         pool = multiprocessing.Pool(processes=np)
     for instancefile in instancefiles:
-        print "Process instance file %s" % instancefile
+        print "Process instance file %s with penalty weights %s" % (instancefile, pwstr)
         solve_instance_args = {'instancefile': instancefile, 'penalty_weights': penalty_weights}
         solve_instance_args.update(kwargs)
         if np != 1:

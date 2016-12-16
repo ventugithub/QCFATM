@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--num_embed', default=1, help='number of different embeddings', type=int)
     parser.add_argument('-d', '--delays', nargs='+', default=[3, 6, 9], help='delay steps to consider', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
+    parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--penalty_weights_all_combinations', nargs='+', help='list of penalty weights for unique and conflict term of the QUBO (', type=float)
@@ -36,6 +37,7 @@ def main():
     timeout = args.timeout
     nproc = args.np
     num_embed = args.num_embed
+    embedding_only = args.embedding_only
 
     if not os.path.exists(os.path.dirname(args.inventoryfile)):
         os.makedirs(os.path.dirname(args.inventoryfile))
@@ -53,7 +55,8 @@ def main():
     for w2, w3 in penalty_weights:
         solve_instance_args = {'num_embed': num_embed,
                                'outputFolder': args.output,
-                               'use_snapshots': True,
+                               'embedding_only': embedding_only,
+                               'use_snapshots': args.use_snapshots,
                                'retry_embedding': max(num_embed - 2, 0),
                                'retry_embedding_desperate': 1,
                                'unary': True,
