@@ -20,6 +20,7 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--penalty_weights_all_combinations', nargs='+', help='list of penalty weights for unique and conflict term of the QUBO (', type=float)
     group.add_argument('--penalty_weights_two_tuples', nargs='+', default=[0.5, 0.5, 1, 1, 2, 2], help='list of two penalty weights (unique and conflict) of the QUBO (list length must be even). E.g. 0.5 0.5 1 1 2 2', type=float)
+    parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--np', default=1, help='number of processes', type=int)
     parser.add_argument('--maxDelay', default=18, help='maximum delay', type=int)
     args = parser.parse_args()
@@ -64,7 +65,7 @@ def main():
                                'timeout': timeout,
                                'exact': True,
                                'store_everything': True,
-                               'retry_exact': False,
+                               'retry_exact': args.retry_exact,
                                'inventoryfile': inventoryfile}
         si.solve_instances(instancefiles, penalty_weights={'unique': w2, 'conflict': w3}, np=nproc, **solve_instance_args)
 
