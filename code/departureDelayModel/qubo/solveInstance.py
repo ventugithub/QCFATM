@@ -439,8 +439,10 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
                 inventory = pd.concat([inventory_before, inventory])
 
             # drop duplicates but ignore version
-            columnsToConsider = ['exact', 'embedding', 'penalty_weight_unique', 'penalty_weight_conflict', 'NLogQubits']
+            columnsToConsider = ['instance', 'exact', 'embedding', 'penalty_weight_unique', 'penalty_weight_conflict', 'NLogQubits']
+            inventory.reset_index(inplace=True)
             inventory.drop_duplicates(subset=columnsToConsider, keep='last', inplace=True)
+            inventory.set_index('instance', inplace=True)
             inventory.to_hdf(inventoryfile, 'inventory', mode='w')
 
 def solve_instances(instancefiles, penalty_weights, np=1, **kwargs):
