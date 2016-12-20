@@ -1,0 +1,44 @@
+\mode<presentation>
+
+\setbeamertemplate{background}{
+    \ifnum\c@framenumber=1%
+        \includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{images/background_title_dlr_nasa.png}
+    \else%
+   \vbox to \paperheight{\vfil\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{images/background_dlr_nasa.png}}
+    \fi%
+}
+
+\newlength{\dlrleftmargin}
+\def\dlrleftmargin{1.0cm}
+
+% Title page
+\defbeamertemplate*{title page}{dlr}[1][]
+{ 
+    \begin{beamercolorbox}[wd=12cm,leftskip=\dlrleftmargin,#1]{title page header}
+      \usebeamerfont{title}\inserttitle\par%
+    \end{beamercolorbox}%
+    \vskip0.75cm%
+    \begin{beamercolorbox}[wd=12cm,rightskip=1.5cm,leftskip=\dlrleftmargin,#1]{author}
+      \usebeamerfont{author}\insertauthor%
+    \end{beamercolorbox}
+     \vskip0.5cm%
+    \begin{beamercolorbox}[wd=12cm,leftskip=\dlrleftmargin,#1]{institute}
+      \usebeamerfont{institute}\insertinstitute%
+    \end{beamercolorbox}
+%    \begin{beamercolorbox}[wd=12cm,leftskip=\dlrleftmargin,#1]{date}
+%      \usebeamerfont{author}\insertdate%
+%    \end{beamercolorbox}
+  \vfill
+}
+
+% smaller bullets in itemize
+%\newlength{\bulletraise}
+%\setbox1=\hbox{$\bullet$}\setbox2=\hbox{\tiny$\bullet$}
+%\setlength{\bulletraise}{\dimexpr0.5\ht1-0.5\ht2}
+%\newcommand\tinybullet{\raisebox{\bulletraise}{\tiny$\bullet$}}
+\newcommand\tinybullet{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\defbeamertemplate{itemize item}{tiny bullet}{\tinybullet}
+\defbeamertemplate{itemize subitem}{tiny bullet}{\tinybullet}
+\defbeamertemplate{itemize subsubitem}{tiny bullet}{\tinybullet}
+
+\mode<all>
