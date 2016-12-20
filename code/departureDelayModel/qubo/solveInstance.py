@@ -176,6 +176,8 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
             if not rawresult:
                 print "No exact solution found. Timeout was ", timeout, "seconds"
                 f = h5py.File(resultfile, 'a')
+                if exactSolutionStr not in f:
+                    f.create_group(exactSolutionStr)
                 f[exactSolutionStr].attrs['foundSolution'] = False
                 f.close()
             else:
