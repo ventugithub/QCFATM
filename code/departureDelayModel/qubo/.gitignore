@@ -1,4 +1,4 @@
-data/
+data
 myToken.py
 *.pyc
 hardware_adjacency.yml
