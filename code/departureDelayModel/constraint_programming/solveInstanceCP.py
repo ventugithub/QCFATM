@@ -56,6 +56,12 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
         os.makedirs(os.path.dirname(inventoryfile))
     inst = instance.Instance(instancefile)
 
+    # if argument Nd is zero, assume continous delay variable
+    discrete = True
+    if Nd == 0:
+        discrete = False
+        deltat = float(deltat)
+
     # get basename by removing the delayStep and maxDelay values from filename (since they are ignored)
     basename = os.path.basename(instancefile).partition('_delayStep')[0]
     resultfile = "%s/%s.results.h5" % (outputFolder, basename)
@@ -65,7 +71,11 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
         Nk = len(inst.conflicts)
 
         # define Nf integer variables from [0, Nd]
-        d = nj.VarArray(Nf, Nd + 1)
+        if discrete:
+            d = nj.VarArray(Nf, Nd + 1)
+        # define Nf float variables from [0, Nd] if argument Nd == 0
+        else:
+            d = nj.VarArray(Nf, 0.0, float(maxDelay))
 
         # create model
         model = nj.Model()
@@ -77,12 +87,19 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
             f2 = int(inst.conflicts[k][1])
             i = int(inst.flights.index(f1))
             j = int(inst.flights.index(f2))
-            constraint1 = maxDelay * (d[i] - d[j]) >= Nd * (deltat - dtmin)
-            constraint2 = maxDelay * (d[i] - d[j]) <= - Nd * (deltat + dtmax)
+            if discrete:
+                constraint1 = maxDelay * (d[i] - d[j]) >= Nd * (deltat - dtmin)
+                constraint2 = maxDelay * (d[i] - d[j]) <= - Nd * (deltat + dtmax)
+            else:
+                constraint1 = (d[i] - d[j]) >= (deltat - dtmin)
+                constraint2 = (d[i] - d[j]) <= - (deltat + dtmax)
             model += nj.Disjunction([constraint1, constraint2])
 
         # load solver
-        solver = model.load("Mistral")
+        if discrete:
+            solver = model.load("Mistral")
+        else:
+            solver = model.load("CPLEX")
         if verbose:
             solver.setVerbosity(1)
         if timeout:
@@ -94,7 +111,10 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
 
             # parse solution
             s = d.solution()
-            solution = [int(n) for n in s.strip("[]").split(', ')]
+            if discrete:
+                solution = [int(n) for n in s.strip("[]").split(', ')]
+            else:
+                solution = [float(n) for n in s.strip("[]").split(', ')]
 
             # check solution
             valids = []
@@ -105,14 +125,21 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
                 f2 = int(inst.conflicts[k][1])
                 i = int(inst.flights.index(f1))
                 j = int(inst.flights.index(f2))
-                constraint1 = maxDelay * (solution[i] - solution[j]) >= Nd * (deltat - dtmin)
-                constraint2 = maxDelay * (solution[i] - solution[j]) <= - Nd * (deltat + dtmax)
+                if discrete:
+                    constraint1 = maxDelay * (solution[i] - solution[j]) >= Nd * (deltat - dtmin)
+                    constraint2 = maxDelay * (solution[i] - solution[j]) <= - Nd * (deltat + dtmax)
+                else:
+                    constraint1 = (solution[i] - solution[j]) >= (deltat - dtmin)
+                    constraint2 = (solution[i] - solution[j]) <= - (deltat + dtmax)
                 valid = True if (constraint1 or constraint2) else False
                 valids.append(valid)
             if not all(valids):
                 print "Solution is not valid. Will not be stored"
             else:
-                delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
+                if discrete:
+                    delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
+                else:
+                    delayValues = solution
                 delayVariables = variable.IntegerVariable(delayValues)
                 # calculate objective function
                 totaldelay = 0
