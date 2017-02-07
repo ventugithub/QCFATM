@@ -8,7 +8,7 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--output', default='data/results/', help='result folder')
     parser.add_argument('-d', '--maxDelay', default=18, help='Maximum delay', type=int)
-    parser.add_argument('-n', '--numDelays', nargs='+', help='List of (number of delay steps - 1) (ignored if allfactors is true)', type=int)
+    parser.add_argument('-n', '--numDelays', nargs='+', help='List of (number of delay steps - 1). Set to 0 for continuous variables (ignored if allfactors is true)', type=int)
     parser.add_argument('--allfactors', action='store_true', help='Use (number of delay steps - 1) = all factors of maxDelay ')
     parser.add_argument('--instanceFolder', default='data/instances', help='path to instance folder')
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)

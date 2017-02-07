@@ -21,7 +21,7 @@ def main():
     parser.add_argument('-i', '--input', required=True, help='input instance file (ignoring the delays included)')
     parser.add_argument('-o', '--output', default='data/results/', help='result folder')
     parser.add_argument('-d', '--maxDelay', default=18, help='Maximum delay', type=int)
-    parser.add_argument('-n', '--numDelays', nargs='+', default=[6], help='List of (number of delay steps - 1)', type=int)
+    parser.add_argument('-n', '--numDelays', nargs='+', default=[6], help='List of (number of delay steps - 1), Set to 0 for continuous variables', type=int)
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
@@ -135,6 +135,20 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
                 valids.append(valid)
             if not all(valids):
                 print "Solution is not valid. Will not be stored"
+                if verbose:
+                    for k in range(Nk):
+                        dtmin = int(inst.timeLimits[k][0])
+                        dtmax = int(inst.timeLimits[k][0])
+                        f1 = int(inst.conflicts[k][0])
+                        f2 = int(inst.conflicts[k][1])
+                        i = int(inst.flights.index(f1))
+                        j = int(inst.flights.index(f2))
+                        if discrete:
+                            diff = maxDelay / Nd * (solution[i] - solution[j])
+                        else:
+                            diff = solution[i] - solution[j]
+                        print "Constraint violation in solution:", deltat - dtmin, "not <=", diff, " or ", diff, "not >=", -deltat - dtmax, "( dtmin =", dtmin, "dtmax =", dtmax, ")"
+
             else:
                 if discrete:
                     delayValues = float(maxDelay) / Nd * np.array(solution, dtype=int)
