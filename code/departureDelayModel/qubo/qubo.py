@@ -4,7 +4,7 @@ import variable
 
 def isRealConflict(delay1, delay2, deltaTMin, deltaTMax, threshold=3):
     dmin = - threshold - deltaTMax
-    dmax = - threshold + deltaTMin
+    dmax = threshold - deltaTMin
     delayDiff = delay1 - delay2
     if delayDiff > dmin and delayDiff < dmax:
         return 1
