@@ -26,14 +26,14 @@ def getNumberOfRealConflictConfigurations(tmin, tmax, maxDelay, dthreshold=3):
 
 def main():
     parser = argparse.ArgumentParser(description='Create QUBO instances from data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--maxDelay', default=12, help='maximum delay for the instance', type=int)
+    parser.add_argument('--maxDelay', default=18, help='maximum delay for the instance', type=int)
     parser.add_argument('--delayStep', default=3, help='delay step size for the instance', type=int)
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
-    parser.add_argument('-t', '--mintime', default=12, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
+    parser.add_argument('-t', '--mintime', default=21, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
     parser.add_argument('--delayPerConflict', default=0, help='Delay introduced by each conflict avoiding maneuver', type=int)
     parser.add_argument('--dthreshold', default=3, help='Minimum time difference in minutes to qualify as a real conflict', type=int)
-    parser.add_argument('--maxDepartDelay', default=12, help='Maximum departure delay in the precalculation', type=int)
+    parser.add_argument('--maxDepartDelay', default=18, help='Maximum departure delay in the precalculation', type=int)
     parser.add_argument('--pointConflictFile', help='input file containing the point conflicts (overwrites -t and -d)')
     parser.add_argument('--parallelConflictFile', help='input file containing the parallel conflicts (overwrites -t and -d)')
     parser.add_argument('--flights2ConflictsFile', help='input file the mapping from flight to conflict indices (overwrites -t and -d)')
