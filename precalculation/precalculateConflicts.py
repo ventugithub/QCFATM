@@ -96,29 +96,34 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
     reducedPointConflictFile = filename + ".reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
     reducedParallelConflictFile = filename + ".reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
     if not os.path.exists(flights2ConflictsFile) or not os.path.exists(reducedPointConflictFile) or not os.path.exists(reducedParallelConflictFile) or not use_snapshots:
-        diff = 1
-        count = 0
-        iterMax = maxIter
-        logfile = filename + ".reduceConflicts_delay%03i_thres%03i_depart%03i.log" % (delayPerConflict, dthreshold, maxDepartDelay)
-        f = open(logfile, 'w')
-        f.write('# count\tnumber of conflicts\n')
-        while not diff == 0 and count < iterMax:
+        if delayPerConflict == 0:
+            print "Reduction not necessary since delayPerConflict is 0. Calculate flight2Conflict though."
             flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
             flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
-            NConflicts = len(pointConflicts) + len(parallelConflicts)
-            pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, delayPerConflict, dthreshold, maxDepartDelay)
-            NConflictsNew = len(pointConflicts) + len(parallelConflicts)
-            diff = NConflicts - NConflictsNew
-            f.write('%i\t%i\n' % (count, NConflicts))
-            count += 1
-            print "Iteration:", count, ". Number of Conflicts:", NConflicts
-        if count == iterMax:
-            f.close()
-            print "No convergence. Break."
-            exit(1)
         else:
-            print "Convergence after", count, "iterations. Number of Conflicts:", NConflicts
-        f.close()
+            diff = 1
+            count = 0
+            iterMax = maxIter
+            logfile = filename + ".reduceConflicts_delay%03i_thres%03i_depart%03i.log" % (delayPerConflict, dthreshold, maxDepartDelay)
+            f = open(logfile, 'w')
+            f.write('# count\tnumber of conflicts\n')
+            while not diff == 0 and count < iterMax:
+                flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
+                flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
+                NConflicts = len(pointConflicts) + len(parallelConflicts)
+                pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, delayPerConflict, dthreshold, maxDepartDelay)
+                NConflictsNew = len(pointConflicts) + len(parallelConflicts)
+                diff = NConflicts - NConflictsNew
+                f.write('%i\t%i\n' % (count, NConflicts))
+                count += 1
+                print "Iteration:", count, ". Number of Conflicts:", NConflicts
+            if count == iterMax:
+                f.close()
+                print "No convergence. Break."
+                exit(1)
+            else:
+                print "Convergence after", count, "iterations. Number of Conflicts:", NConflicts
+            f.close()
 
         print "Flight to conflict data written to", flights2ConflictsFile
         flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
