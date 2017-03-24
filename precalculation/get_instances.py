@@ -45,6 +45,8 @@ def main():
     sp_parser = subparsers.add_parser("subpartitions", help='Extract instances from partitioning a single connected component of the conflict graph', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     sp_parser.add_argument('-c', '--component', required=True, help='Index of component (ordered by number of flights) which will be divided into subpartitions', type=int)
     sp_parser.add_argument('-k', '--numPart', required=True, help='Number of subpartitions', type=int)
+
+    subparsers.add_parser("getConflictGraph", help='Extract conflict graph only', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     args = parser.parse_args()
 
     name = "mindist%05.1f_mintime%03i" % (args.mindistance, args.mintime)
@@ -199,6 +201,16 @@ def main():
             f.close()
 
             count = count + 1
+
+    if args.mode == 'getConflictGraph':
+        G = analysis.getConflictGraph(pointConflicts, parallelConflicts)
+        if not os.path.exists(args.output):
+            os.mkdir(args.output)
+        filename = args.output + "/atm_conflict_graph_maxDepartDelayPrecalculation%03i.txt" % (args.mintime - args.dthreshold)
+        f = open(filename, 'w')
+        for i, j in G.edges():
+            f.write("%i %i\n" % (i, j))
+        f.close()
 
 if __name__ == "__main__":
     main()
