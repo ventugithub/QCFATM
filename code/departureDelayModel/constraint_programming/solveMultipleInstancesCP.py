@@ -36,7 +36,9 @@ def main():
     print "Collect instance files ..."
     instancefiles = []
     for p in partitions:
-        instancefile = '%s/atm_instance_partition%04i_delayStep009_maxDelay018.h5' % (args.instanceFolder, p)
+        delayStep = args.maxDelay / numDelays[0]
+        print delayStep
+        instancefile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (args.instanceFolder, p, delayStep, args.maxDelay)
         if not os.path.exists(instancefile):
             raise ValueError('%s does not exists' % instancefile)
         instancefiles.append(instancefile)
