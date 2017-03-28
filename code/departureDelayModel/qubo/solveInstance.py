@@ -11,6 +11,7 @@ import qubo
 import solver
 import polynomial
 import variable
+import instance
 
 import pandas as pd
 
@@ -120,7 +121,6 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
     # read in instance and calculate QUBO and index mapping
     subqubonames = ['departure', 'conflict', 'unique']
     grouplist = []
-    grouplist.append('%s/qubo' % pwstr)
     for name in subqubonames:
         grouplist.append('subqubo-%s' % name)
     grouplist.append('variable')
@@ -137,12 +137,19 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
             subqubos[name].save_hdf5(resultfile, 'subqubo-%s' % name)
     else:
         print "Read in QUBO ..."
-        q = polynomial.Polynomial()
-        q.load_hdf5(resultfile, '%s/qubo' % pwstr)
         subqubos = {}
         for name in subqubonames:
             subqubos[name] = polynomial.Polynomial()
             subqubos[name].load_hdf5(resultfile, 'subqubo-%s' % name)
+
+        q = polynomial.Polynomial()
+        inst = instance.Instance(instancefile)
+        delayValues = list(inst.delays)
+        penalty_weight_departure = 1.0 / delayValues[-1]
+        q += penalty_weight_departure * subqubos['departure']
+        for name in hardConstraints:
+            q += penalty_weights[name] * subqubos[name]
+        q.save_hdf5(resultfile, '%s/qubo' % pwstr)
         print "Read in Variable ..."
         if unary:
             var = variable.Unary(resultfile, instancefile, hdf5=True)

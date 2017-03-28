@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import subprocess
 
+skipBigProblems = 1024
 num_embed = 5
-nProc = 1
+nProc = 1 
 # the maximum delay of the precalculation
-for maxDelayPrecalc in [6, 12, 15, 18, 24, 36, 48, 60]:
+for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
     # get the maximum value of the delay variable (always <= the maximum delay of the precalculation)
     instanceFolder = '../../../precalculation/data/instances/connectedComponents/maxDepartDelayPrecalculation_%03i' % maxDelayPrecalc
     # get partition maximum
@@ -24,9 +25,10 @@ for maxDelayPrecalc in [6, 12, 15, 18, 24, 36, 48, 60]:
     cmd += ' --pmax %i' % partitionMax
     cmd += ' --num_embed %i' % num_embed
     cmd += ' -d %s' % ' '.join(delaySteps)
+    cmd += ' --skipBigProblems %i' % skipBigProblems
     cmd += ' --use_snapshots'
     cmd += ' --embedding_only'
     cmd += ' --maxDelay %i' % maxDelayPrecalc
     cmd += ' --np %i' % nProc
     print cmd
-    #subprocess.call(cmd, shell=True)
+    subprocess.call(cmd, shell=True)

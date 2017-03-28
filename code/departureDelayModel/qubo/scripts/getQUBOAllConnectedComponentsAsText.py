@@ -9,8 +9,7 @@ import polynomial
 subqubonames = ['departure', 'unique', 'conflict']
 nProc = 1
 # the maximum delay of the precalculation
-#for maxDelayPrecalc in [6, 12, 15, 18, 24, 36, 48, 60]:
-for maxDelayPrecalc in [6, ]:
+for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
     # get the maximum value of the delay variable (always <= the maximum delay of the precalculation)
     resultFolder = 'data/connectedComponents/maxDelayPrecalc%03i/results' % maxDelayPrecalc
     outputFolder = 'data/connectedComponents/quboAsTxt/maxDelayPrecalc%03i' % maxDelayPrecalc
@@ -32,9 +31,8 @@ for maxDelayPrecalc in [6, ]:
     for d in delaySteps:
         for p in range(partitionMax + 1):
             resultfile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.results.h5' % (resultFolder, p, d, maxDelayPrecalc)
-            if not os.path.exists(resultfile):
-                raise ValueError('%s does not exists' % resultfile)
-            resultfiles.append(resultfile)
+            if os.path.exists(resultfile):
+                resultfiles.append(resultfile)
 
     for resultfile in resultfiles:
         print "Convert subqubos in %s to txt" % resultfile

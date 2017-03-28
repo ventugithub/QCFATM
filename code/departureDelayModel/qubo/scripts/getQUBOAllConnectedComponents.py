@@ -3,9 +3,9 @@ import subprocess
 
 skipBigProblems = 1024
 num_embed = 5
-nProc = 1
+nProc = 4
 # the maximum delay of the precalculation
-for maxDelayPrecalc in [6, 12, 15, 18, 24, 36, 48, 60]:
+for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
     # get the maximum value of the delay variable (always <= the maximum delay of the precalculation)
     instanceFolder = '../../../precalculation/data/instances/connectedComponents/maxDepartDelayPrecalculation_%03i' % maxDelayPrecalc
     # get partition maximum
@@ -25,10 +25,10 @@ for maxDelayPrecalc in [6, 12, 15, 18, 24, 36, 48, 60]:
     cmd += ' --pmax %i' % partitionMax
     cmd += ' --num_embed %i' % num_embed
     cmd += ' -d %s' % ' '.join(delaySteps)
-    # cmd += ' --use_snapshots'
+    cmd += ' --use_snapshots'
     cmd += ' --qubo_creation_only'
     cmd += ' --maxDelay %i' % maxDelayPrecalc
-    cmd += ' --skipBigProblems %i' % skipBigProblems
+    # cmd += ' --skipBigProblems %i' % skipBigProblems
     cmd += ' --penalty_weights_two_tuples 1 1'
     cmd += ' --np %i' % nProc
     print cmd
