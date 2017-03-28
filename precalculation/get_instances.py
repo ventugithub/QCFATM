@@ -7,7 +7,6 @@ import numpy as np
 import argparse
 import os
 import h5py
-import metis
 
 import instance
 import analysis
@@ -25,9 +24,10 @@ def getNumberOfRealConflictConfigurations(tmin, tmax, maxDelay, dthreshold=3):
     return np.count_nonzero(z)
 
 def main():
-    parser = argparse.ArgumentParser(description='Create QUBO instances from data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--maxDelay', default=18, help='maximum delay for the instance', type=int)
-    parser.add_argument('--delayStep', default=3, help='delay step size for the instance', type=int)
+    parser = argparse.ArgumentParser(description='Create Delay Only ATM QUBO instances from data', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--maxDelays', default=[18], nargs='*', help='maximum values of delay variable', type=int)
+    parser.add_argument('--delaySteps', default=[3, 6, 9], nargs='*', help='step sizes of the delay variable', type=int)
+    parser.add_argument('--delayStepsAllFactors', action='store_true', help='if set,  use all factors of maxDelay as delay step sizes')
     parser.add_argument('--input', default='data/TrajDataV2_20120729.txt', help='input file containing the trajectory data with consecutive flight index')
     parser.add_argument('-d', '--mindistance', default=30, help='Minimum distance in nautic miles to qualify as a conflict', type=float)
     parser.add_argument('-t', '--mintime', default=21, help='Minimum time difference in minutes to qualify as a potential conflict', type=int)
@@ -52,13 +52,11 @@ def main():
     name = "mindist%05.1f_mintime%03i" % (args.mindistance, args.mintime)
     pointConflictFile = "%s.%s.reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
     parallelConflictFile = "%s.%s.reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
-    if args.maxDelay % args.delayStep != 0:
-        print "maximum delay is not a multiple of delay step."
-        exit(1)
 
     if not os.path.exists(args.output):
-        os.mkdir(args.output)
+        os.makedirs(args.output)
 
+    print "Read in precalculation data ..."
     flights2ConflictsFile = "%s.%s.flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (args.input, name, args.delayPerConflict, args.dthreshold, args.maxDepartDelay)
     if args.pointConflictFile:
         pointConflictFile = args.pointConflictFile
@@ -71,6 +69,7 @@ def main():
     parallelConflicts = pd.read_csv(parallelConflictFile, index_col='parallelConflict')
     flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
 
+    print "Extract instances ..."
     if args.mode == 'connectedComponents':
         G = analysis.getConflictGraph(pointConflicts, parallelConflicts)
 
@@ -91,10 +90,10 @@ def main():
             conflictsPerPartition.append((N, flights, conflicts))
 
         parallelConflicts['timediff'] = parallelConflicts['time1'] - parallelConflicts['time2']
-        delays = [int(d) for d in np.arange(0, args.maxDelay + 1, args.delayStep)]
         NPointConflicts = len(pointConflicts)
         count = 0
         for N, flights, conflicts in conflictsPerPartition:
+            print "Get instances from connected component", count + 1, " of", len(conflictsPerPartition)
             timeLimits = []
             cnfl = []
             for c in [int(n) for n in conflicts]:
@@ -108,20 +107,38 @@ def main():
                     timeLimits.append((int(pc.timediff.min()), int(pc.timediff.max())))
                     cnfl.append((int(pc.flight1.iloc[0]), int(pc.flight2.iloc[0])))
             flights = [int(f) for f in flights]
-            filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5" % (count, args.delayStep, args.maxDelay)
-            inst = instance.Instance(flights, cnfl, timeLimits, delays)
-            inst.save_hdf5(filename)
-            f = h5py.File(filename, 'a')
-            # save metadata
-            for arg in vars(args):
-                val = getattr(args, arg)
-                if val is not None:
-                    f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
-            f.close()
+
+            for maxDelay in args.maxDelays:
+                if args.delayStepsAllFactors:
+                    delaySteps = []
+                    for n in range(1, maxDelay + 1):
+                        if maxDelay % n == 0:
+                            delaySteps.append(maxDelay / n)
+                else:
+                    delaySteps = args.delaySteps
+
+                for delayStep in delaySteps:
+                    if maxDelay % delayStep != 0:
+                        print "maximum delay is not a multiple of delay step."
+                        exit(1)
+
+                    delays = [int(d) for d in np.arange(0, maxDelay + 1, delayStep)]
+                    filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5" % (count, delayStep, maxDelay)
+                    inst = instance.Instance(flights, cnfl, timeLimits, delays)
+                    inst.save_hdf5(filename)
+                    f = h5py.File(filename, 'a')
+                    # save metadata
+                    for arg in vars(args):
+                        val = getattr(args, arg)
+                        if val is not None:
+                            f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
+                    f.close()
 
             count = count + 1
 
     elif args.mode == 'subpartitions':
+
+        import metis
         numPart = args.numPart
         # get conflict graph
         conflictGraph = analysis.getConflictGraph(pointConflicts, parallelConflicts)
@@ -189,16 +206,32 @@ def main():
                     timeLimits.append((int(pc.timediff.min()), int(pc.timediff.max())))
                     cnfl.append((int(pc.flight1.iloc[0]), int(pc.flight2.iloc[0])))
             flights = [int(f) for f in flights]
-            filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i_subpartition%04i_of%04i_edgecut%010i.h5" % (args.component, args.delayStep, args.maxDelay, count, numPart, edgecut)
-            inst = instance.Instance(flights, cnfl, timeLimits, delays)
-            inst.save_hdf5(filename)
-            f = h5py.File(filename, 'a')
-            # save metadata
-            for arg in vars(args):
-                val = getattr(args, arg)
-                if val is not None:
-                    f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
-            f.close()
+
+            for maxDelay in args.maxDelays:
+                if args.delayStepsAllFactors:
+                    delaySteps = []
+                    for n in range(1, maxDelay + 1):
+                        if maxDelay % n == 0:
+                            delaySteps.append(maxDelay / n)
+                else:
+                    delaySteps = args.delaySteps
+
+                for delayStep in delaySteps:
+                    if maxDelay % delayStep != 0:
+                        print "maximum delay is not a multiple of delay step."
+                        exit(1)
+
+                    delays = [int(d) for d in np.arange(0, maxDelay + 1, delayStep)]
+                    filename = args.output + "/atm_instance_partition%04i_subpartition%04i_of%04i_edgecut%010i_delayStep%03i_maxDelay%03i.h5" % (args.component, count, numPart, edgecut, delayStep, maxDelay)
+                    inst = instance.Instance(flights, cnfl, timeLimits, delays)
+                    inst.save_hdf5(filename)
+                    f = h5py.File(filename, 'a')
+                    # save metadata
+                    for arg in vars(args):
+                        val = getattr(args, arg)
+                        if val is not None:
+                            f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
+                    f.close()
 
             count = count + 1
 
