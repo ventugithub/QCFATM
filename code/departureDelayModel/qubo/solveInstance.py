@@ -34,6 +34,7 @@ def main():
     parser.add_argument('--exact', action='store_true', help='calculate exact solution with maxsat solver')
     parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
+    parser.add_argument('--skipBigProblems', help='Number of logical qubits above which no calculation is performed', type=int)
     parser.add_argument('-p2', '--penalty_weight_unique', default=1, help='penaly weight for the term in the QUBO which enforces uniqueness', type=float)
     parser.add_argument('-p3', '--penalty_weight_conflict', default=1, help='penaly weight for the conflict term in the QUBO', type=float)
     args = parser.parse_args()
@@ -65,6 +66,7 @@ def main():
                    exact=args.exact,
                    store_everything=args.store_everything,
                    penalty_weights=penalty_weights,
+                   skipBigProblems=args.skipBigProblems,
                    retry_exact=args.retry_exact,
                    inventoryfile=args.inventory)
 
@@ -97,7 +99,7 @@ def save_array_in_group(array, filename, groupname, datasetname, mode='a'):
     group.create_dataset(datasetname, data=array)
     f.close()
 
-def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False):
+def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use_snapshots=False, embedding_only=False, qubo_creation_only=False, retry_embedding=0, retry_embedding_desperate=0, unary=False, verbose=False, timeout=None, exact=False, chimera={}, inventoryfile=None, accuracy=14, store_everything=False, retry_exact=False, skipBigProblems=None):
 
     # invertory data
     inventorydata = {}
@@ -120,15 +122,19 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
     grouplist = []
     grouplist.append('%s/qubo' % pwstr)
     for name in subqubonames:
-        grouplist.append('%s/subqubo-%s' % (pwstr, name))
+        grouplist.append('subqubo-%s' % name)
     grouplist.append('variable')
     if not all([exists(resultfile, g) for g in grouplist]) or not use_snapshots:
         print "Calculate QUBO ..."
+        nlogqubits = qubo.get_number_of_logical_qubits(instancefile)
+        if skipBigProblems is not None and nlogqubits > skipBigProblems:
+            print "WARNING skip problem since it to big: %i > %i" % (nlogqubits, skipBigProblems)
+            return
         q, subqubos, var = qubo.get_qubo(instancefile, penalty_weights, unary)
         var.save_hdf5(resultfile)
         q.save_hdf5(resultfile, '%s/qubo' % pwstr)
         for name in subqubonames:
-            subqubos[name].save_hdf5(resultfile, '%s/subqubo-%s' % (pwstr, name))
+            subqubos[name].save_hdf5(resultfile, 'subqubo-%s' % name)
     else:
         print "Read in QUBO ..."
         q = polynomial.Polynomial()
@@ -136,7 +142,7 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
         subqubos = {}
         for name in subqubonames:
             subqubos[name] = polynomial.Polynomial()
-            subqubos[name].load_hdf5(resultfile, '%s/subqubo-%s' % (pwstr, name))
+            subqubos[name].load_hdf5(resultfile, 'subqubo-%s' % name)
         print "Read in Variable ..."
         if unary:
             var = variable.Unary(resultfile, instancefile, hdf5=True)
@@ -277,7 +283,7 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
         inventorydata['embedding'][e]['valid'] = np.nan
         inventorydata['embedding'][e]['energy'] = np.nan
         print "Embedding %i" % e
-        embedname = "%s/embedding%05i" % (pwstr, e)
+        embedname = "embedding%05i" % e
         if (chimera):
             embedname = "%s/embedding%05i_chimera%03i_%03i_%03i" % (pwstr, e, chimera['m'], chimera['n'], chimera['t'])
         if not exists(resultfile, embedname) or not use_snapshots:

@@ -16,6 +16,7 @@ def main():
     parser.add_argument('-d', '--delays', nargs='+', default=[3, 6, 9], help='delay steps to consider', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
+    parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--penalty_weights_all_combinations', nargs='+', help='list of penalty weights for unique and conflict term of the QUBO (', type=float)
@@ -23,6 +24,7 @@ def main():
     parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--np', default=1, help='number of processes', type=int)
     parser.add_argument('--maxDelay', default=18, help='maximum delay', type=int)
+    parser.add_argument('--skipBigProblems', help='Number of logical qubits above which no calculation is performed', type=int)
     args = parser.parse_args()
 
     if args.penalty_weights_two_tuples and len(args.penalty_weights_two_tuples) % 2 != 0:
@@ -66,6 +68,8 @@ def main():
                                'exact': True,
                                'store_everything': True,
                                'retry_exact': args.retry_exact,
+                               'qubo_creation_only': args.qubo_creation_only,
+                               'skipBigProblems': args.skipBigProblems,
                                'inventoryfile': inventoryfile}
         si.solve_instances(instancefiles, penalty_weights={'unique': w2, 'conflict': w3}, np=nproc, **solve_instance_args)
 

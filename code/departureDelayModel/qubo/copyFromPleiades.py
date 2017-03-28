@@ -3,7 +3,8 @@ import subprocess
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(description='copy data from pleiades cluster')
+    parser = argparse.ArgumentParser(description='copy data from pleiades cluster',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-u', '--user', default='tstollen', help='user name on cluster')
     parser.add_argument('-n', '--host', default='pfe23', help='host name on cluster')
     parser.add_argument('-p', '--path', default='projects/qcfatm/code/departureDelayModel/qubo/data/', help='path to data folder on cluster')

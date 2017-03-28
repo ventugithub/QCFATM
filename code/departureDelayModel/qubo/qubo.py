@@ -11,6 +11,16 @@ def isRealConflict(delay1, delay2, deltaTMin, deltaTMax, threshold=3):
     else:
         return 0
 
+def get_number_of_logical_qubits(input):
+    """ Read in instance and calculate the QUBO as well as the index mapping """
+    inst = instance.Instance(input)
+
+    flights = inst.flights
+    delays = inst.delays
+    I = len(flights)
+    D = len(delays)
+    return D * I
+
 def get_qubo(input, penalty_weights, unary=False):
     """ Read in instance and calculate the QUBO as well as the index mapping """
     inst = instance.Instance(input)
