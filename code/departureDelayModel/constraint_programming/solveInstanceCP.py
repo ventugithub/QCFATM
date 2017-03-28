@@ -50,6 +50,7 @@ def exists(filename, group):
     return exists
 
 def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapshots=False, verbose=False, timeout=None, inventoryfile=None):
+    print "Process instance file %s with numDelays=%03i, maxDelay=%03i" % (instancefile, Nd, maxDelay)
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
     if not os.path.exists(os.path.dirname(inventoryfile)):
@@ -180,7 +181,6 @@ def solve_instances(instancefiles, numDelays, np=1, **kwargs):
         pool = multiprocessing.Pool(processes=np)
     for instancefile in instancefiles:
         for Nd in numDelays:
-            print "Process instance file %s with numDelays=%03i" % (instancefile, Nd)
             solve_instance_args = {'instancefile': instancefile,
                                    'Nd': Nd}
             solve_instance_args.update(kwargs)

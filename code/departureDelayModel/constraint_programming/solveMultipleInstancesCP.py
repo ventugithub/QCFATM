@@ -11,6 +11,8 @@ def main():
     parser.add_argument('-n', '--numDelays', nargs='+', help='List of (number of delay steps - 1). Set to 0 for continuous variables (ignored if allfactors is true)', type=int)
     parser.add_argument('--allfactors', action='store_true', help='Use (number of delay steps - 1) = all factors of maxDelay ')
     parser.add_argument('--instanceFolder', default='data/instances', help='path to instance folder')
+    parser.add_argument('--maxDelayInstance', default=18, help='Search for instances of ending with e.g. "_maxDelay006.h5". Note, that the maxDelay of the instance will be overwritten by the maxDelay of the CP solver.', type=int)
+    parser.add_argument('--delayStepInstance', default=3, help='Search for instances of containing e.g. "delayStep003_maxDelay006.h5". Note, that the delayStep of the instance will be overwritten by the numDelays of the CP solver.', type=int)
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
@@ -36,9 +38,7 @@ def main():
     print "Collect instance files ..."
     instancefiles = []
     for p in partitions:
-        delayStep = args.maxDelay / numDelays[0]
-        print delayStep
-        instancefile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (args.instanceFolder, p, delayStep, args.maxDelay)
+        instancefile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (args.instanceFolder, p, args.delayStepInstance, args.maxDelayInstance)
         if not os.path.exists(instancefile):
             raise ValueError('%s does not exists' % instancefile)
         instancefiles.append(instancefile)
