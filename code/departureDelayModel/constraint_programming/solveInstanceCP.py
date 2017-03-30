@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import numpy as np
-import traceback
 import Numberjack as nj
 import multiprocessing
 import filelock
@@ -26,9 +25,11 @@ def main():
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
+    parser.add_argument('--skipBigProblems', help='Do not try to solve instance bigger than this number', type=int)
     parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver', type=int)
     parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
+    parser.add_argument('--accuracy', default=0.0, help='Accuracy to fulfill constraints in continous case (make up for rounding errors', type=float)
     args = parser.parse_args()
     solve_instances(instancefiles=[args.input],
                     numDelays=args.numDelays,
@@ -37,6 +38,8 @@ def main():
                     np=args.np,
                     outputFolder=args.output,
                     use_snapshots=args.use_snapshots,
+                    skipBigProblems=args.skipBigProblems,
+                    accuracy=args.accuracy,
                     verbose=args.verbose,
                     timeout=args.timeout,
                     inventoryfile=args.inventory)
@@ -50,7 +53,7 @@ def exists(filename, group):
     f.close()
     return exists
 
-def solve_instance(instancefile, Nd, maxDelay, outputFolder, deltat=3, skipBigProblems=None, use_snapshots=False, verbose=False, timeout=None, inventoryfile=None):
+def solve_instance(instancefile, Nd, maxDelay, outputFolder, deltat=3, skipBigProblems=None, use_snapshots=False, accuracy=0.0, verbose=False, timeout=None, inventoryfile=None):
     print "Process instance file %s with numDelays=%03i, maxDelay=%03i" % (instancefile, Nd, maxDelay)
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
@@ -140,8 +143,9 @@ def solve_instance(instancefile, Nd, maxDelay, outputFolder, deltat=3, skipBigPr
                     constraint1 = maxDelay * (solution[i] - solution[j]) >= Nd * (deltat - dtmin)
                     constraint2 = maxDelay * (solution[i] - solution[j]) <= - Nd * (deltat + dtmax)
                 else:
-                    constraint1 = (solution[i] - solution[j]) >= (deltat - dtmin)
-                    constraint2 = (solution[i] - solution[j]) <= - (deltat + dtmax)
+                    constraint1 = (solution[i] - solution[j]) >= (deltat - dtmin) - accuracy
+                    constraint2 = (solution[i] - solution[j]) <= - (deltat + dtmax) + accuracy
+
                 valid = True if (constraint1 or constraint2) else False
                 valids.append(valid)
             if not all(valids):

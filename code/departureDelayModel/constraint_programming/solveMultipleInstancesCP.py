@@ -16,11 +16,13 @@ def main():
     parser.add_argument('--deltat', default=3, help='Temporal threshold for conflicts', type=int)
     parser.add_argument('--np', default=1, help='Number of processes', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
+    parser.add_argument('--skipBigProblems', help='Do not try to solve instance bigger than this number', type=int)
     parser.add_argument('--verbose', action='store_true', help='verbose output')
+    parser.add_argument('--accuracy', default=0.0, help='Accuracy to fulfill constraints in continous case (make up for rounding errors', type=float)
     parser.add_argument('--timeout', default=None, help='timeout in seconds for exact solver', type=int)
     parser.add_argument('--inventory', default='data/inventory.h5', help='Inventory file')
     parser.add_argument('--pmin', default=0, help='minimum index of partition to consider', type=int)
-    parser.add_argument('--pmax', default=113, help='maximum index of partition to consider', type=int)
+    parser.add_argument('--pmax', default=50, help='maximum index of partition to consider', type=int)
     parser.add_argument('--nmin', default=3, help='minimum number of delay steps - 1 (ignored if numDelays is given)', type=int)
     parser.add_argument('--nmax', default=18, help='maximum number of delay steps - 1 (ignored if numDelays is given)', type=int)
     args = parser.parse_args()
@@ -40,7 +42,7 @@ def main():
     instancefiles = []
     outputFolders = {}
     maxDelayDict = {}
-    numDelayDict  = {}
+    numDelayDict = {}
     for p in partitions:
         instancefile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (args.instanceFolder, p, args.delayStepInstance, args.maxDelayInstance)
         if not os.path.exists(instancefile):
@@ -58,6 +60,8 @@ def main():
                     deltat=args.deltat,
                     np=args.np,
                     use_snapshots=args.use_snapshots,
+                    skipBigProblems=args.skipBigProblems,
+                    accuracy=args.accuracy,
                     verbose=args.verbose,
                     timeout=args.timeout,
                     inventoryfile=args.inventory)
