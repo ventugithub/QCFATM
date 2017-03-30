@@ -239,6 +239,7 @@ def main():
     parser.add_argument('--max_penalty_unique', default=2.5, help='maximum penalty weights for unique term of the QUBO to consider during search for threshold', type=float)
     parser.add_argument('--max_penalty_conflict', default=2.5, help='maximum penalty weights for conflict term of the QUBO to consider during search for threshold', type=float)
     parser.add_argument('--maxDelay', default=18, help='maximum delay', type=int)
+    parser.add_argument('--skipBigProblems', help='Number of logical qubits above which no calculation is performed', type=int)
     parser.add_argument('--radiuses', nargs='+', default=[0.1, 0.2, 0.5, 1], help='radiuses used in algorithm following the threshold boundary', type=float)
     parser.add_argument('--np', default=1, help='number of processes', type=int)
     args = parser.parse_args()
@@ -264,6 +265,7 @@ def main():
                            'verbose': False,
                            'timeout': timeout,
                            'exact': True,
+                           'skipBigProblems': args.skipBigProblems,
                            'retry_exact': False,
                            'inventoryfile': inventoryfile}
 
@@ -289,12 +291,11 @@ def main():
                                             'instancefile': instancefile}
         solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
         if nproc != 1:
-            result = pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
+            pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
         else:
             solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
 
     if nproc != 1:
-        result.get()
         pool.close()
         pool.join()
 

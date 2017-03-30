@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import traceback
 import Numberjack as nj
 import multiprocessing
 import filelock
@@ -49,7 +50,7 @@ def exists(filename, group):
     f.close()
     return exists
 
-def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapshots=False, verbose=False, timeout=None, inventoryfile=None):
+def solve_instance(instancefile, Nd, maxDelay, outputFolder, deltat=3, skipBigProblems=None, use_snapshots=False, verbose=False, timeout=None, inventoryfile=None):
     print "Process instance file %s with numDelays=%03i, maxDelay=%03i" % (instancefile, Nd, maxDelay)
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
@@ -107,7 +108,16 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
             solver.setTimeLimit(timeout)
 
         # solve
-        success = solver.solve()
+        skipProblem = False
+        if skipBigProblems is None:
+            success = solver.solve()
+        else:
+            problemSize = len(model.variables) + len(model.constraints)
+            if problemSize <= skipBigProblems:
+                success = solver.solve()
+            else:
+                success = False
+                skipProblem = True
         if success:
 
             # parse solution
@@ -171,23 +181,55 @@ def solve_instance(instancefile, Nd, maxDelay, deltat, outputFolder, use_snapsho
                     f[cpsol].attrs['total delay'] = totaldelay
                     f.close()
         else:
-            if solver.is_unsat():
+            if skipProblem:
+                print "Skip big problem (%i > %i)" % (problemSize, skipBigProblems)
+            elif solver.is_unsat():
                 print "No solution found. Problem not satisfiable"
             else:
                 print "No solution found. Nothing will be stored. Runtime was %s. Timeout was %s" % (solver.getTime(), timeout)
 
-def solve_instances(instancefiles, numDelays, np=1, **kwargs):
+def solve_instances(instancefiles, outputFolders, maxDelays, numDelays, np=1, **kwargs):
+    """
+    Runs the CP solver in parallel for various instances and parameters
+
+    instancefiles: list of instance files to process
+    outputFolder: dictonary with key: instancefile, value: outputFolder
+    maxDelays: dictionary with key: instancefile, value: list of maxDelays
+    numDelays: dictionary with key: tuple: (instancefile, maxDelay), value: list of numDelays
+    """
+    # check:
+    print "Check Arguments of parallel solver ..."
+    if set(instancefiles) != set(outputFolders.keys()):
+        raise ValueError('Number of instancefiles is not equal to the number of outputFolders')
+    if set(maxDelays.keys()) != set(instancefiles):
+        raise ValueError('Not all instancefiles are in the keys of maxDelays')
+    for k, v in numDelays.items():
+        if not k[0] in instancefiles:
+            raise ValueError('Not all instancefiles are in the keys of numDelays')
+        if not k[1] in maxDelays[k[0]]:
+            raise ValueError('Not all maxDelays are in the keys of numDelays')
+        for numDelay in v:
+            if numDelay > maxDelays[k[0]]:
+                raise ValueError('numDelay value is greater than maxDelay')
+
+    print "Run %s instances on %i cores ..." % (len(instancefiles), np)
     if np != 1:
         pool = multiprocessing.Pool(processes=np)
     for instancefile in instancefiles:
-        for Nd in numDelays:
-            solve_instance_args = {'instancefile': instancefile,
-                                   'Nd': Nd}
-            solve_instance_args.update(kwargs)
-            if np != 1:
-                pool.apply_async(solve_instance, kwds=solve_instance_args)
-            else:
-                solve_instance(**solve_instance_args)
+        outputFolder = outputFolders[instancefile]
+        maxDelayList = maxDelays[instancefile]
+        for maxDelay in maxDelayList:
+            numDelayList = numDelays[(instancefile, maxDelay)]
+            for Nd in numDelayList:
+                solve_instance_args = {'instancefile': instancefile,
+                                       'outputFolder': outputFolder,
+                                       'maxDelay': maxDelay,
+                                       'Nd': Nd}
+                solve_instance_args.update(kwargs)
+                if np != 1:
+                    pool.apply_async(solve_instance, kwds=solve_instance_args)
+                else:
+                    solve_instance(**solve_instance_args)
 
     if np != 1:
         pool.close()

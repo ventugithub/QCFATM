@@ -142,6 +142,10 @@ def solve_instance(instancefile, outputFolder, penalty_weights, num_embed=1, use
             subqubos[name] = polynomial.Polynomial()
             subqubos[name].load_hdf5(resultfile, 'subqubo-%s' % name)
 
+        nlogqubits = qubo.get_number_of_logical_qubits(instancefile)
+        if skipBigProblems is not None and nlogqubits > skipBigProblems:
+            print "WARNING skip problem since it to big: %i > %i" % (nlogqubits, skipBigProblems)
+            return
         q = polynomial.Polynomial()
         inst = instance.Instance(instancefile)
         delayValues = list(inst.delays)

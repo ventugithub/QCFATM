@@ -37,18 +37,26 @@ def main():
     partitions = range(args.pmin, args.pmax + 1)
     print "Collect instance files ..."
     instancefiles = []
+    instancefiles = []
+    outputFolders = {}
+    maxDelayDict = {}
+    numDelayDict  = {}
     for p in partitions:
         instancefile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5' % (args.instanceFolder, p, args.delayStepInstance, args.maxDelayInstance)
         if not os.path.exists(instancefile):
             raise ValueError('%s does not exists' % instancefile)
         instancefiles.append(instancefile)
+        outputFolders[instancefile] = args.output
+        maxDelayDict[instancefile] = [args.maxDelay]
+        numDelayDict[(instancefile, args.maxDelay)] = numDelays
+
     print "Solve instances ..."
-    solve_instances(instancefiles=instancefiles,
-                    numDelays=numDelays,
-                    maxDelay=args.maxDelay,
+    solve_instances(instancefiles,
+                    outputFolders,
+                    maxDelayDict,
+                    numDelayDict,
                     deltat=args.deltat,
                     np=args.np,
-                    outputFolder=args.output,
                     use_snapshots=args.use_snapshots,
                     verbose=args.verbose,
                     timeout=args.timeout,

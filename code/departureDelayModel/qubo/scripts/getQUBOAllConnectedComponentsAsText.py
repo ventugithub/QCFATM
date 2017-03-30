@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import subprocess
+import h5py
 import os
 
 import sys
@@ -32,7 +33,15 @@ for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
         for p in range(partitionMax + 1):
             resultfile = '%s/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.results.h5' % (resultFolder, p, d, maxDelayPrecalc)
             if os.path.exists(resultfile):
-                resultfiles.append(resultfile)
+                f = h5py.File(resultfile, 'r')
+                exists = []
+                for sqname in subqubonames:
+                    exists.append('subqubo-%s' % sqname in f)
+                f.close()
+                exists = all(exists)
+                if exists:
+                    resultfiles.append(resultfile)
+
 
     for resultfile in resultfiles:
         print "Convert subqubos in %s to txt" % resultfile
@@ -43,13 +52,17 @@ for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
             if not q.isQUBO:
                 raise ValueError('Input polynomial is not a QUBO')
             txtSubQuboFile = "%s/%s.subqubo_%s.txt" % (outputFolder, os.path.basename(resultfile).rstrip('results.h5'), sqname)
-            f = open(txtSubQuboFile, 'w')
-            for k in sorted(q.poly, key=lambda x: len(x)):
-                v = q.poly[k]
-                if len(k) == 2:
-                    f.write("%i %i %e\n" % (k[0], k[1], v))
-                elif len(k) == 1:
-                    f.write("%i %i %e\n" % (k[0], k[0], v))
-                elif len(k) == 0:
-                    f.write("# offset %e\n" % v)
-            f.close()
+            if not os.path.exists(txtSubQuboFile.rstrip('.txt') + '.bz2'):
+                f = open(txtSubQuboFile, 'w')
+                for k in sorted(q.poly, key=lambda x: len(x)):
+                    v = q.poly[k]
+                    if len(k) == 2:
+                        f.write("%i %i %e\n" % (k[0], k[1], v))
+                    elif len(k) == 1:
+                        f.write("%i %i %e\n" % (k[0], k[0], v))
+                    elif len(k) == 0:
+                        f.write("# offset %e\n" % v)
+                f.close()
+                cmd = "bzip2 %s" % txtSubQuboFile
+                subprocess.call(cmd, shell=True)
+
