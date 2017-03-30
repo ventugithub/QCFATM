@@ -233,6 +233,7 @@ def main():
     parser.add_argument('--delta_w', default=0.01, help='accuray of the bisection algorithm (rounded to 3 digits)', type=float)
     parser.add_argument('-d', '--delays', nargs='+', default=[3], help='delay steps to consider', type=int)
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
+    parser.add_argument('--extract_validity_map_only', action='store_true', help='Only do postprocessing')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
     parser.add_argument('--fixed_penalty_unique_start', default=2.0, help='fixed penalty weights for unique term of the QUBO for first bisection search of threshold', type=float)
     parser.add_argument('--counter_clockwise', action='store_true', help='Counter clockwise search for threshold points on a circle during the algorithm following the threshold boundary')
@@ -281,19 +282,26 @@ def main():
     if nproc != 1:
         pool = multiprocessing.Pool(processes=nproc)
     for instancefile in instancefiles:
-        solveAndFindPenaltyThresholdArgs = {'wfixedunique': wfixedunique,
-                                            'wstart': wstart,
-                                            'delta_w': delta_w,
-                                            'direction': direction,
-                                            'max_penalty_unique': max_penalty_unique,
-                                            'max_penalty_conflict': max_penalty_conflict,
-                                            'radiuses': radiuses,
-                                            'instancefile': instancefile}
-        solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
-        if nproc != 1:
-            pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
+        if not args.extract_validity_map_only:
+            solveAndFindPenaltyThresholdArgs = {'wfixedunique': wfixedunique,
+                                                'wstart': wstart,
+                                                'delta_w': delta_w,
+                                                'direction': direction,
+                                                'max_penalty_unique': max_penalty_unique,
+                                                'max_penalty_conflict': max_penalty_conflict,
+                                                'radiuses': radiuses,
+                                                'instancefile': instancefile}
+            solveAndFindPenaltyThresholdArgs.update(solve_instance_args)
+            if nproc != 1:
+                pool.apply_async(solveAndFindPenaltyThreshold, kwds=solveAndFindPenaltyThresholdArgs)
+            else:
+                solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
         else:
-            solveAndFindPenaltyThreshold(**solveAndFindPenaltyThresholdArgs)
+            resultfile = "%s/%s.results.h5" % (solve_instance_args['outputFolder'], os.path.basename(instancefile).rstrip('.h5'))
+            if nproc != 1:
+                pool.apply_async(extractValidityMap, kwds={'resultfile': resultfile})
+            else:
+                extractValidityMap(resultfile)
 
     if nproc != 1:
         pool.close()

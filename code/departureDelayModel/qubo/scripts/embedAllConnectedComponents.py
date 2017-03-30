@@ -3,7 +3,7 @@ import subprocess
 
 skipBigProblems = 1024
 num_embed = 5
-nProc = 60
+nProc = 64
 # the maximum delay of the precalculation
 for maxDelayPrecalc in [6, 9, 12, 15, 18, 24, 36, 48, 60]:
     # get the maximum value of the delay variable (always <= the maximum delay of the precalculation)
