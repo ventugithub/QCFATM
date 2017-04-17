@@ -67,20 +67,39 @@ By introducting a constant maximum delay $D_{max}$ we can dismiss all spatial co
 \end{equation*}
 With this, we are left with a set of potentially conflicting pairs of trajectory points
 \begin{equation*}
-    C^{ij}_\text{raw} = \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x , |t-t'| < \Delta_t + D_\text{max} \} \; .
+    C^{ij}_0 = \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x , |t-t'| < \Delta_t + D_\text{max} \} \; .
 \end{equation*}
+
+\subsection{Conflict Clustering}
 As a next step, we group together conflicting trajectory point pairs which are subsequent in time
 \begin{align*}
-    C^{ij}_\text{parallel} = \{ ((x_{i, t},  x_{j, t'}),  (x_{i, s},  x_{j, s'})) \; | \; &(x_{i, t},  x_{j, t'}) \in C^{ij}_\text{raw}, \\
-                                                                                         & (x_{i, s},  x_{j, s'}) \in C^{ij}_\text{raw}, \\ 
-                                                                                         & |t - s| < \Delta'_t,  \\
-                                                                                         & |t' - s'| < \Delta'_t \}
+    C^{ij}_\parallel = \{ ((x_{i, t},  x_{j, t'}),  (x_{i, s},  x_{j, s'})) \; | \; & (x_{i, t},  x_{j, t'}) \in C^{ij}_0, \\
+                                                                                    & (x_{i, s},  x_{j, s'}) \in C^{ij}_0, \\ 
+                                                                                    & |t - s| < \Delta'_t,  \\
+                                                                                    & |t' - s'| < \Delta'_t \}
 \end{align*}
 where we set $\Delta'_t = 2$ minutes.
-For a given pair of flights $(i, j)$ there might be multiple disjunct subsets in $C^{ij}_\text{parallel}$.
-Each of this subsets constitute a \emph{parallel potential conflict}.
-We introduce an index $k\in{1, \dots, K}$
-
+For a given pair of flights $(i, j)$ there might be multiple ``disjunct`` subsets in $C^{ij}_\parallel$
+\begin{equation*}
+    \bigcup_{n} C^{ij}_{\parallel n} = C^{ij}_\parallel
+\end{equation*}
+where
+\begin{align*}
+    & |t - s| \geq \Delta'_t \land |t' - s'| \geq \Delta'_t \\
+    & \forall (x_{i, t},  x_{j, t'}) \in C^{ij}_{\parallel n}, \\
+    & \forall (x_{i, s},  x_{j, s'}) \in C^{ij}_{\parallel n'}, \\
+    & n \neq n' \; .
+\end{align*}
+Together with the remaining, spatially isolated, conflicting trajectory points
+\begin{equation*}
+    C^{ij}_{\times} = C^{ij}_0 \setminus C^{ij}_\parallel \; ,
+\end{equation*}
+these subsets of trajectory point clusters are called \emph{potential conflicts}.
+\begin{equation*}
+    C_k \in C = \{ C^{ij}_{\parallel n} | \forall i, j, n\} \cup  \{C^{ij}_{\times} | \forall i, j\}
+\end{equation*}
+Here, we introduced an conflict index $k\in{1, \dots, K}$, with $K = |C|$.
+For each conflict index $k$, we will denote the pair of involved flights by $I_k = (i_k, j_k)$.
 
 \section{Mapping to QUBO}
 
