@@ -1,0 +1,90 @@
+\documentclass[aps,pra,twocolumn,10pt]{revtex4-1}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[fleqn,tbtags]{amsmath}
+
+
+\begin{document}
+
+\title{Quantum Annealing for Air Traffic Management}
+\author{Tobias Stollenwerk}
+\affiliation{German Aerospace Center, Linder H\"ohe, 51147 Cologne, Germany}
+\author{Bryan O'Gorman},
+\author{Salvatore Mandr\`{a}}
+\author{Eleanor G. Rieffel}
+%\author{Davide Venturelli},
+%\author{Olga Rodionova},
+%\author{Hok K. Ng},
+%\author{Banavar Sridhar},
+\affiliation{NASA Ames, Moffet Blvd, Mountain View, CA 94035, USA}
+\date{\today}
+
+\maketitle
+
+
+\section{Introduction}
+
+
+\section{Problem Description}
+The problem at hand is the deconflicting of transatlantic wind-optimal trajectories.
+As it was done in \cite{rodionova16} we are using the same wind-optimal trajectories of a single day, July 29 2012.
+These wind-optimal trajectories are given as
+${\left(\mathbf{x}_i\right)}_{i=1}^n$, 
+where 
+$\mathbf{x}_i = {\left(x_{i,t}\right)}_{t=\tau_{i,0}}^{\tau_{i,1}}$ 
+and 
+$x_{i, t}$ is the location (as latitude, longitude, and altitude) of the $i$th flight at time $t$.
+The times $\tau_{i,0}$ and $\tau_{i, 1}$ are the times at which the wind-optimal trajectory for the $i$th flight begins and ends, respectively.
+Furthermore, the times are given in units of one minutes $T_i = \left(\tau_{i, 0}, \tau_{i, 0} + 1, \ldots, \tau_{i, 1}\right)$.
+Each flight $i$ is at a constant speed $v_i$, to within (classical) machine precision.
+
+A conflict between two flights is defined as a pair of trajectory points which are too close to each other in space and time.
+\begin{equation*}
+    \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x ,  |t - t'| < \Delta_t \} \; ,
+\end{equation*}
+where $\mathcal{D}(x, y)$ is the spatial distance between two points $x$ and $y$ given as latitude, longitude and altitude.
+Following \cite{rodionova16}, the space threshold is $\Delta_x = 3$ nautical miles and the time threshold is $\Delta_t = 3$ minutes.
+In this paper, we consider the following means to deconflict the trajectories:
+First, we can delay each flight $i$ at departure time by a departure delay $d_i$
+\begin{equation*}
+    x_{i, t} \to x_{i, t + d_i} \quad \forall \; t \in T_{i}
+\end{equation*}
+
+Second, we can avoid a conflict by maneuvers of both involved flights.
+We assume, however, that the maneuvers will not introduce new conflicts. 
+In doing so, these maneuvers can be view as resulting in time shifts only.
+
+\section{Classical Preprocessing}
+It is beneficial to reduce the data to conflicting regions in space and decoupling the spacial and temporal components of the problem.
+As a first step, we detect all pairs of trajectory points which are separated by a spacial distance below $\Delta_x$ 
+\begin{equation*}
+    \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x \} \; ,
+\end{equation*}
+Two spatially conflicting trajectory points might never become conflicting in time if the corresponding times are far apart.
+By introducting a constant maximum delay $D_{max}$ we can dismiss all spatial conflicts which can never become conflicting in time
+\begin{equation*}
+    \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x , |t-t'| \geq \Delta_t + D_\text{max} \} \; .
+\end{equation*}
+With this, we are left with a set of potentially conflicting pairs of trajectory points
+\begin{equation*}
+    C^{ij}_\text{raw} = \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x , |t-t'| < \Delta_t + D_\text{max} \} \; .
+\end{equation*}
+As a next step, we group together conflicting trajectory point pairs which are subsequent in time
+\begin{align*}
+    C^{ij}_\text{parallel} = \{ ((x_{i, t},  x_{j, t'}),  (x_{i, s},  x_{j, s'})) \; | \; &(x_{i, t},  x_{j, t'}) \in C^{ij}_\text{raw}, \\
+                                                                                         & (x_{i, s},  x_{j, s'}) \in C^{ij}_\text{raw}, \\ 
+                                                                                         & |t - s| < \Delta'_t,  \\
+                                                                                         & |t' - s'| < \Delta'_t \}
+\end{align*}
+where we set $\Delta'_t = 2$ minutes.
+For a given pair of flights $(i, j)$ there might be multiple disjunct subsets in $C^{ij}_\text{parallel}$.
+Each of this subsets constitute a \emph{parallel potential conflict}.
+We introduce an index $k\in{1, \dots, K}$
+
+
+\section{Mapping to QUBO}
+
+
+\bibliography{atm}
+
+\end{document}
