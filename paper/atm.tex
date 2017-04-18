@@ -2,6 +2,7 @@
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage[fleqn,tbtags]{amsmath}
+\usepackage{graphicx} 
 
 
 \begin{document}
@@ -91,6 +92,15 @@ As a next step, we group together conflicting trajectory point pairs which are s
                                                                                     & |t' - s'| < \Delta'_t \}
 \end{align*}
 where we set $\Delta'_t = 2$ minutes.
+
+\begin{figure}[t]
+    \begin{center}
+        \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/example_conflict_in_real_space.pdf}
+    \end{center}
+    \caption{Example of two parallel potential conflicts between two transatlantic flights starting from the east cost of the USA.}
+    \label{fig:example_parallel_conflict}
+\end{figure}
+
 For a given pair of flights $(i, j)$ there might be multiple ``disjoint`` subsets in $C^{ij}_\parallel$
 \begin{equation*}
     \bigcup_{n} C^{ij}_{\parallel n} = C^{ij}_\parallel
@@ -102,6 +112,7 @@ where
     & \forall (x_{i, s},  x_{j, s'}) \in C^{ij}_{\parallel n'}, \\
     & n \neq n' \; .
 \end{align*}
+In figure \ref{fig:example_parallel_conflict} an example of two separated clusters are shown.
 Together with the remaining, spatially isolated, conflicting trajectory points
 \begin{equation*}
     C^{ij}_{\times} = C^{ij}_0 \setminus C^{ij}_\parallel \; ,
@@ -113,6 +124,16 @@ these subsets of trajectory point clusters are called \emph{potential conflicts}
 Here, we introduced a conflict index $k\in\{1, \dots, N_C\}$, with $N_C = |C|$.
 For each conflict index $k$, we will denote the pair of involved flights by $I_k = (i_k, j_k)$.
 
+\begin{figure}[t]
+    \begin{center}
+        \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
+    \end{center}
+    \caption{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
+    \label{fig:preprocessing_reduction_number_of_conflicts}
+\end{figure}
+
+Before the preprocessing, the number of conflicts was given by $N_C^\text{before} = \sum_{ij} |C^{ij}_0|$.
+As one can see in figure \ref{fig:preprocessing_reduction_number_of_conflicts} the preprocessing reduces the number of conflicts by orders of magnitude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
