@@ -721,15 +721,18 @@ def reduceConflicts(flight2Conflict, pointConflicts, parallelConflicts, delayPer
             NConflictsBeforePartner = indexList[0]
             NConflictsBefore = i
             keep = False
-            # conflict possible if dthreshold - max(t1 - t2) < d_i - d_j < dthreshold - min(t1 - t2)
+            # conflict possible if - dthreshold - max(t1 - t2) < d_i - d_j < dthreshold - min(t1 - t2)
             # d_i in [0, delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay]
             # d_j in [0, delayPerConflictAvoidance * NConflictsBeforePartner + maxDepartDelay]
-            # => a conflict is possible if
-            # dthreshold - max(t1, t2) < delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay
-            # - delayPerConflictAvoidance * NConflictsBeforePartner - maxDelay1 < dthreshold - min(t1, t2)
-            if dthreshold - maxTimeDiffWithPartner < delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay:
+            # =>  max(d_i - d_j) = delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay
+            # and min(d_i - d_j) = - delayPerConflictAvoidance * NConflictsBeforePartner + maxDepartDelay
+            # => a conflict is possible if the max(d_i - d_j) is above the lower bound
+            # - dthreshold - max(t1, t2) < delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay
+            # or if min(d_i - d_j) is below the upper bound
+            # dthreshold - min(t1, t2) > - delayPerConflictAvoidance * NConflictsBeforePartner - maxDelay1
+            if - dthreshold - maxTimeDiffWithPartner < delayPerConflictAvoidance * NConflictsBefore + maxDepartDelay:
                 keep = True
-            elif -delayPerConflictAvoidance * NConflictsBeforePartner - maxDepartDelay < dthreshold - minTimeDiffWithPartner:
+            elif  dthreshold - minTimeDiffWithPartner > -delayPerConflictAvoidance * NConflictsBeforePartner - maxDepartDelay:
                 keep = True
             if not keep:
                 if conflictIndex < N1:
