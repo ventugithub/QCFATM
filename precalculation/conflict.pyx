@@ -4,8 +4,27 @@ import cython
 import math
 from libc.math cimport sin, cos, acos, fabs
 from libcpp.vector cimport vector
+from libcpp.limits cimport numeric_limits
 from libcpp cimport bool
 import progressbar
+
+cdef int intVecMax(vector[int] vec):
+    cdef long size = vec.size()
+    cdef int maximum = numeric_limits[int].min()
+    for i in range(size):
+        if vec[i] > maximum:
+            maximum = vec[i]
+    return maximum
+
+cdef vector[int] arrayToIntVector(array):
+    cdef long size = len(array)
+    cdef vector[int] vec
+    vec.resize(size)
+    cdef long i
+    for i in range(size):
+        vec[i] = int(array[i])
+
+    return vec
 
 cdef mapToCoarseGrid(float lat, float lon, float time, float latMin, float lonMin, float timeMin, float deltaLat=0.5, float deltaLon=0.5, float deltaTime=60.0):
     """ map trajectory point to coarse grid
@@ -530,28 +549,28 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
             5. minimum time difference with partner, i.e. min(arrival times - arrival times partner)
             6. maximum time difference with partner, i.e. max(arrival times - arrival times partner)
     """
-    pointConflictIndex = np.array(pointConflicts.index, dtype=int)
-    flight1 = np.array(pointConflicts['flight1'], dtype=int)
-    flight2 = np.array(pointConflicts['flight2'], dtype=int)
-    time1 = np.array(pointConflicts['time1'], dtype=int)
-    time2 = np.array(pointConflicts['time2'], dtype=int)
-    timediff = np.array(pointConflicts['time1'] - pointConflicts['time2'], dtype=int)
-    parallelConflictIndex = np.array(parallelConflicts.index, dtype=int)
-    pflight1 = np.array(parallelConflicts['flight1'], dtype=int)
-    pflight2 = np.array(parallelConflicts['flight2'], dtype=int)
-    ptime1 = np.array(parallelConflicts['time1'], dtype=int)
-    ptime2 = np.array(parallelConflicts['time2'], dtype=int)
+    cdef int N1 = len(pointConflicts)
+    cdef int N2 = len(parallelConflicts)
+    pointConflictIndex = arrayToIntVector(np.array(pointConflicts.index, dtype=int))
+    flight1 = arrayToIntVector(np.array(pointConflicts['flight1'], dtype=int))
+    flight2 = arrayToIntVector(np.array(pointConflicts['flight2'], dtype=int))
+    time1 = arrayToIntVector(np.array(pointConflicts['time1'], dtype=int))
+    time2 = arrayToIntVector(np.array(pointConflicts['time2'], dtype=int))
+    timediff = arrayToIntVector(np.array(pointConflicts['time1'] - pointConflicts['time2'], dtype=int))
+    parallelConflictIndex = arrayToIntVector(np.array(parallelConflicts.index, dtype=int))
+    pflight1 = arrayToIntVector(np.array(parallelConflicts['flight1'], dtype=int))
+    pflight2 = arrayToIntVector(np.array(parallelConflicts['flight2'], dtype=int))
+    ptime1 = arrayToIntVector(np.array(parallelConflicts['time1'], dtype=int))
+    ptime2 = arrayToIntVector(np.array(parallelConflicts['time2'], dtype=int))
 
     parallelConflicts['timediff'] = parallelConflicts['time1'] - parallelConflicts['time2']
-    ptimediff = np.array(parallelConflicts['timediff'], dtype=int)
+    ptimediff = arrayToIntVector(np.array(parallelConflicts['timediff'], dtype=int))
 
     cdef int i
-    cdef int N1 = len(flight1)
-    cdef int N2 = len(pflight1)
     pFlightsUnique = pd.concat([parallelConflicts['flight1'], parallelConflicts['flight2']]).unique()
-    flightsUnique = np.unique(np.append(pd.concat([pointConflicts['flight1'], pointConflicts['flight2']]).unique(), pFlightsUnique))
-    cdef int N = max(flight1.max() if flight1.shape[0] else 0, pflight1.max() if pflight1.shape[0] else 0)
-    cdef int M = max(flight2.max() if flight2.shape[0] else 0, pflight2.max() if pflight2.shape[0] else 0)
+    flightsUnique = arrayToIntVector(np.unique(np.append(pd.concat([pointConflicts['flight1'], pointConflicts['flight2']]).unique(), pFlightsUnique)))
+    cdef int N = max(intVecMax(flight1) if flight1.size() != 0 else 0, intVecMax(pflight1) if pflight1.size() != 0 else 0)
+    cdef int M = max(intVecMax(flight2) if flight2.size() != 0 else 0, intVecMax(pflight2) if pflight2.size() != 0 else 0)
     N = max(N, M) + 1
 
     cdef vector[vector[vector[int]]] conflicts
@@ -575,33 +594,45 @@ def getFlightConflicts(pointConflicts, parallelConflicts):
         conflicts[flight2[i]][5].push_back(-timediff[i])
 
     print 'Calculate mapping from flight index to parallel conflicts ...'
+    cdef int minCurrentTimeDiff
+    cdef int maxCurrentTimeDiff
     if N2 > 0:
         conflicts[pflight1[0]][0].push_back(parallelConflictIndex[0] + N1)
         conflicts[pflight1[0]][1].push_back(ptime1[0])
         conflicts[pflight1[0]][2].push_back(pflight2[0])
         conflicts[pflight1[0]][3].push_back(ptime2[0])
-        conflicts[pflight1[0]][4].push_back(parallelConflicts.loc[0]['timediff'].min())
-        conflicts[pflight1[0]][5].push_back(parallelConflicts.loc[0]['timediff'].max())
         conflicts[pflight2[0]][0].push_back(parallelConflictIndex[0] + N1)
         conflicts[pflight2[0]][1].push_back(ptime2[0])
         conflicts[pflight2[0]][2].push_back(pflight1[0])
         conflicts[pflight2[0]][3].push_back(ptime1[0])
-        conflicts[pflight2[0]][4].push_back(-parallelConflicts.loc[0]['timediff'].min())
-        conflicts[pflight2[0]][5].push_back(-parallelConflicts.loc[0]['timediff'].max())
+
+        currentTimeDiffs = parallelConflicts.loc[0]['timediff']
+        maxCurrentTimeDiff = currentTimeDiffs.max()
+        minCurrentTimeDiff = currentTimeDiffs.min()
+        conflicts[pflight1[0]][4].push_back(minCurrentTimeDiff)
+        conflicts[pflight1[0]][5].push_back(maxCurrentTimeDiff)
+        conflicts[pflight2[0]][4].push_back(-minCurrentTimeDiff)
+        conflicts[pflight2[0]][5].push_back(-maxCurrentTimeDiff)
     for i in range(1, N2):
+        if i % 1000 == 0:
+            print i, "from", N2
         if (parallelConflictIndex[i] != parallelConflictIndex[i - 1]):
             conflicts[pflight1[i]][0].push_back(parallelConflictIndex[i] + N1)
             conflicts[pflight1[i]][1].push_back(ptime1[i])
             conflicts[pflight1[i]][2].push_back(pflight2[i])
             conflicts[pflight1[i]][3].push_back(ptime2[i])
-            conflicts[pflight1[i]][4].push_back(parallelConflicts.loc[parallelConflictIndex[i]]['timediff'].min())
-            conflicts[pflight1[i]][5].push_back(parallelConflicts.loc[parallelConflictIndex[i]]['timediff'].max())
             conflicts[pflight2[i]][0].push_back(parallelConflictIndex[i] + N1)
             conflicts[pflight2[i]][1].push_back(ptime2[i])
             conflicts[pflight2[i]][2].push_back(pflight1[i])
             conflicts[pflight2[i]][3].push_back(ptime1[i])
-            conflicts[pflight2[i]][4].push_back(-parallelConflicts.loc[parallelConflictIndex[i]]['timediff'].min())
-            conflicts[pflight2[i]][5].push_back(-parallelConflicts.loc[parallelConflictIndex[i]]['timediff'].max())
+
+            currentTimeDiffs = parallelConflicts.loc[int(parallelConflictIndex[i])]['timediff']
+            maxCurrentTimeDiff = currentTimeDiffs.max()
+            minCurrentTimeDiff = currentTimeDiffs.min()
+            conflicts[pflight1[i]][4].push_back(minCurrentTimeDiff)
+            conflicts[pflight1[i]][5].push_back(maxCurrentTimeDiff)
+            conflicts[pflight2[i]][4].push_back(-minCurrentTimeDiff)
+            conflicts[pflight2[i]][5].push_back(-maxCurrentTimeDiff)
 
     print 'Convert mapping from flight index to parallel conflicts to data frame ...'
     pbar = progressbar.ProgressBar().start()
