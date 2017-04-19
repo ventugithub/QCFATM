@@ -59,6 +59,7 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
         trajectories['flightIndex'] = trajectories['flight'].map(lambda x: np.where(flightNames == x)[0][0])
         # set consecutive flight index as dataset index
         trajectories = trajectories.set_index('flightIndex')
+
         trajectories.to_csv(trajectoryFile, mode='w')
     else:
         print "read in trajectories ..."
@@ -92,14 +93,14 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
     print len(parallelConflicts.index.unique()), "parallel conflicts involving", parallelConflicts.shape[0], "trajectory points identified"
 
     # calulate mapping of flight index to temporal sorted conflicts and reduce number of conflicts
-    flights2ConflictsFile = filename + ".flights2Conflicts_delay%03i_thres%03i_depart%03i.h5" % (delayPerConflict, dthreshold, maxDepartDelay)
+    flights2ConflictsFile = filename + ".flights2Conflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
     reducedPointConflictFile = filename + ".reducedPointConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
     reducedParallelConflictFile = filename + ".reducedParallelConflicts_delay%03i_thres%03i_depart%03i.csv" % (delayPerConflict, dthreshold, maxDepartDelay)
     if not os.path.exists(flights2ConflictsFile) or not os.path.exists(reducedPointConflictFile) or not os.path.exists(reducedParallelConflictFile) or not use_snapshots:
         if delayPerConflict == 0:
             print "Reduction not necessary since delayPerConflict is 0. Calculate flight2Conflict though."
             flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
-            flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
+            flights2Conflicts.to_csv(flights2ConflictsFile, mode='w')
         else:
             diff = 1
             count = 0
@@ -109,7 +110,6 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
             f.write('# count\tnumber of conflicts\n')
             while not diff == 0 and count < iterMax:
                 flights2Conflicts = conflict.getFlightConflicts(pointConflicts, parallelConflicts)
-                flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
                 NConflicts = len(pointConflicts) + len(parallelConflicts)
                 pointConflicts, parallelConflicts = conflict.reduceConflicts(flights2Conflicts, pointConflicts, parallelConflicts, delayPerConflict, dthreshold, maxDepartDelay)
                 NConflictsNew = len(pointConflicts) + len(parallelConflicts)
@@ -126,13 +126,13 @@ def precalculateConflicts(inputFile, mindistance, mintime, delayPerConflict, dth
             f.close()
 
         print "Flight to conflict data written to", flights2ConflictsFile
-        flights2Conflicts.to_hdf(flights2ConflictsFile, 'flights2Conflicts')
+        flights2Conflicts.to_csv(flights2ConflictsFile)
         pointConflicts.to_csv(reducedPointConflictFile, mode='w')
         print "Reduced point conflict data written to", reducedPointConflictFile
         parallelConflicts.to_csv(reducedParallelConflictFile, mode='w')
         print "Parallel conflict data written to", reducedParallelConflictFile
     else:
-        flights2Conflicts = pd.read_hdf(flights2ConflictsFile, 'flights2Conflicts')
+        flights2Conflicts = pd.read_csv(flights2ConflictsFile, index_col='flight')
         pointConflicts = pd.read_csv(reducedPointConflictFile, index_col='conflictIndex')
         parallelConflicts = pd.read_csv(reducedParallelConflictFile, index_col='parallelConflict')
     print pointConflicts.shape[0], "reduced point conflicts identified"
