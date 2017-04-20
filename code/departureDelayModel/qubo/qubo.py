@@ -1,6 +1,6 @@
-from polynomial import Polynomial as poly
-import instance
-import variable
+import qcfco.qubo
+from qcfco.polynomial import Polynomial as poly
+
 
 def isRealConflict(delay1, delay2, deltaTMin, deltaTMax, threshold=3):
     dmin = - threshold - deltaTMax
@@ -11,74 +11,91 @@ def isRealConflict(delay1, delay2, deltaTMin, deltaTMax, threshold=3):
     else:
         return 0
 
-def get_number_of_logical_qubits(input):
-    """ Read in instance and calculate the QUBO as well as the index mapping """
-    inst = instance.Instance(input)
 
-    flights = inst.flights
-    delays = inst.delays
-    I = len(flights)
-    D = len(delays)
-    return D * I
+class Qubo(qcfco.qubo.Qubo):
+    def __init__(self, instance, variable, penalty_weights):
+        """ calculate the QUBO
 
-def get_qubo(input, penalty_weights, unary=False):
-    """ Read in instance and calculate the QUBO as well as the index mapping """
-    inst = instance.Instance(input)
+        instance: instance class instance
+        variable: variable class instance
+        penalty_weights: list of penalty weights
 
-    flights = inst.flights
-    delays = inst.delays
-    conflicts = inst.conflicts
-    timeLimits = inst.timeLimits
-    I = len(flights)
-    K = len(conflicts)
+        """
+        self.instance = instance
+        self.variable = variable
+        self.penalty_weights = penalty_weights
 
-    delayValues = list(delays)
+    @staticmethod
+    def get_hard_constraints():
+        """ return a list of subqubo names whose value must be zero to fulfill hard constraints"""
+        return ['unique', 'conflict']
 
-    var = variable.Unary(inst)
+    @staticmethod
+    def get_subqubo_names():
+        """ return a list of subqubo names"""
+        return ['departure', 'unique', 'conflict']
 
-    NDelay = var.NDelay
+    def get_num_logical_qubits(self):
+        flights = self.instance.flights
+        delays = self.instance.delays
+        I = len(flights)
+        D = len(delays)
+        return D * I
 
-    penalty_weights['departure'] = 1.0/delayValues[-1]
-    if not unary:
-        raise ValueError('Binary representation is not feasible for this model due to the conflict penalizing term in the cost function')
+    def get_qubo(self):
+        ###########################################################################
+        # calculate QUBO
+        ###########################################################################
 
-    ###########################################################################
-    # calculate QUBO
-    ###########################################################################
-    qubo = poly()
-    subqubos = {}
-    print "Calculate departure delay contribution"
-    subqubos['departure'] = poly()
-    for i in range(I):
-        subqubos['departure'] += var.delay(i)
-    qubo += penalty_weights['departure'] * subqubos['departure']
+        flights = self.instance.flights
+        delays = self.instance.delays
+        conflicts = self.instance.conflicts
+        timeLimits = self.instance.timeLimits
+        I = len(flights)
+        K = len(conflicts)
 
-    print "Calculate conflict contribution"
-    subqubos['conflict'] = poly()
-    flights = var.instance.flights
-    for k in range(K):
-        f1, f2 = conflicts[k]
-        i = flights.index(f1)
-        j = flights.index(f2)
-        Q = poly()
-        for a in range(NDelay):
-            for b in range(NDelay):
-                if isRealConflict(delayValues[a], delayValues[b], timeLimits[k][0], timeLimits[k][1]):
-                    Q += poly({(var.d[i, a],): 1}) * poly({(var.d[j, b],): 1})
-        subqubos['conflict'] += Q
-    qubo += penalty_weights['conflict'] * subqubos['conflict']
+        delayValues = list(delays)
 
-    print "Calculate departure delay uniqueness contribution"
-    subqubos['unique'] = poly()
-    for i in range(I):
-        Q = poly()
-        for a in range(NDelay):
-            Q += poly({(var.d[i, a],): 1})
-        Q += poly({(): -1})
-        subqubos['unique'] += Q * Q
-    qubo += penalty_weights['unique'] * subqubos['unique']
+        var = self.variable
 
-    if not qubo.isQUBO():
-        print "WARNING: Cost function is not quadratic!"
+        NDelay = var.NDelay
 
-    return qubo, subqubos, var
+        ###########################################################################
+        # calculate QUBO
+        ###########################################################################
+        qubo = poly()
+        subqubos = {}
+        print "Calculate departure delay contribution"
+        subqubos['departure'] = poly()
+        for i in range(I):
+            subqubos['departure'] += var.delay(i)
+        qubo += self.penalty_weights['departure'] * subqubos['departure']
+
+        print "Calculate conflict contribution"
+        subqubos['conflict'] = poly()
+        flights = var.instance.flights
+        for k in range(K):
+            f1, f2 = conflicts[k]
+            i = flights.index(f1)
+            j = flights.index(f2)
+            Q = poly()
+            for a in range(NDelay):
+                for b in range(NDelay):
+                    if isRealConflict(delayValues[a], delayValues[b], timeLimits[k][0], timeLimits[k][1]):
+                        Q += poly({(var.d[i, a],): 1}) * poly({(var.d[j, b],): 1})
+            subqubos['conflict'] += Q
+        qubo += self.penalty_weights['conflict'] * subqubos['conflict']
+
+        print "Calculate departure delay uniqueness contribution"
+        subqubos['unique'] = poly()
+        for i in range(I):
+            Q = poly()
+            for a in range(NDelay):
+                Q += poly({(var.d[i, a],): 1})
+            Q += poly({(): -1})
+            subqubos['unique'] += Q * Q
+        qubo += self.penalty_weights['unique'] * subqubos['unique']
+
+        if not qubo.isQUBO():
+            print "WARNING: Cost function is not quadratic!"
+        return qubo, subqubos

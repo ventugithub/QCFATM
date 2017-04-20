@@ -125,13 +125,13 @@ def main():
                     delays = [int(d) for d in np.arange(0, maxDelay + 1, delayStep)]
                     filename = args.output + "/atm_instance_partition%04i_delayStep%03i_maxDelay%03i.h5" % (count, delayStep, maxDelay)
                     inst = instance.Instance(flights, cnfl, timeLimits, delays)
-                    inst.save_hdf5(filename)
+                    inst.save(filename)
                     f = h5py.File(filename, 'a')
                     # save metadata
                     for arg in vars(args):
                         val = getattr(args, arg)
                         if val is not None:
-                            f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
+                            f['Instance'].attrs['Precalculation argument: %s' % arg] = val
                     f.close()
 
             count = count + 1
@@ -224,13 +224,13 @@ def main():
                     delays = [int(d) for d in np.arange(0, maxDelay + 1, delayStep)]
                     filename = args.output + "/atm_instance_partition%04i_subpartition%04i_of%04i_edgecut%010i_delayStep%03i_maxDelay%03i.h5" % (args.component, count, numPart, edgecut, delayStep, maxDelay)
                     inst = instance.Instance(flights, cnfl, timeLimits, delays)
-                    inst.save_hdf5(filename)
+                    inst.save(filename)
                     f = h5py.File(filename, 'a')
                     # save metadata
                     for arg in vars(args):
                         val = getattr(args, arg)
                         if val is not None:
-                            f['atm-instance'].attrs['Precalculation argument: %s' % arg] = val
+                            f['Instance'].attrs['Precalculation argument: %s' % arg] = val
                     f.close()
 
             count = count + 1

@@ -1,70 +1,35 @@
-import yaml
-import h5py
 import numpy as np
+import qcfco.instance
 
-class Instance:
-    def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            if type(args[0]) == str:
-                if kwargs and kwargs['hdf5'] == False:
-                    self.load_txt(args[0])
-                else:
-                    self.load_hdf5(args[0])
-            else:
-                self.update(*args)
-        elif len(args) == 2:
-            if type(args[0]) == str:
-                self.load_hdf5(args[0], args[1])
-        elif len(args) == 4:
-            self.flights = args[0]
-            self.conflicts = args[1]
-            self.timeLimits = args[2]
-            self.delays = args[3]
-        else:
-            raise ValueError('Error in instance creation: Wrong number of arguments')
+
+class Instance(qcfco.instance.Instance):
+    def update(self, flights, conflicts, timeLimits, delays):
+        self.flights = flights
+        self.conflicts = conflicts
+        self.timeLimits = timeLimits
+        self.delays = delays
+
         self.check()
 
-    def save_txt(self, filename):
-        data = {}
-        data['flights'] = self.flights
-        data['conflicts'] = self.conflicts
-        data['timeLimits'] = self.timeLimits
-        data['delays'] = self.delays
-        f = open(filename, 'w')
-        yaml.dump(data, f)
-        f.close()
+    def writeToHDF5(self, group):
+        """ write instance data to HDF5 group
 
-    def load_txt(self, filename):
-        # parse instance file
-        f = open(filename)
-        data = yaml.load(f)
-        f.close()
-        self.flights = data['flights']
-        self.conflicts = data['conflicts']
-        self.timeLimits = data['timeLimits']
-        self.delays = data['delays']
-        self.check()
-
-    def save_hdf5(self, filename, name='atm-instance', mode='w'):
-        f = h5py.File(filename, mode)
-        if name in f:
-            del f[name]
-        group = f.create_group(name)
+        group: HDF5 group name where the data is stored
+        """
         group.create_dataset('delays', data=np.array(self.delays, dtype=int))
         group.create_dataset('flights', data=np.array(self.flights, dtype=int))
         group.create_dataset('timeLimits', data=np.array(self.timeLimits, dtype=int))
         group.create_dataset('conflicts', data=np.array(self.conflicts, dtype=int))
         group.attrs['Number of flights'] = len(self.flights)
         group.attrs['Number of conflicts'] = len(self.conflicts)
-        f.close()
 
-    def load_hdf5(self, filename, name='atm-instance'):
-        f = h5py.File(filename, 'r')
-        if name not in f:
-            raise ValueError('Did not find %s group in hdf5 file %s' % (name, filename))
-        group = f[name]
+    def readFromHDF5(self, group):
+        """ load instance data from HDF5 group
+
+        group: HDF5 group name where the data is stored
+        """
         if any([d not in group for d in ['delays', 'flights', 'timeLimits', 'conflicts']]):
-            raise ValueError('Did not find all %s datasets in hdf5 file %s' % (name, filename))
+            raise ValueError('Did not find all %s datasets in hdf5 file %s' % (group.name, group.file.filename))
         dataset = group['delays']
         self.delays = dataset.value.tolist()
         dataset = group['flights']

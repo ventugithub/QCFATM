@@ -1,6 +1,7 @@
 data
 myToken.py
 *.pyc
-hardware_adjacency.yml
+hardware_adjacency*.yml
 *.swp
 *.sh
+*.cfg
