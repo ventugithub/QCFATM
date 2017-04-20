@@ -69,6 +69,7 @@ class Qubo(qcfco.qubo.Qubo):
         subqubos['departure'] = poly()
         for i in range(I):
             subqubos['departure'] += var.delay(i)
+        subqubos['departure'] *= 1.0 / delayValues[-1]
         qubo += self.penalty_weights['departure'] * subqubos['departure']
 
         print "Calculate conflict contribution"
