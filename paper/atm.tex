@@ -147,7 +147,7 @@ With this, the trajectory times of flight $i$ are shifted
 \end{align*}
 where $D_i(t)$ is the delay of flight $i$ at time $t$ and the sum runs over all the conflicts which are before $t$
 \begin{equation*}
-    K_{i}(t) = \{k | \max_{t'} x_{i,t'} \in C_k < t   \} 
+    K_{i}(t) = \left\{k | \max_{t'} x_{i,t'} \in C_k < t   \right\} 
 \end{equation*}
 We introduce the pairs of times of spatially conflicting points inside a conflict $k$:
 \begin{equation*}
@@ -161,12 +161,29 @@ A conflicts $k$ between two flights $i$ and $j$ occurs if the delays are chosen 
 for any $(t, t') \in T_k$.
 Hence a conflict $k$ is avoided if
 \begin{equation*}
-    D_i(t) - D_j(t') \notin D_k
+    D_i(t) - D_j(t') \notin D_k \qquad \forall \, (t, t') \in T_k
 \end{equation*}
 with
 \begin{equation*}
     D_k = \left(-\Delta_t - \max_{(t, t') \in T_k} (t - t'), \Delta_t - \min_{(t, t') \in T_k} (t - t')\right)
 \end{equation*}
+
+For a given conflict $k$, the maneuver introduced delays $\{d_{i, k} | i \in I_k\}$ should depend on the actual maneuver performed.
+Therefore we introduce a set of maneuver parameters $\mathbf{a}_k$ for each conflict $k$ which determines the resulting maneuver delays for both involved flights.
+\begin{equation*}
+    d_{ik} = \mathcal{D}_{ik}(\mathbf{a}_k) \quad \forall i \in I_k \; .
+\end{equation*}
+In general, $\mathcal{D}_{ik}$ is some function depending on the spatial configuration of the conflict trajectory points.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimization Problem Formulation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Mapping to QUBO}
 
 
