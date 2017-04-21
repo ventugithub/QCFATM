@@ -1,9 +1,12 @@
-personal_ws-1.1 en 8 
+personal_ws-1.1 en 11 
+annealer
 QUBO
 deconflict
+DDM
 preprocessing
-Preprocessing
 deconflicting
 th
 ij
 ik
+prefactor
+discretization

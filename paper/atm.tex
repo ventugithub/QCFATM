@@ -168,23 +168,61 @@ with
     D_k = \left(-\Delta_t - \max_{(t, t') \in T_k} (t - t'), \Delta_t - \min_{(t, t') \in T_k} (t - t')\right)
 \end{equation*}
 
-For a given conflict $k$, the maneuver introduced delays $\{d_{i, k} | i \in I_k\}$ should depend on the actual maneuver performed.
-Therefore we introduce a set of maneuver parameters $\mathbf{a}_k$ for each conflict $k$ which determines the resulting maneuver delays for both involved flights.
-\begin{equation*}
-    d_{ik} = \mathcal{D}_{ik}(\mathbf{a}_k) \quad \forall i \in I_k \; .
-\end{equation*}
-In general, $\mathcal{D}_{ik}$ is some function depending on the spatial configuration of the conflict trajectory points.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Optimization Problem Formulation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Departure Delay Model}
+In this section we describe a simplified version of the above problem.
+We restrict ourselves to departure delays and neglect maneuvers.
+Hence the optimization problem can be written as
+\begin{align}
+    & \arg, \min_{d_i} \sum_i d_i \notag \\
+    & \text{s.t.}  \quad 
+    d_i - d_j \notin D_k \qquad \forall \, (t, t') \in T_k \label{eqn:departure_delay_model}
+\end{align}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Mapping to QUBO}
+The problem needs to be mapped to a quadratic binary optimization problem (QUBO) in order to be solvable by a D-Wave quantum annealer.
+As a first step, we introduce a discretization and upper bound for the departure delay variables 
+\begin{equation*}
+    d_i \in \{0, \Delta_d, 2\Delta_d, \dots, d_\text{max} \}\, .
+\end{equation*}
+With this we can write the departure delay variables in terms of new binary variables $d_{i\alpha}$ by
+\begin{align*}
+    d_i & = \sum_\alpha \alpha d_{i\alpha} \\
+    \alpha & \in \{0, \Delta_d, 2\Delta_d, \dots, d_\text{max} \}\, .
+\end{align*}
+However, this approach requires $\sum_\alpha d_{i\alpha} = 1$ to have a unique representation of $d_i$ by $d_{i\alpha}$.
+This is achieved by adding the following contribution to the QUBO
+\begin{equation*}
+    Q_\text{unique} = \lambda_\text{unique} \sum_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \; .
+\end{equation*}
+where $\lambda_\text{unique}$ is a penalty weight sufficiently large to ensure $Q_\text{unique}=0$ for the solution.
+The cost function in \eqref{eqn:departure_delay_model} yields contribution
+\begin{equation*}
+    Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} d_{i\alpha} \; ,
+\end{equation*}
+where we have chosen the prefactor for convenience.
+The last contribution to the QUBO represents the conflict avoidance
+\begin{equation*}
+    Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\alpha, \beta) \in K_k} d_{i\alpha} d_{j\alpha} \biggl. \biggr|_{i, j \in I_k}
+\end{equation*}
+where $K_k$ is the set of all $(\alpha, \beta)$ which correspond to a conflict
+\begin{equation*}
+    K_k = \{(\alpha, \beta) | \alpha - \beta \in D_k\}
+\end{equation*}
+Again, $\lambda_\text{conflict}$ is the penalty weight for this contribution.
+The total QUBO of the departure delay model then reads
+\begin{equation*}
+    Q_\text{DDM} = Q_\text{delay} + Q_\text{unique} + Q_\text{conflict}
+\end{equation*}
+
+\subsection{Configuration Space Restrictions}
+\subsection{Embedding to D-Wave}
+\subsection{Quantum Annealing Results}
+
+\section{Maneuver Model}
 
 
 \bibliography{atm}
