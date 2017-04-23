@@ -256,7 +256,7 @@ The maneuver delays are given by
 \end{equation*}
 Since the total delay is given by $\sum_{ik} D_{ik}$, we can write the corresponding QUBO contribution as
 \begin{equation*}
-    \tilde Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} \alpha d_{i\alpha}  + \sum_{ik} d_M a_{ik}\; ,
+    \tilde Q_\text{delay} = \sum_{i\alpha} \alpha d_{i\alpha}  + \sum_{ik} d_M a_{ik}\; ,
 \end{equation*}
 
 For the conflict avoidance, we need to introduce another variable representing the delay at a given conflict
@@ -286,6 +286,7 @@ where $B_k$ is the set of all $(\delta, \delta')$ which correspond to a conflict
 \begin{equation*}
     B_k = \{(\delta, \delta') \; | \; \delta - \delta' \in D_k\}
 \end{equation*}
+The penalty weights $\lambda_\Delta$, $\lambda_\text{unique}$ and $\lambda_\text{conflict}$ must be chosen large enough to ensure vanishing contributions from the corresponding QUBO terms for the solution.
 
 Finally, the maneuver decision described by \eqref{eqn:maneuver_model_maneuver_decision} is incorporated by a antiferromagnetic coupling between the two maneuver delay variables
 \begin{equation*}
