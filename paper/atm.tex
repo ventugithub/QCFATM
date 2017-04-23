@@ -141,31 +141,31 @@ As one can see in figure \ref{fig:preprocessing_reduction_number_of_conflicts} t
 \subsection{Conflict Avoidance}
 In order to avoid conflicts, a flight $i$ can be either delayed at departure time by $d_i$ or by maneuver introduced delays $d_{ik}$ for each conflict $k$ the flight is involved in.
 With this, the trajectory times of flight $i$ are shifted
-\begin{align*}
-    t_i & \to \tau_i = t_i  + D_i(t) \; , \\
-    D_i(t) & = d_i + \sum_{k\in K_{i}(t)} d_{ik} 
-\end{align*}
+\begin{align}
+    t & \to t  + D_i(t) \; , \notag \\
+    D_i(t) & = d_i + \sum_{k\in K_{i}(t)} d_{ik} \label{eqn:time_dependent_delay} \; , 
+\end{align}
 where $D_i(t)$ is the delay of flight $i$ at time $t$ and the sum runs over all the conflicts which are before $t$
 \begin{equation*}
-    K_{i}(t) = \left\{k | \max_{t'} x_{i,t'} \in C_k < t   \right\} 
+    K_{i}(t) = \left\{k \; |  \; \exists x_{i, t'} \in C_k \text{ for which } t' < t  \right\}  \; .
 \end{equation*}
 We introduce the pairs of times of spatially conflicting points inside a conflict $k$:
 \begin{equation*}
-    T_k =  \{(t, t') \; | \; |x_{i, t} - x_{j, t'}| < \Delta_x, (i, j) \in I_k \}
+    T_k =  \{(t, t') \; | \; (x_{i, t}, x_{j, t'}) \in C_k , (i, j) \in I_k \} \; .
 \end{equation*}
 A conflicts $k$ between two flights $i$ and $j$ occurs if the delays are chosen such that a temporal difference between spatially conflicting points is below $\Delta_t$:
 \begin{align*}
     & |t + D_i(t) - t' - D_j(t')| < \Delta_t \\
-    \Rightarrow  & - \Delta_t - (t - t') < D_i(t) - D_j(t') < \Delta_t - (t - t')
+    \Rightarrow  & - \Delta_t - (t - t') < D_i(t) - D_j(t') < \Delta_t - (t - t') \; , 
 \end{align*}
 for any $(t, t') \in T_k$.
 Hence a conflict $k$ is avoided if
 \begin{equation*}
-    D_i(t) - D_j(t') \notin D_k \qquad \forall \, (t, t') \in T_k
+    D_i(t) - D_j(t') \notin D_k \qquad \forall \, (t, t') \in T_k \; .
 \end{equation*}
 with
 \begin{equation*}
-    D_k = \left(-\Delta_t - \max_{(t, t') \in T_k} (t - t'), \Delta_t - \min_{(t, t') \in T_k} (t - t')\right)
+    D_k = \left(-\Delta_t - \max_{(t, t') \in T_k} (t - t'), \Delta_t - \min_{(t, t') \in T_k} (t - t')\right) \; .
 \end{equation*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -174,6 +174,7 @@ with
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Departure Delay Model}
+\label{sec:departure_delay_model}
 In this section we describe a simplified version of the above problem.
 We restrict ourselves to departure delays and neglect maneuvers.
 Hence the optimization problem can be written as
@@ -186,8 +187,9 @@ Hence the optimization problem can be written as
 The problem needs to be mapped to a quadratic binary optimization problem (QUBO) in order to be solvable by a D-Wave quantum annealer.
 As a first step, we introduce a discretization and upper bound for the departure delay variables 
 \begin{equation*}
-    d_i \in \{0, \Delta_d, 2\Delta_d, \dots, d_\text{max} \}\, .
+    d_i \in \{0, \Delta_d, 2\Delta_d, \dots, d_\text{max} \}\, ,
 \end{equation*}
+where $d_\text{max} = N_d \Delta_d$ and $(N_d + 1)$ is the number of delay steps.
 With this we can write the departure delay variables in terms of new binary variables $d_{i\alpha}$ by
 \begin{align*}
     d_i & = \sum_\alpha \alpha d_{i\alpha} \\
@@ -201,29 +203,97 @@ This is achieved by adding the following contribution to the QUBO
 where $\lambda_\text{unique}$ is a penalty weight sufficiently large to ensure $Q_\text{unique}=0$ for the solution.
 The cost function in \eqref{eqn:departure_delay_model} yields contribution
 \begin{equation*}
-    Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} d_{i\alpha} \; ,
+    Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} \alpha d_{i\alpha} \; ,
 \end{equation*}
-where we have chosen the prefactor for convenience.
+where we have chosen the prefactor $1/d_\text{max}$ for convenience.
 The last contribution to the QUBO represents the conflict avoidance
 \begin{equation*}
-    Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\alpha, \beta) \in K_k} d_{i\alpha} d_{j\alpha} \biggl. \biggr|_{i, j \in I_k}
+    Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\alpha, \beta) \in A_k} d_{i\alpha} d_{j\alpha} \biggl. \biggr|_{i, j \in I_k}
 \end{equation*}
-where $K_k$ is the set of all $(\alpha, \beta)$ which correspond to a conflict
+where $A_k$ is the set of all $(\alpha, \beta)$ which correspond to a conflict
 \begin{equation*}
-    K_k = \{(\alpha, \beta) | \alpha - \beta \in D_k\}
+    A_k = \{(\alpha, \beta) \; | \; \alpha - \beta \in D_k\}
 \end{equation*}
-Again, $\lambda_\text{conflict}$ is the penalty weight for this contribution.
+Again, $\lambda_\text{conflict}$ is the penalty weight for this contribution which have to be chosen large enough to ensure $Q_\text{conflict}=0$ for the solution.
 The total QUBO of the departure delay model then reads
 \begin{equation*}
     Q_\text{DDM} = Q_\text{delay} + Q_\text{unique} + Q_\text{conflict}
 \end{equation*}
 
+\subsection{Natural Subsets of the Problem}
 \subsection{Configuration Space Restrictions}
 \subsection{Embedding to D-Wave}
+\subsection{Results for ICM}
 \subsection{Quantum Annealing Results}
 
 \section{Maneuver Model}
+A more realistic model of the problem can be created by including maneuvers.
+As mentioned above the maneuvers enter our formulation as additional delays at the conflict time $d_{ik}$.
+We want to reduce the problem make it amenable to a QUBO formulation.
+In the course of this, however, we need to make sure to retain the combinatorial nature of the maneuver decision problem.
+We do this by restricting the vast realm of maneuvers to two distinct choices:
+Either one of the two involved flights is delayed while leaving the other flight untouched
+\begin{equation} \label{eqn:maneuver_model_maneuver_decision}
+    \text{if } d_{ik} \neq 0 \Rightarrow d_{jk} = 0  \qquad \forall (i, j) \in I_k \; \forall k \; .
+\end{equation}
+Moreover, we set the resulting maneuver delays to a constant value $d_M$ large enough to capture all kinds of real maneuvers.
+A natural choice for this is the temporal conflict threshold $d_M = \Delta_t$.
 
+With \eqref{eqn:time_dependent_delay} we can introduce the delay a flight $i$ at the conflict $k$ as
+\begin{equation*}
+    D_{ik} = d_i + \sum_{k'<k} d_{ik} \; ,
+\end{equation*}
+where we have introduced a temporal ordering of the conflicts for each flight $i$ by
+\begin{align*}
+                 &k < k' \text{ if } t < t' \\
+    \text{ for } &t = \arg \min_s x_{i, s} \in C_k \; , \\
+                 &t' = \arg \min_s x_{i, s} \in C_{k'}
+\end{align*}
+
+The departure delay variables are represented by binary variables as it was done in section \ref{sec:departure_delay_model}.
+The maneuver delays are given by
+\begin{equation*}
+    d_{ik} = d_M a_{ik} \qquad a_{ik} \in \{0, 1\}
+\end{equation*}
+Since the total delay is given by $\sum_{ik} D_{ik}$, we can write the corresponding QUBO contribution as
+\begin{equation*}
+    \tilde Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} \alpha d_{i\alpha}  + \sum_{ik} d_M \tilde a_{ik}\; ,
+\end{equation*}
+
+For the conflict avoidance, we need to introduce another variable representing the delay at a given conflict
+\begin{equation*}
+    D_{ik} = \sum_\delta \delta \Delta_{ik\delta} \qquad \Delta_{ik\delta} \in \{0, 1\} \; .
+\end{equation*}
+By restricting ourselves to $\Delta_d = \Delta_t$ the values of $\delta$ in the above equation are given as
+\begin{equation*}
+    \delta \in \{0, \Delta_t, 2\Delta_t, \dots,  (N_d + M_{ik}) \Delta_t\} \; .
+\end{equation*}
+Here, $M_{ik}$ is the number of conflicts the flight $i$ is involved in before $k$.
+For unique representation of the variables we add the following contribution to the QUBO
+\begin{align*}
+    \tilde Q_\text{unique} = \lambda_\text{unique} & \left\{  \sum_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \right. \; , \\
+                      & \left. + \sum_{ik} \left( \sum_\delta \Delta_{ik\delta} - 1 \right)^2 \right\} \; .
+\end{align*}
+Conflicts are avoided if $D_{ik} - D_{jk} \notin D_k$, $(i, j) \in I_k$. 
+The corresponding QUBO contribution reads
+\begin{equation*}
+    \tilde Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\delta, \delta') \in B_k} \Delta_{ik\delta} \Delta_{jk\delta'} \biggl. \biggr|_{i, j \in I_k}
+\end{equation*}
+where $B_k$ is the set of all $(\delta, \delta')$ which correspond to a conflict
+\begin{equation*}
+    B_k = \{(\delta, \delta') \; | \; \delta - \delta' \in D_k\}
+\end{equation*}
+
+Finally, the maneuver decision described by \eqref{eqn:maneuver_model_maneuver_decision} is incorporated by a antiferromagnetic coupling between the two maneuver delay variables
+\begin{equation*}
+    \tilde Q_\text{maneuver} = J \sum_k  s_{ik} s_{jk} \biggl. \biggr|_{i, j \in I_k}  + J \; .
+\end{equation*}
+with 
+\begin{equation*}
+    s_{ik} = 2 a_{ik} - 1 \in \{-1, 1\}
+\end{equation*}
+and $J>0$ has to be chosen large enough. 
+A solution is considered to be valid only if $\tilde Q_\text{maneuver} = 0$.
 
 \bibliography{atm}
 
