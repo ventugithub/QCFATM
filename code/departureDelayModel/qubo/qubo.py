@@ -74,7 +74,7 @@ class Qubo(qcfco.qubo.Qubo):
 
         print "Calculate conflict contribution"
         subqubos['conflict'] = poly()
-        flights = var.instance.flights
+        flights = self.instance.flights
         for k in range(K):
             f1, f2 = conflicts[k]
             i = flights.index(f1)

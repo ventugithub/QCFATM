@@ -24,7 +24,6 @@ def main():
     for subquboname in subqubonames:
         pw = argdict['pw_%s' % subquboname]
         penalty_weights[subquboname] = pw
-    print penalty_weights
 
     # solve instance
     controller.solve_instance(instancefile=args.input,
@@ -33,15 +32,14 @@ def main():
                               num_embed=args.num_embed,
                               use_snapshots=args.use_snapshots,
                               embedding_only=args.embedding_only,
+                              jintra=args.jintra,
                               qubo_creation_only=args.qubo_creation_only,
+                              max_coefficient_ratio_only=args.max_coefficient_ratio_only,
                               retry_embedding=args.retry_embedding,
                               retry_embedding_desperate=args.retry_embedding_desperate,
                               verbose=args.verbose,
                               timeout=args.timeout,
                               exact=args.exact,
-                              chimera_m=args.chimera_m,
-                              chimera_n=args.chimera_n,
-                              chimera_t=args.chimera_t,
                               inventoryfile=args.inventory,
                               store_everything=args.store_everything,
                               retry_exact=args.retry_exact,
