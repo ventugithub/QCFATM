@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--use_snapshots', action='store_true', help='use snapshot files')
     parser.add_argument('--embedding_only', action='store_true', help='no quantum annealing')
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
+    parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--penalty_weights_all_combinations', nargs='+', help='list of penalty weights for unique and conflict term of the QUBO (', type=float)
@@ -81,7 +82,7 @@ def main():
                                'timeout': args.timeout,
                                'exact': True,
                                'store_everything': False,
-                               'retry_exact': False,
+                               'retry_exact': args.retry_exact,
                                'qubo_creation_only': args.qubo_creation_only,
                                'skipBigProblems': args.skipBigProblems,
                                'solverConfig': args.solverConfig,
