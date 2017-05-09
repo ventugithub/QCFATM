@@ -224,24 +224,33 @@ The total QUBO of the departure delay model then reads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Natural Subsets of the Problem}
+To investigate the problem we consider each flight as a vertex of a graph and each conflict between two flights as an edge of this graph.
+The connected components of this \emph{conflict graph} represent natural subsets of the problem.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Configuration Space Restrictions}
 It is important to understand how the restrictions to the configuration space by \eqref{eqn:departure_delay_model_discretization} influence the solution quality.
 Therefore we solve \eqref{eqn:departure_delay_model} with a constraint programming solver \cite{numberjack} for various delay discretizations and upper bounds as well as for the continous problem.
+As problem instances we used most of the connected components of the conflict graph for $D_\text{max}=18$ miniutes with up to $N_f=50$ flights and $N_c=104$ conflicts.
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/delay_only_cp_results.pdf}
+    \caption{Top: Total delay of constraint programming solutions for a problem instance with $N_f=19$ flights and $N_c=47$ conflicts for various discretization parameters.
+    Bottom: Minimum $d_\text{max}$ which yield optimal solution in continuous problem for various problem instances. For all problem instances we used $D_\text{max}=18$ minutes.}
+    \label{fig:delay_only_cp_results}
+\end{figure}
+
 In figure \ref{fig:delay_only_cp_results} one can see the results for a problem instance extracted from a connected component of the conflict graph with $N_f=19$ flights and $N_c=47$ conflicts.
 With the exception of the small maximum delay $d_\text{max} = 3$ min, the total delay of the solutions is nearly independent of the maximum delay.
 Moreover it is monotonically increasing with the coarseness of the discretization.
 Since the original data is discretzized in time in units of $1$ minute, $\Delta_t=1$ yield the same result as a continuous variable with the same upper bound.
-For this particular problem instance, the solution to the continous problem is the does not change for $d_\text{max}\geq6$ min.
-However, we found similar behaviour for all other instances.
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/delay_only_cp_results.pdf}
-    \caption{Total delay of constraint programming solutions for a problem instance with $N_f=19$ flights and $N_c=47$ conflicts for various discretization parameters.}
-    \label{fig:delay_only_cp_results}
-\end{figure}
+Obviously the total delay for the continous solution decreases monotonically with $d_\text{max}$.
+Above a certain value $d^0_\text{max}$ the total delay stays the same.
+With one exception, we found that for all the investigated problem instances $d^0_\text{max}\leq6$ minutes (see figure \ref{fig:delay_only_cp_results}).
+Therefore we conclude, that a moderate maximum delay is sufficient even for larger problem instances.
+On the other hand, the delay discretization should be as fine as possible to obtain a high quality solutions.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -328,7 +337,7 @@ The penalty weights $\lambda_\Delta$, $\lambda_\text{unique}$ and $\lambda_\text
 
 Finally, the maneuver decision described by \eqref{eqn:maneuver_model_maneuver_decision} is incorporated by a antiferromagnetic coupling between the two maneuver delay variables
 \begin{equation*}
-    \tilde Q_\text{maneuver} = J \sum_k  s_{ik} s_{jk} \biggl. \biggr|_{i, j \in I_k}  + J \; .
+    \tilde Q_\text{maneuver} = J \sum_k  \left( s_{ik} s_{jk} + 1\right)_{i, j \in I_k} \; .
 \end{equation*}
 with 
 \begin{equation*}
