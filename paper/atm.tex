@@ -121,7 +121,7 @@ these subsets of trajectory point clusters are called \emph{potential conflicts}
 \begin{equation*}
     C_k \in C = \{ C^{ij}_{\parallel n} | \forall i, j, n\} \cup  \{C^{ij}_{\times} | \forall i, j\}
 \end{equation*}
-Here, we introduced a conflict index $k\in\{1, \dots, N_C\}$, with $N_C = |C|$.
+Here, we introduced a conflict index $k\in\{1, \dots, N_c\}$, with $N_c = |C|$.
 For each conflict index $k$, we will denote the pair of involved flights by $I_k = (i_k, j_k)$.
 
 \begin{figure}[t]
@@ -132,7 +132,7 @@ For each conflict index $k$, we will denote the pair of involved flights by $I_k
     \label{fig:preprocessing_reduction_number_of_conflicts}
 \end{figure}
 
-Before the preprocessing, the number of conflicts was given by $N_C^\text{before} = \sum_{ij} |C^{ij}_0|$.
+Before the preprocessing, the number of conflicts was given by $N_c^\text{before} = \sum_{ij} |C^{ij}_0|$.
 As one can see in figure \ref{fig:preprocessing_reduction_number_of_conflicts} the preprocessing reduces the number of conflicts by orders of magnitude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,8 +232,8 @@ The connected components of this \emph{conflict graph} represent natural subsets
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Configuration Space Restrictions}
 It is important to understand how the restrictions to the configuration space by \eqref{eqn:departure_delay_model_discretization} influence the solution quality.
-Therefore we solve \eqref{eqn:departure_delay_model} with a constraint programming solver \cite{numberjack} for various delay discretizations and upper bounds as well as for the continous problem.
-As problem instances we used most of the connected components of the conflict graph for $D_\text{max}=18$ miniutes with up to $N_f=50$ flights and $N_c=104$ conflicts.
+Therefore we solve \eqref{eqn:departure_delay_model} with a constraint programming solver \cite{numberjack} for various delay discretizations and upper bounds as well as for the continuous problem.
+As problem instances we used most of the connected components of the conflict graph for $D_\text{max}=18$ minutes with up to $N_f=50$ flights and $N_c=104$ conflicts.
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/delay_only_cp_results.pdf}
@@ -245,8 +245,8 @@ As problem instances we used most of the connected components of the conflict gr
 In figure \ref{fig:delay_only_cp_results} one can see the results for a problem instance extracted from a connected component of the conflict graph with $N_f=19$ flights and $N_c=47$ conflicts.
 With the exception of the small maximum delay $d_\text{max} = 3$ min, the total delay of the solutions is nearly independent of the maximum delay.
 Moreover it is monotonically increasing with the coarseness of the discretization.
-Since the original data is discretzized in time in units of $1$ minute, $\Delta_t=1$ yield the same result as a continuous variable with the same upper bound.
-Obviously the total delay for the continous solution decreases monotonically with $d_\text{max}$.
+Since the original data is discretized in time in units of $1$ minute, $\Delta_t=1$ yield the same result as a continuous variable with the same upper bound.
+Obviously the total delay for the continuous solution decreases monotonically with $d_\text{max}$.
 Above a certain value $d^0_\text{max}$ the total delay stays the same.
 With one exception, we found that for all the investigated problem instances $d^0_\text{max}\leq6$ minutes (see figure \ref{fig:delay_only_cp_results}).
 Therefore we conclude, that a moderate maximum delay is sufficient even for larger problem instances.
@@ -255,6 +255,12 @@ On the other hand, the delay discretization should be as fine as possible to obt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Choice of the Penalty Weights}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/validity_boundary_example.pdf}
+    \caption{Validity of exact solution to a QUBO extracted from a a problem instance with $N_f=7$ flights and $N_c=9$ conflicts in dependence on the choice of the penalty weights, $\lambda_\text{unique}$ and $\lambda_\text{conflict}$.}
+    \label{fig:penalty_weights}
+\end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -263,10 +269,25 @@ On the other hand, the delay discretization should be as fine as possible to obt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Embedding to D-Wave}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/physicalVsLogicalNumberOfQubits.pdf}
+    \caption{Number of physical qubits versus the number of logical qubits after embedding of QUBO instances with up to $N_f=50$ and $N_c=104$}
+    \label{fig:number_of_physical_qubits}
+\end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Quantum Annealing Results}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/annealing_results_success_vs_flights_and_conflicts.pdf}
+    \caption{Success probability for QUBO instances in dependence of the number of flights $N_f$ and the number of conflicts $N_c$. 
+             The error bars indicate the standard deviation.
+             We used $10000$ annealing runs for each instance and penalty weights $\lambda = \lambda_\text{conflict} = \lambda_\text{unique} \in \{0.5, 1, 2\}$. 
+    }
+    \label{fig:success_probability}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

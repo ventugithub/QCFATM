@@ -1,10 +1,13 @@
-personal_ws-1.1 en 15 
+personal_ws-1.1 en 19 
 annealer
 jk
 QUBO
 deconflict
 antiferromagnetic
+qubits
 combinatorial
+arg
+discretized
 DDM
 preprocessing
 deconflicting
@@ -14,3 +17,4 @@ ik
 ICM
 prefactor
 discretization
+discretizations
