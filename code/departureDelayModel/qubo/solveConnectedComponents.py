@@ -25,6 +25,8 @@ def main():
     parser.add_argument('--qubo_creation_only', action='store_true', help='qubo creation only')
     parser.add_argument('--retry_exact', action='store_true', help='retry exact solution in case of previous failure')
     parser.add_argument('--timeout', default=1000, help='timeout in seconds for exact solver')
+    parser.add_argument('--num_reads', default=10000, help='Number of D-Wave runs for one call to the D-Wave solver (must be below the hardware restriction', type=int)
+    parser.add_argument('--num_repetitions', default=1, help='Number of repeated calls to the D-Wave solver (the total number of annealing runs is num_reads * num_repetitions)', type=int)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--penalty_weights_all_combinations', nargs='+', help='list of penalty weights for unique and conflict term of the QUBO (', type=float)
     group.add_argument('--penalty_weights_two_tuples', nargs='+', default=[0.5, 0.5, 1, 1, 2, 2], help='list of two penalty weights (unique and conflict) of the QUBO (list length must be even). E.g. 0.5 0.5 1 1 2 2', type=float)
@@ -87,7 +89,9 @@ def main():
                                'skipBigProblems': args.skipBigProblems,
                                'solverConfig': args.solverConfig,
                                'jintra': args.jintra,
-                               'inventoryfile': args.inventoryfile}
+                               'inventoryfile': args.inventoryfile,
+                               'num_reads': args.num_reads,
+                               'num_repetitions': args.num_repetitions}
 
         controller.solve_instances(instancefiles, penalty_weights={'departure': 1, 'unique': w2, 'conflict': w3}, np=args.np, **solve_instance_args)
 

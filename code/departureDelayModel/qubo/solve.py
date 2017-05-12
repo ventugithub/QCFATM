@@ -41,6 +41,8 @@ def main():
                               timeout=args.timeout,
                               exact=args.exact,
                               inventoryfile=args.inventory,
+                              num_reads=args.num_reads,
+                              num_repetitions=args.num_repetitions,
                               store_everything=args.store_everything,
                               retry_exact=args.retry_exact,
                               solverConfig=args.solverConfig)
