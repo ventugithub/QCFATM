@@ -1,15 +1,21 @@
-personal_ws-1.1 en 19 
+personal_ws-1.1 en 25 
 annealer
 jk
 QUBO
 deconflict
 antiferromagnetic
 qubits
+annealers
 combinatorial
+Acknowledgements
 arg
+TODO
 discretized
 DDM
+akmaxsat
 preprocessing
+misspecification
+deconficting
 deconflicting
 th
 ij

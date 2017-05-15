@@ -1,5 +1,5 @@
 #!/bin/bash
-for f in $( ls *.tex)
+for f in $( ls *.tex sections/*.tex)
 do
 	#aspell -l en_US -c $f
     echo $f;
