@@ -1,0 +1,22 @@
+\section{D-Wave}
+
+\subsection{Embedding}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/physicalVsLogicalNumberOfQubits.pdf}
+    \caption{Number of physical qubits versus the number of logical qubits after embedding of QUBO instances with up to $N_f=50$ and $N_c=104$}
+    \label{fig:number_of_physical_qubits}
+\end{figure}
+
+\subsection{Quantum Annealing Results}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/annealing_results_success_vs_flights_and_conflicts.pdf}
+    \caption{Success probability for QUBO instances in dependence of the number of flights $N_f$ and the number of conflicts $N_c$. 
+             The error bars indicate the standard deviation.
+             We used $10000$ annealing runs for each instance and penalty weights $\lambda = \lambda_\text{conflict} = \lambda_\text{unique} \in \{0.5, 1, 2\}$. 
+    }
+    \label{fig:success_probability}
+\end{figure}
