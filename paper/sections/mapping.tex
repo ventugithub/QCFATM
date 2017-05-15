@@ -1,7 +1,7 @@
 \section{Mapping to QUBO}
-\label{sec:departure_delay_model}
 
 \subsection{Departure delays}
+\label{sec:departure_delay_model}
 In this section we describe a simplified version of the above problem.
 We restrict ourselves to departure delays and neglect maneuvers.
 Hence the optimization problem can be written as
@@ -24,19 +24,22 @@ With this we can write the departure delay variables in terms of new binary vari
 \end{align}
 However, this approach requires $\sum_\alpha d_{i\alpha} = 1$ to have a unique representation of $d_i$ by $d_{i\alpha}$.
 This is achieved by adding the following contribution to the QUBO
-\begin{equation*}
+\begin{equation}
+    \label{eqn:departure_delay_model_qubo_unique}
     Q_\text{unique} = \lambda_\text{unique} \sum_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \; .
-\end{equation*}
+\end{equation}
 where $\lambda_\text{unique}$ is a penalty weight sufficiently large to ensure $Q_\text{unique}=0$ for the solution.
 The cost function in \eqref{eqn:departure_delay_model} yields contribution
-\begin{equation*}
+\begin{equation}
+    \label{eqn:departure_delay_model_qubo_departure}
     Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} \alpha d_{i\alpha} \; ,
-\end{equation*}
+\end{equation}
 where we have chosen the prefactor $1/d_\text{max}$ for convenience.
 The last contribution to the QUBO represents the conflict avoidance
-\begin{equation*}
+\begin{equation}
+    \label{eqn:departure_delay_model_qubo_conflict}
     Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\alpha, \beta) \in A_k} d_{i\alpha} d_{j\alpha} \biggl. \biggr|_{i, j \in I_k}
-\end{equation*}
+\end{equation}
 where $A_k$ is the set of all $(\alpha, \beta)$ which correspond to a conflict
 \begin{equation*}
     A_k = \{(\alpha, \beta) \; | \; \alpha - \beta \in D_k\}
