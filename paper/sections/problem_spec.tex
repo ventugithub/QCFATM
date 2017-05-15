@@ -3,7 +3,7 @@
 Formally, an instance of the deconflicting problem is a set of ideal trajectories  
 
 The problem at hand is the deconflicting of transatlantic wind-optimal trajectories.
-As it was done in \cite{rodionova16} we are using the same wind-optimal trajectories of a single day, July 29 2012.
+As it was done in~\cite{rodionova16} we are using the same wind-optimal trajectories of a single day, July 29 2012.
 These wind-optimal trajectories are given as
 ${\left(\mathbf{x}_i\right)}_{i=1}^n$, 
 where 
@@ -19,7 +19,7 @@ A conflict between two flights is defined as a pair of trajectory points which a
     \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x ,  |t - t'| < \Delta_t \} \; ,
 \end{equation}
 where $\mathcal{D}(x, y)$ is the spatial distance between two points $x$ and $y$ given as latitude, longitude and altitude.
-Following \cite{rodionova16}, the space threshold is $\Delta_x = 3$ nautical miles and the time threshold is $\Delta_t = 3$ minutes.
+Following~\cite{rodionova16}, the space threshold is $\Delta_x = 3$ nautical miles and the time threshold is $\Delta_t = 3$ minutes.
 In this paper, we consider the following means to deconflict the trajectories:
 First, we can delay each flight $i$ at departure time by a departure delay $d_i$
 \begin{equation*}
@@ -40,7 +40,7 @@ As a first step, we detect all pairs of trajectory points which are separated by
     \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x \} \; ,
 \end{equation*}
 Two spatially conflicting trajectory points might never become conflicting in time if the corresponding times are far apart.
-By introducing a constant maximum delay $D_{max}$ we can dismiss all spatial conflicts which can never become conflicting in time
+By introducing a constant maximum delay $D_{\max}$ we can dismiss all spatial conflicts which can never become conflicting in time
 \begin{equation*}
     \{ (x_{i, t},  x_{j, t'}) \; | \; \mathcal{D} (x_{i, t}, x_{j, t'}) < \Delta_x , |t-t'| \geq \Delta_t + D_\text{max} \} \; .
 \end{equation*}
@@ -60,13 +60,13 @@ where we set $\Delta'_t = 2$ minutes.
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/example_conflict_in_real_space.pdf}
+        \includegraphics[width=0.45\textwidth]{./pics/example_conflict_in_real_space.pdf}
     \end{center}
-    \caption{Example of two parallel potential conflicts between two transatlantic flights starting from the east cost of the USA.}
-    \label{fig:example_parallel_conflict}
+\caption{Example of two parallel potential conflicts between two transatlantic flights starting from the east cost of the USA.}
+\label{fig:example_parallel_conflict}
 \end{figure}
 
-For a given pair of flights $(i, j)$ there might be multiple ``disjoint`` subsets in $C^{ij}_\parallel$
+For a given pair of flights $(i, j)$ there might be multiple ``disjoint'' subsets in $C^{ij}_\parallel$
 \begin{equation*}
     \bigcup_{n} C^{ij}_{\parallel n} = C^{ij}_\parallel
 \end{equation*}
@@ -77,7 +77,7 @@ where
     & \forall (x_{i, s},  x_{j, s'}) \in C^{ij}_{\parallel n'}, \\
     & n \neq n' \; .
 \end{align*}
-In figure \ref{fig:example_parallel_conflict} an example of two separated clusters are shown.
+In figure~\ref{fig:example_parallel_conflict} an example of two separated clusters are shown.
 Together with the remaining, spatially isolated, conflicting trajectory points
 \begin{equation*}
     C^{ij}_{\times} = C^{ij}_0 \setminus C^{ij}_\parallel \; ,
@@ -91,14 +91,14 @@ For each conflict index $k$, we will denote the pair of involved flights by $I_k
 
 \begin{figure}[t]
     \begin{center}
-        \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
+        \includegraphics[width=0.45\textwidth]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
     \end{center}
     \caption{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
-    \label{fig:preprocessing_reduction_number_of_conflicts}
+\label{fig:preprocessing_reduction_number_of_conflicts}
 \end{figure}
 
 Before the preprocessing, the number of conflicts was given by $N_c^\text{before} = \sum_{ij} |C^{ij}_0|$.
-As one can see in figure \ref{fig:preprocessing_reduction_number_of_conflicts} the preprocessing reduces the number of conflicts by orders of magnitude.
+As one can see in figure~\ref{fig:preprocessing_reduction_number_of_conflicts} the preprocessing reduces the number of conflicts by orders of magnitude.
 
 \subsection{Conflict Avoidance}
 In order to avoid conflicts, a flight $i$ can be either delayed at departure time by $d_i$ or by maneuver introduced delays $d_{ik}$ for each conflict $k$ the flight is involved in.

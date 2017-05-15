@@ -26,10 +26,10 @@ However, this approach requires $\sum_\alpha d_{i\alpha} = 1$ to have a unique r
 This is achieved by adding the following contribution to the QUBO
 \begin{equation}
     \label{eqn:departure_delay_model_qubo_unique}
-    Q_\text{unique} = \lambda_\text{unique} \sum_i \left( \sum_\alpha d_{i\alpha} - 1 \right)^2 \; .
+    Q_\text{unique} = \lambda_\text{unique} \sum_i {\left( \sum_\alpha d_{i\alpha} - 1 \right)}^2 \; .
 \end{equation}
 where $\lambda_\text{unique}$ is a penalty weight sufficiently large to ensure $Q_\text{unique}=0$ for the solution.
-The cost function in \eqref{eqn:departure_delay_model} yields contribution
+The cost function in~\eqref{eqn:departure_delay_model} yields contribution
 \begin{equation}
     \label{eqn:departure_delay_model_qubo_departure}
     Q_\text{delay} = \frac{1}{d_\text{max}}\sum_{i\alpha} \alpha d_{i\alpha} \; ,

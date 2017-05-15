@@ -1,6 +1,5 @@
 PROJECT_NAME=atm
 ${PROJECT_NAME}: ${PROJECT_NAME}*.tex ${PROJECT_NAME}.bib sections/*.tex
-	latex ${PROJECT_NAME}
 	pdflatex ${PROJECT_NAME}.tex
 	bibtex ${PROJECT_NAME}
 	pdflatex ${PROJECT_NAME}.tex
