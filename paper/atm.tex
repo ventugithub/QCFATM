@@ -1,28 +1,39 @@
 \documentclass[aps,pra,twocolumn,10pt]{revtex4-1} % chktex 8
+
+\bibliographystyle{apsrevtitle}
+
+\usepackage{amsmath} 
+\usepackage{amsfonts} 
 \usepackage{amssymb}
-\usepackage{amsfonts}
-\usepackage[fleqn,tbtags]{amsmath}
 \usepackage{graphicx} 
+\usepackage{microtype}
+\usepackage[svgnames]{xcolor} 
+
+\usepackage[pdftex]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=ForestGreen, urlcolor=DarkOrchid}
 
 \newcommand{\function}[1]{f_{\mathrm{#1}}}
 \newcommand{\weight}[1]{\lambda_{\mathrm{#1}}}
 \newcommand{\BB}{{\{0, 1\}}}
+\newcommand{\gacl}{\affiliation{German Aerospace Center, Linder H\"ohe, 51147 Cologne, Germany}}
+\newcommand{\berk}{\affiliation{University of California, Berkeley}} 
+\newcommand{\usra}{\affiliation{USRA}} 
+\newcommand{\sgt}{\affiliation{Stinger Ghaffarian Technologies Inc., 7701 Greenbelt Rd., Suite 400, Greenbelt, MD 20770}} 
+\newcommand{\nasa}{\affiliation{NASA Ames Research Center Quantum Artificial Intelligence Laboratory (QuAIL), Mail Stop 269-1, 94035 Moffett Field CA}} % chktex 8
 
 \begin{document}
 
 \title{Quantum Annealing for Air Traffic Management}
-\author{Tobias Stollenwerk}
-\affiliation{German Aerospace Center, Linder H\"ohe, 51147 Cologne, Germany}
-\author{Bryan O'Gorman},
-\author{Salvatore Mandr\`{a}}
-\author{Eleanor G. Rieffel}
-%\author{Davide Venturelli},
-%\author{Olga Rodionova},
-%\author{Hok K. Ng},
-%\author{Banavar Sridhar},
-\affiliation{NASA Ames, Moffet Blvd, Mountain View, CA 94035, USA}
-\date{\today}
 
+\author{Tobias Stollenwerk}    \gacl{}
+\author{Bryan O'Gorman}        \berk{} \nasa{} \sgt{}
+\author{Davide Venturelli}     \nasa{} \usra{}
+\author{Eleanor G. Rieffel}    \nasa{} 
+\author{Salvatore Mandr{\`a}}  \nasa{} \sgt{}
+
+\author{Olga Rodionova, Hok K. Ng and Banavar Sridhar} \affiliation{tbd}
+
+\date{\today}
 
 % TODO: remove frontmatter
 
@@ -31,7 +42,12 @@
 \listoffigures
 \clearpage
 
+\input{./sections/abstract}
+
+\pacs{here pacs}
+
 \maketitle
+
 
 \input{./sections/introduction}
 \input{./sections/problem_spec}
