@@ -9,7 +9,7 @@ Hence, it is desirable to find a sweet spot of the smallest penalty weights whic
 \begin{figure}[htpb]
     \centering
     \includegraphics[width=0.45\textwidth,natwidth=1,natheight=0]{./pics/validity_boundary_example.pdf}
-    \caption{Validity of exact solution to a QUBO extracted from a problem instance with $N_f=7$ flights and $N_c=9$ conflicts in dependence on the choice of the penalty weights, $\lambda_\text{unique}$ and $\lambda_\text{conflict}$.}
+    \caption{Validity of exact solution to a QUBO extracted from a problem instance with $N_f=7$ flights and $N_c=9$ conflicts in dependence on the choice of the penalty weights, $\lambda_\text{unique}$ and $\lambda_\text{conflict}$. Here, $\Delta_t=3$ and $d_\text{max}=18$.}
     \label{fig:penalty_weights}
 \end{figure}
 
@@ -19,12 +19,14 @@ For all these problem instances we found a box like shape of the boundary betwee
 
 One can give an upper bound for the sufficiently large penalty weights by the following considerations.
 A minimal violation of the hard constraints yield an additional contribution to the QUBO cost function of $\lambda_\text{unique}$ or $\lambda_\text{conflict}$, respectively.
-As a result of this violation, the contribution from \eqref{eqn:departure_delay_model_qubo_departure} can be reduced maximally by 
+Such a violation would correspond to single bit flip in the binary delay variables $d_{i\alpha}$.
+Therefore the contribution from \eqref{eqn:departure_delay_model_qubo_departure} would be reduced maximally by 
 \begin{equation*}
-    \min_{\{d_{i\alpha}\}} \left\{\frac{1}{d_\text{max}} \sum_{i\alpha} \alpha d_{i\alpha} - \frac{1}{d_\text{max}}\sum_{j\beta} \beta d_{j\beta} \right\} = - 1
+    \min_\alpha \frac{-\alpha}{d_\text{max}} = - 1    
 \end{equation*}
-Therefore an upper bound for sufficiently large penalty weights is given by
+Hence, sufficiently large penalty weights must fulfill the following conditions
 \begin{align*}
     \lambda_\text{unique} & > 1 \\
-    \lambda_\text{conflict} &> 1
+    \lambda_\text{conflict} &> 1 \, .
 \end{align*}
+This corresponds to a box like shape as it appears in figure \ref{fig:penalty_weights}.
