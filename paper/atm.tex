@@ -1,29 +1,57 @@
 \documentclass[aps,pra,twocolumn,10pt]{revtex4-1}
-\usepackage{amssymb}
-\usepackage{amsfonts}
-\usepackage[fleqn,tbtags]{amsmath}
-\usepackage{graphicx} 
 
+\bibliographystyle{apsrevtitle}
+
+\usepackage{amsmath} 
+\usepackage{amsfonts} 
+\usepackage{amssymb}
+
+\usepackage{graphicx} 
+\usepackage{microtype}
+
+\usepackage[svgnames]{xcolor} 
+\usepackage[pdftex]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=ForestGreen, urlcolor=DarkOrchid}
+
+\newcommand{\gacl}{\affiliation{German Aerospace Center, Linder H\"ohe, 51147 Cologne, Germany}}
+\newcommand{\berk}{\affiliation{Berkeley University}} 
+\newcommand{\usra}{\affiliation{USRA}} 
+\newcommand{\sgt}{\affiliation{Stinger Ghaffarian Technologies Inc., 7701 Greenbelt Rd., Suite 400, Greenbelt, MD 20770}} 
+\newcommand{\nasa}{\affiliation{NASA Ames Research Center Quantum Artificial Intelligence Laboratory (QuAIL), Mail Stop 269-1, 94035 Moffett Field CA}} 
 
 \begin{document}
 
 \title{Quantum Annealing for Air Traffic Management}
-\author{Tobias Stollenwerk}
-\affiliation{German Aerospace Center, Linder H\"ohe, 51147 Cologne, Germany}
-\author{Bryan O'Gorman},
-\author{Salvatore Mandr\`{a}}
-\author{Eleanor G. Rieffel}
-%\author{Davide Venturelli},
-%\author{Olga Rodionova},
-%\author{Hok K. Ng},
-%\author{Banavar Sridhar},
-\affiliation{NASA Ames, Moffet Blvd, Mountain View, CA 94035, USA}
+
+\author{Tobias Stollenwerk}    \gacl
+\author{Bryan O'Gorman}        \berk \nasa \sgt
+\author{Davide Venturelli}     \nasa \usra
+\author{Eleanor G. Rieffel}    \nasa
+\author{Salvatore Mandr{\`a}}  \nasa \sgt
+
+\author{Olga Rodionova, Hok K. Ng and Banavar Sridhar} \affiliation{tbd}
+
 \date{\today}
+
+\begin{abstract}
+
+In this paper we present the mapping of air traffic management (ATM) problem on
+quadratic unconstrained boolean optimization (QUBO) problem. After the
+representation of the ATM problem in terms of a conflict graph, where nodes of
+the graph represent flights and edges represent a potential conflict between
+flights, we proceed by discretize the ATM problem and then mapping it in binary
+variables. As part of our study, we tested the QUBO formulation of the ATM
+problem using both classical solvers and the D-Wave 2X quantum chip.
+
+\end{abstract}
+
+\pacs{here pacs}
 
 \maketitle
 
+
 \tableofcontents
-\listoffigures
+%\listoffigures
 
 \input{./sections/introduction}
 \input{./sections/problem_spec}
