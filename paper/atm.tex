@@ -4,6 +4,9 @@
 \usepackage[fleqn,tbtags]{amsmath}
 \usepackage{graphicx} 
 
+\newcommand{\function}[1]{f_{\mathrm{#1}}}
+\newcommand{\weight}[1]{\lambda_{\mathrm{#1}}}
+\newcommand{\BB}{{\{0, 1\}}}
 
 \begin{document}
 
@@ -20,21 +23,28 @@
 \affiliation{NASA Ames, Moffet Blvd, Mountain View, CA 94035, USA}
 \date{\today}
 
-\maketitle
 
+% TODO: remove frontmatter
+
+\thispagestyle{empty}
 \tableofcontents
 \listoffigures
+\clearpage
+
+\maketitle
 
 \input{./sections/introduction}
 \input{./sections/problem_spec}
 \input{./sections/instances}
-\input{./sections/restrictions}
+\input{./sections/discretization}
 \input{./sections/mapping}
-\input{./sections/penalty_weights.tex}
 \input{./sections/ICM}
 \input{./sections/D-Wave}
 \input{./sections/conclusions}
 \input{./sections/acknowledgements}
+
+\appendix
+\input{./sections/maneuvers}
 \bibliography{atm}
 
 \end{document}
