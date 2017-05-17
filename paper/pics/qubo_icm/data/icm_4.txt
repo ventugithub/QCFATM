@@ -1,0 +1,16 @@
+# 1 column: dt
+# 2 column: total delay for connected component = 25
+# 2 column: total delay for connected component = 24
+# 2 column: total delay for connected component = 23
+# 2 column: total delay for connected component = 22
+# 2 column: total delay for connected component = 21
+# 2 column: total delay for connected component = 20
+# 2 column: total delay for connected component = 19
+# 2 column: total delay for connected component = 13
+# 2 column: total delay for connected component = 10
+10	80	20	20	10	10	10	10	20	10
+12	84	24	36	12	12	12	12	12	12
+15	120	30	30	15	30	15	15	15	15
+20	140	20	20	20	40	20	20	20	20
+30	150	30	60	30	30	30	30	30	30
+60	300	60	60	60	60	60	60	60	60
