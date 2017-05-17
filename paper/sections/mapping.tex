@@ -1,13 +1,7 @@
 \section{Mapping to QUBO}
 
 \subsection{Binary encoding}
-
-\subsubsection{Departure delays}
-\label{sec:departure_delay_model}
-
-To apply quantum annealing to the deconflicting problem, we must encode the configuration space $\mathbf d$ in binary-valued variables.
-To do so, we must first discretize and bound the allowed values.
-Let $\Delta_d$ be the resolution of the allowed delays and $d_{\max} = N_d \Delta_d$ the maximum allowed delay, so that $d_i \in \left\{\Delta_d l \middle| l \in [0, 1, \ldots, N_d]\right\}$.
+Having suitably discretized the configuration space, we must then encode it into binary-valued variables.
 The value of $d_i$ is encoded in $N_d + 1$ variables $d_{i,0}, \ldots, d_{i,N_d + 1} \in \BB$ using a one-hot encoding:
 \begin{equation}
 d_{i, \alpha} = \begin{cases}

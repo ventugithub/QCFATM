@@ -13,13 +13,13 @@ and Figure~\ref{fig:hist-CC-sizes} shows the distribution of the sizes of the co
 Interestingly, 
 most of the connected components are very small; for example, with $d_{\max}= 60$ minutes, approximately $75\%$ of the connected components contain no more than $10$ flights.
 
-\begin{figure*}[p]
+\begin{figure*}[h]
 \includegraphics[width=\columnwidth]{pics/instances/num_cc.pdf}
 \caption[Number of connected components vs. $d_{\max}$]{Number of connected components versus $d_{\max}$.}
 \label{fig:num-CCs-vs-dmax}
 \end{figure*}
 
-\begin{figure*}[p]
+\begin{figure*}[h]
 \includegraphics[width=\columnwidth]{pics/instances/analysis_cc.pdf}
 \caption[Histogram of connected component sizes]{Histogram of the number of flights per connected component, regardless the maximum delay time.}
 \label{fig:hist-CC-sizes}
@@ -37,7 +37,7 @@ Figure~(\ref{fig:exponent-vs-dmax}) shows the dependence of this empiral power-l
 As $d_{\max}$ increases, the exponent decreases.
 The larger the delay, the less the structure of the trajectories matters and the flatter the distribution of degrees in the conflict graph.
 
-\begin{figure*}[p]
+\begin{figure*}[h]
 \includegraphics[width=0.95\columnwidth]{pics/instances/connectivity_pdf.pdf}
 \caption[Histogram of degrees]{Histogram of the degrees of vertices in the conflict graph for $d_{\max} = 60$. 
 The distribution of the degrees approximately follows a power law, with the exponent depending on $d_{\max}$.
@@ -45,7 +45,7 @@ The distribution of the degrees approximately follows a power law, with the expo
 \label{fig:hist-degree}
 \end{figure*}
 
-\begin{figure*}
+\begin{figure*}[h]
 \includegraphics[width=0.95\columnwidth]{pics/instances/connectivity_pl.pdf}
 \caption[Power-law exponent vs. $d_{\max}$]{Empirical power-law exponent versus $d_{\max}$.}
 \label{fig:exponent-vs-dmax}
@@ -58,7 +58,7 @@ The tree-width of a graph formalizes this notion of tree-likeness, ranging from 
 We examine the treewidth of the connected components as a proxy for the hardness of the instances they represent.
 Figure~\ref{fig:hist-tws} shows that most connected components are very tree-like, while there are a few strongly-connected components.
 
-\begin{figure}
+\begin{figure}[h]
 \includegraphics[width=\columnwidth]{pics/instances/treewidth_histogram.pdf}
 \caption[Histogram of connected component treewidths]{Histogram of the treewidths of the connected components of the conflict graph for various values of $d_{\max}$.}
 \label{fig:hist-tws}
@@ -70,7 +70,7 @@ Moreover, the correlation $\gamma$ between the tree-width of a connected compone
 The larger $d_{\max}$, the more potential conflicts there are;
 restricting $d_{\max}$ also restricts the number of conflicts.
 
-\begin{figure*}
+\begin{figure*}[h]
 \includegraphics[width=\columnwidth]{pics/instances/treewidth_connectivity.pdf}
 \caption[Correlation between connected component size and treewidth]{
 The treewidths of connected components versus their sizes for various values of $d_{\max}$.
@@ -79,7 +79,7 @@ The correlation is approximately linear, with a slope $\gamma$ that depends on $
 \label{fig:tw-vs-CC-size}
 \end{figure*}
 
-\begin{figure*}
+\begin{figure*}[h]
 \includegraphics[width=\columnwidth]{pics/instances/treewidth_pl.pdf}
 \caption[Treewidth-size correlation coefficient vs. $d_{\max}$]{Slope $\gamma$ as a function
   of the maximum delay time.}
