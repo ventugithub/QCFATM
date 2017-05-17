@@ -62,19 +62,19 @@ D =
 \left(d_i + \sum_{k \in K_i} d_{i, k}\right).
 \end{equation}
 This is the quantity we wish to minimize subject to avoiding all potential conflicts.
-\begin{figure}[t]
+\begin{figure}[p]
     \begin{center}
         \includegraphics[width=0.45\textwidth]{./pics/example_conflict_in_real_space.pdf}
     \end{center}
-\caption{Example of two parallel potential conflicts between two transatlantic flights starting from the east cost of the USA.}
+    \caption[Conflict example]{Example of two parallel potential conflicts between two transatlantic flights starting from the east cost of the USA.}
 \label{fig:example_parallel_conflict}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[p]
     \begin{center}
         \includegraphics[width=0.45\textwidth]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
     \end{center}
-    \caption{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
+    \caption[Conflict preproccesing]{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
 \label{fig:preprocessing_reduction_number_of_conflicts}
 \end{figure}
 
@@ -114,4 +114,4 @@ D_k &=
 
 In the remainder of this paper, we focus on the restricted problem in which only departure delays are allowed.
 In this simplified case, the configuration space is simply 
-$\mathbf d = {\left(d_i\right)}_{i=1}^n$, the cost function simply $D = \sum_{i = 1}^n d_i$, and the constraints simply $d_i - d_j \not in D_k$ for all $k$.
+$\mathbf d = {\left(d_i\right)}_{i=1}^n$, the cost function simply $D = \sum_{i = 1}^n d_i$, and the constraints simply $d_i - d_j \notin D_k$ for all $k$.
