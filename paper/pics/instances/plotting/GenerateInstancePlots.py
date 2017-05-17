@@ -22,20 +22,20 @@ fs = (5, 4)
 
 # In[100]:
 
-data = pd.read_csv('../data/graph_1.txt', sep='\t')
-x = data.index
-y = data.values
-fig = plt.figure(figsize=fs)
-ax = fig.add_subplot(1, 1, 1)
-ax.plot(x, y, 'o-')
-#data.hist(ax=ax, bins=51)
-ax.set_xlabel('Number of flights in connected components')
-ax.set_ylabel('PDF');
-#ax.set_yscale('log')
+# data = pd.read_csv('../data/graph_1.txt', sep='\t')
+# x = data.index
+# y = data.values
+# fig = plt.figure(figsize=fs)
+# ax = fig.add_subplot(1, 1, 1)
+# ax.plot(x, y, 'o-')
+# #data.hist(ax=ax, bins=51)
+# ax.set_ylabel('Number of flights in connected components')
+# ax.set_xlabel('PDF');
+# #ax.set_yscale('log')
 
-pdf = matplotlib.backends.backend_pdf.PdfPages('../analysis_cc.pdf');
-pdf.savefig(figure=fig);
-pdf.close();
+# pdf = matplotlib.backends.backend_pdf.PdfPages('../analysis_cc.pdf');
+# pdf.savefig(figure=fig);
+# pdf.close();
 
 
 # In[101]:
@@ -144,8 +144,8 @@ y = data.values
 fig = plt.figure(figsize=fs)
 ax = fig.add_subplot(1, 1, 1)
 ax.plot(x, y, 'o-')
-ax.set_xlabel('Number of connected components')
-ax.set_ylabel('$D_{max}$');
+ax.set_ylabel('Number of connected components')
+ax.set_xlabel('$D_{max}$');
 
 pdf = matplotlib.backends.backend_pdf.PdfPages('../num_cc.pdf');
 pdf.savefig(figure=fig);
