@@ -23,6 +23,7 @@ However, it is possible to map every QUBO to another QUBO which obeys the Chimer
 
 We found, that non of the instances were suitable for direct calculation on the D-Wave machine.
 Therefore we used D-Wave's heuristic embedding algorithm\footnote{Reference to D-Wave embedding algorithm} to embed instances with up to $N_f=50$ and $N_c=104$ depending on discretization (cf.\ Table~\ref{tab:embedding}).
+We used up to $5$ different embeddings for each QUBO instance.
 In figure~\ref{fig:number_of_physical_qubits} on can see the dependence of the number of physical qubits on the number of logical qubits.
 
 
