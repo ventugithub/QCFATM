@@ -1,6 +1,6 @@
 \subsection{Success Probability}
 In order to investigate the performance of the D-Wave 2X machine, we compared its results to the ones of an exact solver.
-We used an exact Max-SAT solver \footnote{Reference to akmaxsat} after we mapped the QUBOs to Max-SAT \footnote{Reference on mapping QUBO to Max-SAT}.
+We used an exact Max-SAT solver~\cite{TODO:akmaxsat} after we mapped the QUBOs to Max-SAT~\cite{TODO:reference-for-QUBO-to-MAXSAT-mapping}.
 For each QUBO instance, we ran the annealing process $N_r = 10000$ times. 
 The success probability is then given by the ratio of the number of annealing solutions which are equal to exact solution and the $N_r$.
 
@@ -14,8 +14,8 @@ The success probability is then given by the ratio of the number of annealing so
 \label{fig:success_probability}
 \end{figure}
 
-In figure \ref{fig:success_probability} the dependence of the average success probability on the number of flights and the number of conflicts is shown.
+In figure~\ref{fig:success_probability} the dependence of the average success probability on the number of flights and the number of conflicts is shown.
 The average was taken over all successfully embedded QUBO instances with the same number of flights and number of conflicts, respectively.
 On can see, that the success probability decreases for larger problem instances as well as for finer discretizations. 
-This is a result of the limited precision in the specification of a QUBO on the D-Wave 2X machine \footnote{Reference to limited precision of D-Wave}.
+This is a result of the limited precision in the specification of a QUBO on the D-Wave 2X machine~\cite{TODO:D-Wave-precision}.
 

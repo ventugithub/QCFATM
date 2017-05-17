@@ -6,12 +6,16 @@ though our methods generalize to instances without these special properties.
 
 One perspective into the nature of an instance of the deconflicting problem is the \emph{conflict graph}, whose vertices correspond to flights and which has an edge between a pair of vertices if there is at least one potential conflict between the corresponding flights.
 Note that the conflict graph for a given set of trajectories depends on the parameters of the problem.
-In the case of only departure delays, whether or not a potential conflict, and thus an edge in the conflict graph, exists between two flights is a function of $d_{\max}$.
+In the case of only departure delays, whether or not a potential conflict, and thus an edge in the conflict graph, exists between two flights is a function of the maximum allowable departure delay $d_{\max}$.
 For a certain value of $d_{\max}$, the conflict graph may contain several connected components, which can be considered as smaller, independent instances.
 Figure~\ref{fig:num-CCs-vs-dmax} shows this dependence of the number of connected components on the maximum delay $d_{\max}$,
 and Figure~\ref{fig:hist-CC-sizes} shows the distribution of the sizes of the connected components for various values of $d_{\max}$.
 Interestingly, 
 most of the connected components are very small; for example, with $d_{\max}= 60$ minutes, approximately $75\%$ of the connected components contain no more than $10$ flights.
+
+In the remainder of this paper, we consider sets of smaller instances corresponding to the connected components of the conflict graph from the larger single instance for various values of $d_{\max}$. 
+Let $\mathcal I_{d_{\max}}$ be the set of such instances for a particular value of $d_{\max}$, excluding trivial instances.
+We say that an instance is trivial if there are no conflicts when all flights therein depart without delay; in particular, this includes instances containing only a single flight.
 
 \begin{figure*}[h]
 \includegraphics[width=\columnwidth]{pics/instances/num_cc.pdf}
