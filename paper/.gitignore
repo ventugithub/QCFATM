@@ -1,0 +1,17 @@
+*atmNotes.bib
+*.lot
+*.out 
+*.aux 
+*.log 
+*.bak 
+*.backup 
+*.toc 
+*~ 
+*.ps 
+*.dvi 
+*.bbl 
+*.blg 
+*.idx 
+*.ilg 
+*.ind 
+*.lof
