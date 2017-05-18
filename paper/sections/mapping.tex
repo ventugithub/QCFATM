@@ -1,4 +1,5 @@
 \section{Mapping to QUBO}
+In this section, we describe how to map to QUBO from the deconflicting problem restricted to only departure delays; a more general mapping is found in the appendix.
 
 \subsection{Binary encoding}
 Having suitably discretized the configuration space, we must then encode it into binary-valued variables.
@@ -45,5 +46,6 @@ f
 =
 \function{encoding} + \function{delay} + \function{conflict}.
 \end{equation}
+
 
 \input{sections/soft_constraints}

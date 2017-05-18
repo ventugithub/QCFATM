@@ -1,4 +1,73 @@
-\subsubsection{Maneuvers}
+\section{General QUBO mapping}
+In this section we describe a mapping to QUBO of a more general version of the deconflicting problem than that covered in the main text.
+
+\subsection{Global trajectory modifications}
+Consider the case in which each trajectory can be modified by a departure delay and some parameterized spatial transformation, i.e.\ for each flight $i$ there is a variable $d_i$ and some parameter $\boldsymbol \theta_i$.
+For example, Rodionova et al.\ consider a single angle $\theta_i$ that determines a sinusoidal transformation of the trajectory.
+To map to QUBO, we require that these variables be allowed to take on values from some finite set, so that are QUBO variables are $\{d_{i, \alpha}\}$ and $\{\boldsymbol \theta_{i,\phi}\}$, where $d_{i, \alpha} = 1$ ($d_{i, \alpha}$) indicates that $d_i = \alpha$ ($d_i \neq \alpha$) and similarly for $\boldsymbol \theta_{i, \phi}$.
+For every pair of flights $i < j$, we can efficiently (in time and space polynomial in the size of the input) compute whether the corresponding trajectories conflict when modified according to $d_i$, $d_j$, $\boldsymbol \theta_i$ and $\boldsymbol \theta_j$.
+Let $B_{i, j}$ be the set of values of $(d_i, \boldsymbol \theta_i, d_j, \boldsymbol \theta_j)$ such that the the modified trajectories conflict.
+Lastly, let $d_{(i, \alpha), (j, \beta)}$ indicate that $d_i = \alpha$ and $ d_j = \beta$, and similarly for $\boldsymbol \theta_{(i, \phi), (j, \psi)}$.
+The overall cost function is
+\begin{equation}
+\function{global}
+\left(
+{\left(d_{i,\alpha}\right)}_{i,\alpha}
+{\left(d_{(i,\alpha),(j,\beta)}\right)}_{i,j,\alpha,\beta}
+{\left(\boldsymbol \theta_{(i,\phi),(j,\psi)}\right)}_{i,j,\phi,\psi}
+\right)
+=
+\function{encoding} +
+\function{consistency} +
+\function{delay} +
+\function{conflict},
+\end{equation}
+where 
+\begin{equation}
+  \function{encoding}
+  =
+  \weight{encoding}
+  \left[
+  \sum_{i} {\left(\sum_{\alpha} d_{i, \alpha} -1\right)}^2
+  +
+  \sum_{i} {\left(\sum_{\phi} \boldsymbol \theta_{i, \phi} -1\right)}^2
+\right]
+\end{equation}
+ensures that the values of $d_i$ and $\boldsymbol \theta_i$ are uniquely encoded;
+\begin{equation}
+\function{consistency}
+=
+\weight{consistency}
+\left[
+\sum_{i < j,\alpha, \beta} 
+s\left(d_{i,\alpha}, d_{j, \beta}, d_{(i, \alpha), (j, \beta)}\right)
++
+\sum_{i < j,\phi, \psi} 
+s\left(\boldsymbol \theta_{i,\phi}, \boldsymbol \theta_{j, \psi}, \boldsymbol \theta_{(i, \phi), (j, \psi)}\right)
+\right]
+\end{equation}
+ensures consistency between the values of $d_{i,\alpha}$, $d_{j, \beta}$, and $d_{(i, \alpha), (j, \beta)}$;
+\begin{equation}
+s(x, y, z) = 3z + xy - 2xz - 2 yz
+\end{equation}
+is a non-negative penalty function that is zero if and only if $z = xy$;
+\begin{equation}
+\function{delay}
+= \sum_{i, \alpha} \alpha d_{i, \alpha}
+\end{equation}
+is the cost function to be minimized; and
+\begin{equation}
+  \function{conflict}
+=
+\weight{conflict}
+\sum_{i < j} 
+\sum_{(\alpha, \phi, \beta, \psi) \in B_{i, j}} 
+d_{(i, \alpha), (j, \beta)} \boldsymbol \theta_{(i, \phi), (j, \psi)}
+\end{equation}
+penalize conflicts.
+
+\subsection{Local trajectory modifications}
+
 A more realistic model of the problem can be created by including maneuvers.
 As mentioned above the maneuvers enter our formulation as additional delays $d_{ik}$ at the conflict time.
 In the course of mapping to a QUBO formulation, we need to make sure to retain the combinatorial nature of the problem.
