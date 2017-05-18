@@ -82,9 +82,11 @@ A conflict can be avoided locally by introducing earlier delays differentially, 
 We focus on the former case.
 Let 
 \begin{equation}
+\label{eq:accum-delay}
 D_{i, k} = d_i + \sum_{\left.k' \in K_i \middle| k' < k\right.} d_{i,k'}
 \end{equation}
 be the accumulated delay of flight $i$ by the time it reaches conflict $k$.
+In this case, $\delta_{i, s} = D_{i, k}$ for all $s$ associated with flight $i$ in conflict $k$, $\left\{ s \middle| (s, t) \in T_k\right\}$.
 We assume that the set of conflicts $K_i$ associated with flight $i$ is indexed in temporal order, i.e.\ if $k' < k$ and $k, k' \in K_i$, then flight $i$ reaches conflict $k'$ before conflict $k$.
 The pairs of conflicting trajectory points associated with conflict $k$ are given by 
 \begin{equation}
@@ -95,13 +97,14 @@ T_k =
 \end{equation}
 Thus the potential conflict is avoided only if 
 \begin{equation}
-D_{i, k} - D_{j, k}
+\label{eq:accum-delay-diff}
+D_k = D_{i, k} - D_{j, k}
 \notin
-D_k 
+B_k 
 \end{equation}
 where 
 \begin{align}
-D_k &= 
+B_k &= 
 \bigcup_{(s, t) \in T_k}
 \left(-\Delta_t + t - s, \Delta_t + t - s\right)
 =
@@ -114,4 +117,4 @@ D_k &=
 
 In the remainder of this paper, we focus on the restricted problem in which only departure delays are allowed.
 In this simplified case, the configuration space is simply 
-$\mathbf d = {\left(d_i\right)}_{i=1}^{\Nf}$, the cost function simply $D = \sum_{i = 1}^{\Nf} d_i$, and the constraints simply $d_i - d_j \notin D_k$ for all $k$.
+$\mathbf d = {\left(d_i\right)}_{i=1}^{\Nf}$, the cost function simply $D = \sum_{i = 1}^{\Nf} d_i$, and the constraints simply $d_i - d_j \notin B_k$ for all $k$.

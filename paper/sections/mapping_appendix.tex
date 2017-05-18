@@ -23,6 +23,7 @@ The overall cost function is
 \function{conflict},
 \end{equation}
 where 
+\begin{widetext}
 \begin{equation}
   \function{encoding}
   =
@@ -46,6 +47,7 @@ s\left(d_{i,\alpha}, d_{j, \beta}, d_{(i, \alpha), (j, \beta)}\right)
 s\left(\boldsymbol \theta_{i,\phi}, \boldsymbol \theta_{j, \psi}, \boldsymbol \theta_{(i, \phi), (j, \psi)}\right)
 \right]
 \end{equation}
+\end{widetext}
 ensures consistency between the values of $d_{i,\alpha}$, $d_{j, \beta}$, and $d_{(i, \alpha), (j, \beta)}$;
 \begin{equation}
 s(x, y, z) = 3z + xy - 2xz - 2 yz
@@ -68,78 +70,102 @@ penalize conflicts.
 
 \subsection{Local trajectory modifications}
 
-A more realistic model of the problem can be created by including maneuvers.
-As mentioned above the maneuvers enter our formulation as additional delays $d_{ik}$ at the conflict time.
-In the course of mapping to a QUBO formulation, we need to make sure to retain the combinatorial nature of the problem.
-We do this by restricting the vast realm of maneuvers to two distinct choices:
-Only one of the two involved flights is delayed while leaving the other flight untouched
-\begin{equation} \label{eqn:maneuver_model_maneuver_decision}
-    \text{if } d_{ik} \neq 0 \Rightarrow d_{jk} = 0  \qquad \forall (i, j) \in I_k \; \forall k \; .
+Alternatively, we can consider modifications to the trajectory only near conflicts.
+We describe a few special models and their mapping to QUBO,
+though many more such ways of doing so, and we leave a full accounting for future work.
+
+\subsubsection{Exclusive avoidance}
+Suppose for every conflict $k$ and associated pair of flights $i < j$, there is a way for either flight to go around the trajectory of the other, introducing some delay $d_{i,k}$ to flight $i$ or $d_{j, k}$ to flight $j$ depending on which trajectory is changed.
+Let $a_k = a_{i, k} = 1$ ($a_{i, k} = 0$) indicate that flight $i$'s trajectory is changed, and for convenience let $a_{j, k} = a_{i, k} - 1$, though only one (qu)bit will be used per conflict. % chktex 36
+Adding in the departure delay, we have the total cost function
+\begin{equation}
+\function{exclusive}
+=
+\function{delay} +
+\function{encoding},
 \end{equation}
-Moreover, we set the resulting maneuver delays to a constant value $d_M$ large enough to capture all kinds of real maneuvers.
-A natural choice for this is the temporal conflict threshold $d_M = \Delta_t$.
-
-With~\eqref{eqn:time_dependent_delay} we can introduce the delay a flight $i$ at the conflict $k$ as
-\begin{equation} \label{eqn:maneuver_model_delay_at_conflict}
-    D_{ik} = d_i + \sum_{k'<k} d_{ik} \; ,
+where 
+\begin{equation}
+\label{eq:delay-exclusive}
+\function{delay} = 
+\sum_{i}
+\left[
+\sum_{\alpha} \alpha d_{i, \alpha}
++
+\sum_{k \in K_i} d_{i, k} a_{i, k}
+\right]
 \end{equation}
-where we have defined a temporal ordering of the conflicts for each flight $i$ by
-\begin{align*}
-                 &k < p \text{ if } t < t' \\
-    \text{ for } &t = \min_s x_{i, s} \in C_k \; , \\
-                 &t' = \min_s x_{i, s} \in C_p
-\end{align*}
+and
+$\function{encoding}$ is as in~\eqref{eq:dep-delay-encoding-penalty}.
+This assumes that the trajectory modifications don't introduce potential conflicts with other flights; this assumption can be partially relaxed by adding penalty terms of the form $a_{i,k} a_{j,k'}$ or $d_{i,\alpha} a_{j, k}$ as appropriate.
 
-The departure delay variables are represented by binary variables as it was done in Section~\ref{sec:departure_delay_model}.
-The maneuver delays are given by
-\begin{equation*}
-    d_{ik} = d_M a_{ik} \qquad a_{ik} \in \{0, 1\}
-\end{equation*}
-Since the total delay is given by $\sum_{ik} D_{ik}$, we can write the corresponding QUBO contribution as
-\begin{equation*}
-    \tilde Q_\text{delay} = \sum_{i\alpha} \alpha d_{i\alpha}  + \sum_{ik} d_M a_{ik}\; ,
-\end{equation*}
+\subsubsection{Flexible avoidance}
+Exclusive \emph{requires} that one or the other flight is delayed at each conflict.
+We can relax this by accounting for the fact that if the flights arriving at a potential conflict are already relatively delayed, the conflict could be passively avoided.
+Let $D_{k, \gamma} = 1$ ($D_{k, \gamma} = 0$) indicate that $D_k = \gamma$ ($D_k \neq \gamma$), where $D_k$ is the difference in the accumulated delays at conflict $k$ as defined in~\eqref{eq:accum-delay-diff}.
 
-For the conflict avoidance, we need to introduce another variable representing the delay at a given conflict
-\begin{equation*}
-    D_{ik} = \sum_\delta \delta \Delta_{ik\delta} \qquad \Delta_{ik\delta} \in \{0, 1\} \; .
-\end{equation*}
-By restricting ourselves to $\Delta_d = \Delta_t$ the values of $\delta$ in the above equation are given as
-\begin{equation*}
-    \delta \in \{0, \Delta_t, 2\Delta_t, \dots,  (N_d + M_{ik}) \Delta_t\} \; .
-\end{equation*}
-Here, $M_{ik}$ is the number of conflicts the flight $i$ is involved in before $k$.
-In order to fulfill~\eqref{eqn:maneuver_model_delay_at_conflict} we add the following contribution to the QUBO
-\begin{equation*}
-  \tilde Q_\Delta = \lambda_\Delta \sum_{ik}  {\left( \sum_{\alpha} \alpha d_{i\alpha}  + \sum_{k'<k} d_M a_{ik'} - \sum_\delta \delta \Delta_{ik\delta}\right)}^2 \biggl. \biggr|_{i, j \in I_k}
-\end{equation*}
-For unique representation of the variables we add 
-\begin{align*}
-  \tilde Q_\text{unique} = \lambda_\text{unique} & \left\{  \sum_i {\left( \sum_\alpha d_{i\alpha} - 1 \right)}^2 \right. \\
-  & \left. + \sum_{ik} {\left( \sum_\delta \Delta_{ik\delta} - 1 \right)}^2 \right\} \; .
-\end{align*}
-Conflicts are avoided if $D_{ik} - D_{jk} \notin D_k$, $(i, j) \in I_k$. 
-The corresponding QUBO contribution reads
-\begin{equation*}
-    \tilde Q_\text{conflict} = \lambda_\text{conflict} \sum_k \sum_{(\delta, \delta') \in B_k} \Delta_{ik\delta} \Delta_{jk\delta'} \biggl. \biggr|_{i, j \in I_k}
-\end{equation*}
-where $B_k$ is the set of all $(\delta, \delta')$ which correspond to a conflict
-\begin{equation*}
-    B_k = \{(\delta, \delta') \; | \; \delta - \delta' \in D_k\}
-\end{equation*}
-The penalty weights $\lambda_\Delta$, $\lambda_\text{unique}$ and $\lambda_\text{conflict}$ must be chosen large enough to ensure vanishing contributions from the corresponding QUBO terms for the solution.
+\begin{equation}
+\function{flexible}
+=
+\function{encoding} +
+\function{delay} +
+\function{consistency} + 
+\function{conflict}
+\end{equation}
+\begin{equation}
+\function{encoding}
+=
+\weight{encoding}
+\left[
+  \sum_i {\left(\sum_{\alpha} d_{i, \alpha} - 1\right)}^2
+  +
+  \sum_{k}
+  {\left(\sum_{\gamma} D_{k, \gamma} - 1\right)}^2
+\right]
+\end{equation}
+\begin{equation}
+\function{consistency}
+=
+\sum_k
+{\left( 
+\sum_{\alpha} \alpha d_{i, \alpha} +
+\sum_{\left. k' \in K_i \middle| k' < k}
+d_{i, k'} a_{i, k'}
+-
+\sum_{\alpha} \alpha d_{j, \alpha} -
+\sum_{\left. k' \in K_j \middle| k' < k}
+d_{j, k'} a_{j, k'}
+-
+\sum_{\gamma} \gamma D_{k, \gamma}
+\right)}^2
+\end{equation}
+and $\function{delay}$ as in~\eqref{eq:delay-exclusive} but where $a_{i,k}$ and $a_{j, k}$ are separate bits.
+\begin{equation}
+\function{conflict}
+=
+\weight{conflict}
+\sum_k \sum_{\gamma \in B_k} 
+\left[
+D_{k, \gamma}
+\left(1 - a_{i, k} - a_{j, k}\right)
++ 2 a_{i, k} a_{j, k}
+\right]
+\end{equation}
 
-Finally, the maneuver decision described by~\eqref{eqn:maneuver_model_maneuver_decision} is incorporated by a antiferromagnetic coupling between the two maneuver delay variables
-\begin{equation*}
-  \tilde Q_\text{maneuver} = J \sum_k  {\left( s_{ik} s_{jk} + 1\right)}_{i, j \in I_k} \; .
-\end{equation*}
-with 
-\begin{equation*}
-    s_{ik} = 2 a_{ik} - 1 \in \{-1, 1\}
-\end{equation*}
-and $J>0$ has to be chosen large enough. 
-A solution is considered to be valid only if $\tilde Q_\text{maneuver} = 0$.
-Hence, the total QUBO for the maneuver model reads
-\begin{equation*}
-    Q_\text{MM} = \tilde Q_\text{delay} + \tilde Q_\Delta  + \tilde Q_\text{unique} + \tilde Q_\text{conflict} + \tilde Q_\text{maneuver} 
-\end{equation*}
+If we want to allow both flights to be delayed at conflict $a_{i,k} = a_{j, k} = 1$, we must introduce an ancillary bit $a_k$ that indicates whether at least one flight is delayed at conflict $k$, adding
+\begin{equation}
+  \weight{consistency}
+  \sum_{k} 
+  \left[
+    \left(a_{i, k} + a_{j, k} \right) \left(1 - 2 a_k\right)
+    + a_{i, k} a_{j, k}
+  \right]
+\end{equation}
+to $\function{consistency}$, and
+replacing $\function{conflict}$ with
+\begin{equation}
+\sum_k \sum_{\gamma \in B_k} D_{k, \gamma} (1 - a_k).
+\end{equation}
+
+\subsubsection{Interstitial delays}
+
