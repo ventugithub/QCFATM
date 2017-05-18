@@ -135,24 +135,3 @@ pdf = matplotlib.backends.backend_pdf.PdfPages('../treewidth_pl.pdf');
 pdf.savefig(figure=fig);
 pdf.close();
 
-
-# In[157]:
-
-data = pd.read_csv('../data/graph_7.txt', sep='\t')
-x = data.index
-y = data.values
-fig = plt.figure(figsize=fs)
-ax = fig.add_subplot(1, 1, 1)
-ax.plot(x, y, 'o-')
-ax.set_ylabel('Number of connected components')
-ax.set_xlabel('$D_{max}$');
-
-pdf = matplotlib.backends.backend_pdf.PdfPages('../num_cc.pdf');
-pdf.savefig(figure=fig);
-pdf.close();
-
-
-# In[ ]:
-
-
-
