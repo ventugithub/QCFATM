@@ -49,16 +49,16 @@ ${t'' \in [\min \{t, t'\}, \max\{t, t'\}]}$
 such that
 ${\left\{(i, s''), (j, t'')\right\} \in C_k}$.
 Thus every conflict $k$ is associated with a pair of flights $I_k = \{i, j\}$.
-Let $K_i = \left\{k \middle| i \in I_k \right\}$ be the set of conflicts to which flight $i$ is associated.
+Let $K_i = \left\{k \middle| i \in I_k \right\}$ be the set of conflicts to which flight $i$ is associated, $\Nc$ the number of conflicts, and $\Nf$ the number of flights.
 
 Having identified disjoint sets of conflicts, we relax the supposition that the trajectory modifications only introduce delays between time steps.
 Instead, we consider modifications to the trajectories that introduce delays local to particular conflicts.
-Specifically, the configuration space consists of the departure delays $\mathbf d = {\left(d_i\right)}_{i=1}^n$ and the set of local maneuvers $\mathbf a_{\mathbf k} = {\left(\mathbf a_k\right)}_k$, where $\mathbf a_k$ represents some parameterization of the local maneuvers used to avoid conflict $k$.
+Specifically, the configuration space consists of the departure delays $\mathbf d = {\left(d_i\right)}_{i=1}^{\Nf}$ and the set of local maneuvers $\mathbf a_{\mathbf k} = {\left(\mathbf a_k\right)}_k$, where $\mathbf a_k$ represents some parameterization of the local maneuvers used to avoid conflict $k$.
 Let $d_{i, k} (\mathbf d, \mathbf a_{\mathbf k})$ be the delay introduced to flight $i$ at conflict $k$, as a function of the departure delays and local maneuvers.
 With this notation, we can write the total delay as
 \begin{equation}
 D = 
-\sum_{i = 1}^{n}
+\sum_{i = 1}^{\Nf}
 \left(d_i + \sum_{k \in K_i} d_{i, k}\right).
 \end{equation}
 This is the quantity we wish to minimize subject to avoiding all potential conflicts.
@@ -114,4 +114,4 @@ D_k &=
 
 In the remainder of this paper, we focus on the restricted problem in which only departure delays are allowed.
 In this simplified case, the configuration space is simply 
-$\mathbf d = {\left(d_i\right)}_{i=1}^n$, the cost function simply $D = \sum_{i = 1}^n d_i$, and the constraints simply $d_i - d_j \notin D_k$ for all $k$.
+$\mathbf d = {\left(d_i\right)}_{i=1}^{\Nf}$, the cost function simply $D = \sum_{i = 1}^{\Nf} d_i$, and the constraints simply $d_i - d_j \notin D_k$ for all $k$.

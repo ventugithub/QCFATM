@@ -8,10 +8,11 @@ To do so, we solve the deconflicting problem with departure delays only for vari
 We consider two sets of instances, $\mathcal I_{18}$ and $\mathcal I_{60}$.
 For $\mathcal I_{18}$, the exact optima are found by modeling the problem as a constraint satisfaction problem~\cite{numberjack}; the largest instance in $\mathcal I_{18}$ has $50$ flights and $104$ potential conflicts.
 
-The instances in $\mathcal I_{60}$ are much larger and harder; we solved them using the Isoenergetic Cluster Method (a
+The instances in $\mathcal I_{60}$ are much larger and harder; we solved them by mapping to QUBO (as described in the next section) and then using the Isoenergetic Cluster Method (a
 rejection-free cluster algorithm for spin glasses that greatly improves
 thermalization)~\cite{zhu2015}, which has been shown to be one of the fastest
 classical heuristic to optimize QUBO problems~\cite{mandra2016}.
+Because ICM is a classical method, the penalty weights can be set arbitrarily large, ensuring that the desired constraints are satisfied.
 While not guaranteed to return the global optimum in general, for the sizes of instances to which we applied ICM the results are sufficiently well converged to conclude that the solution found is indeed globally optimal with exceedingly high probability.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,7 +23,7 @@ While not guaranteed to return the global optimum in general, for the sizes of i
 \centering
 \includegraphics[width=0.45\textwidth]{./pics/delay_only_cp_results.pdf}
 \caption[Effect of discretization on solution quality]{Top: Minimum total delay of a problem instance with $19$ flights and $47$ conflicts for various values of $\Delta_d$ and $d_{\max}$.
-    Bottom: Minimum $d_\text{max}$ necessary to obtain same optimum as that without bounding the delay, for all non-trivial instances with $D_\text{max}=18$ and up to $50$ flights and $104$ conflicts.}
+Bottom: Minimum $d_\text{max}$ necessary to obtain same optimum as that without bounding the delay for instances in $\mathcal I_{18}$.}
 \label{fig:delay_only_cp_results}
 \end{figure}
 
