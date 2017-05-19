@@ -123,18 +123,19 @@ Let $D_{k, \gamma} = 1$ ($D_{k, \gamma} = 0$) indicate that $D_k = \gamma$ ($D_k
   {\left(\sum_{\gamma} D_{k, \gamma} - 1\right)}^2
 \right]
 \end{equation}
+
+\begin{equation}
+D_{i, k} = \sum_{\alpha} \alpha d_{i, \alpha} +
+\sum_{\left. k' \in K_i \middle| k' < k\right.}
+d_{i, k'} a_{i, k'}
+\end{equation}
+
 \begin{equation}
 \function{consistency}
 =
 \sum_k
 {\left( 
-\sum_{\alpha} \alpha d_{i, \alpha} +
-\sum_{\left. k' \in K_i \middle| k' < k\right.}
-d_{i, k'} a_{i, k'}
--
-\sum_{\alpha} \alpha d_{j, \alpha} -
-\sum_{\left. k' \in K_j \middle| k' < k\right.}
-d_{j, k'} a_{j, k'}
+D_{i, k} - D_{j, k}
 -
 \sum_{\gamma} \gamma D_{k, \gamma}
 \right)}^2
