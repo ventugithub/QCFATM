@@ -3,8 +3,8 @@ In this section we report on our efforts to solve problem instances from the dep
 We restricted ourselves to instances with $d_\text{max}=D_\text{max}=18$ and $\Delta_d \in \{3, 6, 9\}$.
 \subsection{Embedding}
 In order to make a QUBO amenable for a D-Wave 2X quantum annealer, it has to obey certain hardware constraints.
-For instance the connections between the binary variables are restricted to the so called Chimera graph~\footnote{Reference to Chimera graph}.
-However, it is possible to map every QUBO to another QUBO which obeys the Chimera architecture while increasing the number of binary variables used by a so called minor-embedding technique~\footnote{Reference to minor-embedding}. 
+For instance the connections between the binary variables are restricted to the so called Chimera graph~\cite{Rieffel2015}
+However, it is possible to map every QUBO to another QUBO which obeys the Chimera architecture while increasing the number of binary variables used by a so called minor-embedding technique~\cite{choi}
 
 \begin{table}[h]
     \begin{tabular}{lrrr}
@@ -22,7 +22,7 @@ However, it is possible to map every QUBO to another QUBO which obeys the Chimer
 \end{table}
 
 We found, that non of the instances were suitable for direct calculation on the D-Wave machine.
-Therefore we used D-Wave's heuristic embedding algorithm\footnote{Reference to D-Wave embedding algorithm} to embed instances with up to $N_f=50$ and $N_c=104$ depending on discretization (cf.\ Table~\ref{tab:embedding}).
+Therefore we used D-Wave's heuristic embedding algorithm~\cite{DWaveEmbeddingHeuristic} to embed instances with up to $N_f=50$ and $N_c=104$ depending on discretization (cf.\ Table~\ref{tab:embedding}).
 We used up to $5$ different embeddings for each QUBO instance.
 In figure~\ref{fig:number_of_physical_qubits} on can see the dependence of the number of physical qubits on the number of logical qubits.
 
