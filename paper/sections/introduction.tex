@@ -1,9 +1,20 @@
 \section{Introduction}
-Efficiently automating air traffic management is increasingly important (increased volume and diversity, environmental concerns, etc.).
+There is an overall increase in air traffic over the last decades and this trend is believed to continue.
+As a result, the air traffic control system is increasingly under pressure.
+The current system works with pre-planned routes for the flights and more or less manual conflict avoidance with the help of air traffic controllers.
+With the limited airspace available, novel approaches are necessary to meet the demand of even more air traffic in the coming decades.
+A promising approach to solve this problem is using wind-optimal trajectories beyond the predefined air traffic network \cite{ng_optimizing_2014}.
+However, the conflicts in the wind-optimal trajectories need to be avoided, or ``deconflicted``  \cite{rodionova16}.
 
+Quantum annealing is a promising computational method which became increasingly important in recent years.
+This development is driven also by first commercially available quantum annealing device by the company D-Wave Systems.
+In addition to studying the fundamental properties of quantum annealing, it is imperative to find possible real world application for this technology.
+Hard operational planning problems are a promising candidate for the latter \cite{Rieffel2015, AAAI148614, Venturelli2015}.
 
-Quantum annealing is a promising computational method.
-
-We investigate the feasibility of applying quantum annealing to a particular problem in air traffic management known as ``deconficting'', in which the goal is to modify a set of independently optimal trajectories in a way that removes conflicts between them while minimizing the cost of doing so.
-
+In this work, we investigate the feasibility of applying quantum annealing to the deconfliction of wind-optimal trajectories. 
+In the course of this, we use wind-optimal trajectory data to extract realistic problem instances.
+To be amenable to a D-Wave Quantum annealer, the problem has to be formulated as a quadratic unconstrained binary optimization (QUBO) problem.
+We demonstrate the mapping of deconfliction problem to a QUBO formulation.
+Since restrictions to the configurations space are necessary for the reformulation of the problem as a QUBO, we investigate the influence of this restriction on the solution quality.
+Moreover, we study the embeddability and solution quality using both classical solvers and quantum annealing runs.
 

@@ -1,4 +1,5 @@
 \section{Mapping to QUBO}
+\label{sec:mapping}
 In this section, we describe how to map to QUBO from the deconflicting problem restricted to only departure delays; a more general mapping is found in the appendix.
 
 \subsection{Binary encoding}
@@ -25,6 +26,7 @@ To enforce this encoding, we add the penalty function
 where $\weight{encoding}$ is a penalty weight sufficiently large to ensure that any cost minimizing state satisfies $\function{encoding} = 0$.
 In terms of these binary variables, the cost function is 
 \begin{equation}
+\label{departure_delay_model_qubo_departure}
 \function{delay} = 
 \Delta_d
 \sum_{i=1}^n 

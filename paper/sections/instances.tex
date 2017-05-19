@@ -17,20 +17,20 @@ In the remainder of this paper, we consider sets of smaller instances correspond
 Let $\mathcal I_{d_{\max}}$ be the set of such instances for a particular value of $d_{\max}$, excluding trivial instances.
 We say that an instance is trivial if there are no conflicts when all flights therein depart without delay; in particular, this includes instances containing only a single flight.
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=\columnwidth]{pics/instances/num_cc.pdf}
 \caption[Number of non-trivial connected components vs. $d_{\max}$]{Number of connected components versus $d_{\max}$.}
 \label{fig:num-CCs-vs-dmax}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=\columnwidth]{pics/instances/analysis_cc.pdf}
-\caption[Histogram of connected component sizes]{Histogram of the number of flights per connected component, regardless the maximum delay time.}
+\caption[Histogram of connected component sizes]{Histogram of the connected component size for various values of the maximum delay time $d_\text{max}$.}
 \label{fig:hist-CC-sizes}
-\end{figure*}
+\end{figure}
 
 As part of our analysis, we also studied the probability
-distribution of the connectivity, namely the number of flights
+distribution of the degree, namely the number of flights
 for which a given flight share a potential conflict with. 
 Figure~(\ref{fig:hist-degree}) shows
 the distribution of degrees in the conflict graph for $d_{\max}=60$,
@@ -41,19 +41,19 @@ Figure~(\ref{fig:exponent-vs-dmax}) shows the dependence of this empirical power
 As $d_{\max}$ increases, the exponent decreases.
 The larger the delay, the less the structure of the trajectories matters and the flatter the distribution of degrees in the conflict graph.
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=0.95\columnwidth]{pics/instances/connectivity_pdf.pdf}
 \caption[Histogram of degrees]{Histogram of the degrees of vertices in the conflict graph for $d_{\max} = 60$. 
 The distribution of the degrees approximately follows a power law, with the exponent depending on $d_{\max}$.
 }
 \label{fig:hist-degree}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=0.95\columnwidth]{pics/instances/connectivity_pl.pdf}
 \caption[Power-law exponent vs. $d_{\max}$]{Empirical power-law exponent versus $d_{\max}$.}
 \label{fig:exponent-vs-dmax}
-\end{figure*}
+\end{figure}
 
 In many cases, generally hard problems are easy when restricted to tree-like instances~\cite{bertele1972, halin1976s}.
 For example, if the conflict graph here is a tree, then the optimum could be easily found by propagating the delays along the tree;
@@ -67,18 +67,18 @@ Moreover, the correlation $\gamma$ between the tree-width of a connected compone
 The larger $d_{\max}$, the more potential conflicts there are;
 restricting $d_{\max}$ also restricts the number of conflicts.
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=\columnwidth]{pics/instances/treewidth_connectivity.pdf}
 \caption[Correlation between connected component size and treewidth]{
 The treewidths of connected components versus their sizes for various values of $d_{\max}$.
 The correlation is approximately linear, with a slope $\gamma$ that depends on $d_{\max}$.
 }
 \label{fig:tw-vs-CC-size}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[h]
+\begin{figure}[htpb]
 \includegraphics[width=\columnwidth]{pics/instances/treewidth_pl.pdf}
 \caption[Treewidth-size correlation coefficient vs. $d_{\max}$]{Slope $\gamma$ as a function
   of the maximum delay time.}
 \label{fig:treewidth-size-correlation}
-\end{figure*}
+\end{figure}
