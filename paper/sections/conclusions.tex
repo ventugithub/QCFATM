@@ -1,2 +1,35 @@
 \section{Conclusions}
-TODO
+In this paper, we propose a novel qubo mapping for a simplified version of one
+the NASA critical missions: the Air Traffic Management (ATM), i.e. the problem
+to find minimal modifications of wind-optimal trajectories to avoid conflicts
+between flights. In our study, we considered the actual wind-optimal
+trajectories for transatlantic flights (NAT) on July 29, 2012. Given the large
+number of flights, it is not a viable solution to directly map the optimal-wind
+trajectories in a qubo model. To avoid this bottleneck, our modified version of
+the ATM problem is based on the main assumption that flight maneuvers to avoid
+conflicts only locally modify the optimal-wind trajectories, with the net effect
+to introduce ``delays'' to the flights. Therefore, optimal-wind trajectories can
+be ``hard encoded'' in our qubo formulation of the ATM model, leaving the
+flights delays as the only variables to optimize. Nevertheless, as explained in
+Appendix 2, our method is enough general to potentially include the effect of
+maneuvers as well. 
+
+As part of our study, we also introduce a novel ``pre-processing'' algorithm to
+eliminate non-potential conflicts that, given a maximum delay, can never occur.
+This novel approach is not only important to greatly reduce the number of
+potential conflicts (as shown in Section XX), but it also gives an important
+indication of the underlying topology the conflict graph. Indeed, we have
+discovered that most of the flights have very few conflicts while there are
+few flights that have conflicts in a non trivial way. The latter set of flights
+represent the hardest part of the ATM problem to optimize. We want to stress
+that the proposed pre-processing algorithm is general and can be succesfully
+applied for the original ATM problem as well, aiding the already existing
+software to improve both the speed and quality to find optimal modification of
+the wind-optimal trajectories. 
+
+Finally, we have analyzed the performance of both classical and quantum
+heuristics in solving the our qubo model where only delays at the departure are
+allowed. Results show that xxx [what can we say here guys?]
+
+In conclusion, we present one of the first attempt to model the Air Traffic
+Management problem onto a qubo problem. 
