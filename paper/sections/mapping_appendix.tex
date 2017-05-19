@@ -1,6 +1,35 @@
 \section{General QUBO mapping}
 In this section we describe a mapping to QUBO of a more general version of the deconflicting problem than that covered in the main text.
 
+\subsection{Alternative encodings}
+In the mappings describe both in the main text and the appendix, we use a one-hot encoding to encode a variable.
+This is best for the specific mappings we described, but in variants an alternative may be better.
+Say we have a variable $x$ that we want to allow to have variables from finite set $W = \{w_1, w_2, \ldots, w_m\}$. 
+The one-hot encoding has $m$ bits ${\left(x_{i}\right)}_{i=1}^m$ such that $x = \sum_{i=1}^m w_i x_i$ and $\sum_{i=1}^m x_i = 1$.
+While we focus on the case in which $W = \{0, 1, \ldots, m -1\}$, our methods are not dependent on that being case, and in particular can address non-uniform sets of values, say if via clever preprocessing it can be determined that such a set would be sufficient.
+An alternative encoding would remove the requirement that exactly one of the bits is one.
+The variable $x$ would still be encoded as $x = \sum_{i=1}^m w_i x_i$, but without the one-hot constraint can take on values in $\left\{\sum_i b_i w_i \middle| b_i \in \{0, 1\}\right\}$.
+In particular, this encompasses the unary encoding in which $w_i = 1$ for all $i$ and thus $x \in [0, m]$, as well as the binary encoding $w_i = 2^{i-1}$ for which $x \in [0, 2^m - 1]$.
+The latter has the advantage of requiring much fewer qubits, but at the cost of similarly increased precision.
+The former requires the same number of qubits as the one-hot encoding we use, and even has the benefit of minimal precision, but does not allow for quadratic constraints that penalize certain pairs of values of variables, e.g. $d_i - d_j \neq B_k$, without the use of ancillary bits.
+In models in which the bits $x_{i}$ only appear in the sum $\sum_i x_i$, it is actually preferable to use the unary encoding to improve the precision requirements.
+We stick to the one-hot encoding for simplicity, but in practice the unary encoding should be used when possible.
+
+To make the expressions more concise, we define the generalized encoding penalty function
+\begin{equation}
+\function{encoding}
+\left(
+{\left\{X_i\right\}}_i
+\right)
+=
+\weight{encoding}
+\sum_i 
+{\left(
+  \sum_{x \in X_i} x - 1
+\right)}^2
+\end{equation}
+that enforces the constraint that exactly one bit $x$ is one for each set of bits $X_i$.
+
 \subsection{Global trajectory modifications}
 Consider the case in which each trajectory can be modified by a departure delay and some parameterized spatial transformation, i.e.\ for each flight $i$ there is a variable $d_i$ and some parameter $\boldsymbol \theta_i$.
 For example, Rodionova et al.~\cite{rodionova16} consider a single angle $\theta_i$ that determines a sinusoidal transformation of the trajectory.
@@ -9,45 +38,60 @@ For every pair of flights $i < j$, we can efficiently (in time and space polynom
 Let $B_{i, j}$ be the set of values of $(d_i, \boldsymbol \theta_i, d_j, \boldsymbol \theta_j)$ such that the the modified trajectories conflict.
 Lastly, let $d_{(i, \alpha), (j, \beta)}$ indicate that $d_i = \alpha$ and $ d_j = \beta$, and similarly for $\boldsymbol \theta_{(i, \phi), (j, \psi)}$.
 The overall cost function is
-\begin{widetext}
-\begin{equation}
+\begin{multline}
 \function{global}
 \left(
 {\left(d_{i,\alpha}\right)}_{i,\alpha}
 {\left(d_{(i,\alpha),(j,\beta)}\right)}_{i,j,\alpha,\beta}
 {\left(\boldsymbol \theta_{(i,\phi),(j,\psi)}\right)}_{i,j,\phi,\psi}
 \right)
-=
+=\\
 \function{encoding} +
 \function{consistency} +
 \function{delay} +
 \function{conflict},
-\end{equation}
+\end{multline}
 where 
 \begin{equation}
-  \function{encoding}
-  =
-  \weight{encoding}
-  \left[
-  \sum_{i} {\left(\sum_{\alpha} d_{i, \alpha} -1\right)}^2
-  +
-  \sum_{i} {\left(\sum_{\phi} \boldsymbol \theta_{i, \phi} -1\right)}^2
-\right]
+\function{encoding} \left(
+{\left\{
+{\left\{
+d_{i, \alpha}
+\right\}}_{\alpha}
+\cup
+{\left\{
+\boldsymbol \theta_{i, \phi}
+\right\}}_{\phi}
+\right\}}_i
+\right)
 \end{equation}
+
+%\begin{equation}
+%  \function{encoding}
+%  =
+%  \weight{encoding}
+%  \left[
+%  \sum_{i} {\left(\sum_{\alpha} d_{i, \alpha} -1\right)}^2
+%  +
+%  \sum_{i} {\left(\sum_{\phi} \boldsymbol \theta_{i, \phi} -1\right)}^2
+%\right]
+%\end{equation}
 ensures that the values of $d_i$ and $\boldsymbol \theta_i$ are uniquely encoded;
-\begin{equation}
+\begin{multline}
 \function{consistency}
-=
+=\\
+\begin{split}
 \weight{consistency}
-\left[
-\sum_{i < j,\alpha, \beta} 
+\bigg[
+&\sum_{i < j,\alpha, \beta} 
 s\left(d_{i,\alpha}, d_{j, \beta}, d_{(i, \alpha), (j, \beta)}\right)
-+
+\\
+&+
 \sum_{i < j,\phi, \psi} 
 s\left(\boldsymbol \theta_{i,\phi}, \boldsymbol \theta_{j, \psi}, \boldsymbol \theta_{(i, \phi), (j, \psi)}\right)
-\right]
-\end{equation}
-\end{widetext}
+\bigg]
+\end{split}
+\end{multline}
 ensures consistency between the values of $d_{i,\alpha}$, $d_{j, \beta}$, and $d_{(i, \alpha), (j, \beta)}$;
 \begin{equation}
 s(x, y, z) = 3z + xy - 2xz - 2 yz
@@ -80,6 +124,12 @@ Let $a_k = a_{i, k} = 1$ ($a_{i, k} = 0$) indicate that flight $i$'s trajectory 
 Adding in the departure delay, we have the total cost function
 \begin{equation}
 \function{exclusive}
+\left(
+{\left(
+  d_{i, \alpha}
+\right)}_{i, \alpha},
+{\left(a_k\right)}_k
+\right)
 =
 \function{delay} +
 \function{encoding},
@@ -104,36 +154,54 @@ Exclusive \emph{requires} that one or the other flight is delayed at each confli
 We can relax this by accounting for the fact that if the flights arriving at a potential conflict are already relatively delayed, the conflict could be passively avoided.
 Let $D_{k, \gamma} = 1$ ($D_{k, \gamma} = 0$) indicate that $D_k = \gamma$ ($D_k \neq \gamma$), where $D_k$ is the difference in the accumulated delays at conflict $k$ as defined in~\eqref{eq:accum-delay-diff}.
 
-\begin{equation}
+The total cost function is
+\begin{multline}
 \function{flexible}
-=
+\left(
+{\left(d_{i, \alpha}\right)}_{i, \alpha},
+{\left(a_{i, k}\right)}_{k, i \in I_k},
+{\left(D_{k, \gamma}\right)}_{k, \gamma}
+\right)
+=\\
 \function{encoding} +
 \function{delay} +
 \function{consistency} + 
-\function{conflict}
-\end{equation}
-\begin{widetext}
+\function{conflict},
+\end{multline}
+where the first term is
 \begin{equation}
 \function{encoding}
-=
-\weight{encoding}
-\left[
-  \sum_i {\left(\sum_{\alpha} d_{i, \alpha} - 1\right)}^2
-  +
-  \sum_{k}
-  {\left(\sum_{\gamma} D_{k, \gamma} - 1\right)}^2
-\right]
+\left(
+{\left\{
+{\left\{
+d_{i, \alpha}
+\right\}}_{\alpha}
+\right\}}_i
+\cup
+{\left\{
+{\left\{
+D_{k, \gamma}
+\right\}}_{\gamma}
+\right\}}_{k}
+\right);
 \end{equation}
+%\begin{equation}
+%\function{encoding}
+%=
+%\weight{encoding}
+%\left[
+%  \sum_i {\left(\sum_{\alpha} d_{i, \alpha} - 1\right)}^2
+%  +
+%  \sum_{k}
+%  {\left(\sum_{\gamma} D_{k, \gamma} - 1\right)}^2
+%\right]
+%\end{equation}
 
-\begin{equation}
-D_{i, k} = \sum_{\alpha} \alpha d_{i, \alpha} +
-\sum_{\left. k' \in K_i \middle| k' < k\right.}
-d_{i, k'} a_{i, k'}
-\end{equation}
-
+the consistency term is
 \begin{equation}
 \function{consistency}
 =
+\weight{consistency}
 \sum_k
 {\left( 
 D_{i, k} - D_{j, k}
@@ -141,7 +209,14 @@ D_{i, k} - D_{j, k}
 \sum_{\gamma} \gamma D_{k, \gamma}
 \right)}^2
 \end{equation}
-and $\function{delay}$ as in~\eqref{eq:delay-exclusive} but where $a_{i,k}$ and $a_{j, k}$ are separate bits.
+using the notational variables
+\begin{equation}
+D_{i, k} = \sum_{\alpha} \alpha d_{i, \alpha} +
+\sum_{k' \in K_{i, k}}
+d_{i, k'} a_{i, k'};
+\end{equation}
+$\function{delay}$ is as in~\eqref{eq:delay-exclusive} but where $a_{i,k}$ and $a_{j, k}$ are separate bits;
+and
 \begin{equation}
 \function{conflict}
 =
@@ -153,7 +228,6 @@ D_{k, \gamma}
 + 2 a_{i, k} a_{j, k}
 \right]
 \end{equation}
-\end{widetext}
 
 If we want to allow both flights to be delayed at conflict $a_{i,k} = a_{j, k} = 1$, we must introduce an ancillary bit $a_k$ that indicates whether at least one flight is delayed at conflict $k$, adding
 \begin{equation}
@@ -172,3 +246,108 @@ replacing $\function{conflict}$ with
 
 \subsubsection{Interstitial delays}
 
+In the interstitial-delay model, the local modifications are not made \emph{at} conflicts but \emph{between} them, and conflicts are only avoided via accumulated delays.
+That is, the delay $d_{i, k}$ introduced to flight $i$ before reaching conflict $k$ but after leaving the previous conflict $\max_{k' \in K_{i, k}}k'$.
+Unlike in the flexible avoidance model, $d_{i,k}$ is now a variable rather than a parameter, and we encode it using bits $d_{i, k, \delta}$.
+\begin{multline}
+\function{interstitial}
+\left(
+{\left(
+d_{i, \alpha}
+\right)}_{i, \alpha},
+{\left(
+D_{i, k, \gamma}
+\right)}_{i, k \in K_i, \gamma}
+\right)
+=\\
+\function{encoding}
++
+\function{consistency}
++
+\function{conflict}
++
+\function{delay},
+\end{multline}
+where
+\begin{equation}
+\function{encoding}
+\left(
+{\left\{
+{\left\{
+d_{i, \alpha}
+\right\}}_{\alpha}
+\right\}}_i
+\cup
+\bigcup_i
+{\left\{
+{\left\{
+D_{i, k, \gamma}
+\right\}}_{\gamma}
+\right\}}_{k \in K_i}
+\right),
+\end{equation}
+
+%\begin{equation}
+%\function{encoding}
+%=
+%\weight{encoding}
+%\left[
+%\sum_{i=1}^{\Nf}
+%{\left(
+%\sum_{\alpha} d_{i, \alpha}
+%- 1
+%\right)}^2
+%+
+%\sum_{i=1}^{\Nf}
+%\sum_{k \in K_i}
+%{\left(
+%\sum_{\delta} d_{i, k, \delta} 
+%- 1
+%\right)}^2
+%+
+%\sum_{k=1}^{\Nc}
+%{\left(
+%\sum_{\delta} D_{i, k, \gamma} - 1
+%\right)}^2
+%\right]
+%\end{equation}
+
+\begin{equation}
+\function{consistency}
+=
+\sum_i
+\sum_{\left.k, k' \in K_i \middle| k' = \max K_{i, k}\right.}
+\sum_{(\gamma, \gamma') \in B_{i, k}}
+D_{i, k, \gamma} D_{i, k', \gamma'},
+\end{equation}
+
+%\begin{widetext}
+%\begin{equation}
+%\function{consistency}
+%=
+%\weight{consistency}
+%\sum_{i=1}^{\Nf}
+%\sum_{k \in K_i}
+%{\left(
+%\sum_{\alpha} \alpha d_{i, \alpha}
+%+
+%\sum_{k' \in K_{i, k}}
+%\delta d_{i, k, \delta}
+%-
+%\sum_{\gamma} \gamma D_{i, k, \gamma} 
+%\right)}^2
+%\end{equation}
+%\end{widetext}
+
+\begin{equation}
+\function{conflict}
+=
+\weight{conflict}
+\sum_{k=1}^{\Nc}
+\sum_{(\gamma, \gamma') \in B_k} D_{i, k, \gamma} D_{j, k, \gamma'},
+\end{equation}
+and
+\begin{equation}
+\function{delay}
+\sum_i \sum_{\gamma} D_{i, \max K_i, \gamma}.
+\end{equation}

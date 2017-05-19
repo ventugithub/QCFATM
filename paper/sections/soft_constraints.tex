@@ -17,16 +17,16 @@ this box-like boundary is found for all of our instances with up to $7$ flights 
 %In order to find these optimal penalty weights, we employed an exact solver
 %\footnote{Reference to mapping from QUBO to max sat and to akmaxsat solver} to explore the validity of a solution in dependence on the penalty weights.
 
-One can give an upper bound for the sufficiently large penalty weights by the following considerations.
-A minimal violation of the hard constraints yield an additional contribution to the QUBO cost function of $\lambda_\text{encoding}$ or $\lambda_\text{conflict}$, respectively.
-Such a violation would correspond to single bit flip in the binary delay variables $d_{i\alpha}$.
-Therefore the contribution from~\eqref{eqn:departure_delay_model_qubo_departure} would be reduced maximally by 
-\begin{equation*}
-    \min_\alpha \frac{-\alpha}{d_\text{max}} = - 1    
-\end{equation*}
-Hence, sufficiently large penalty weights must fulfill the following conditions
-\begin{align*}
-    \lambda_\text{encoding} & > 1 \\
-    \lambda_\text{conflict} &> 1 \, .
-\end{align*}
-This corresponds to a box like shape as it appears in figure~\ref{fig:penalty_weights}.
+%One can give an upper bound for the sufficiently large penalty weights by the following considerations.
+%A minimal violation of the hard constraints yield an additional contribution to the QUBO cost function of $\lambda_\text{encoding}$ or $\lambda_\text{conflict}$, respectively.
+%Such a violation would correspond to single bit flip in the binary delay variables $d_{i\alpha}$.
+%Therefore the contribution from~\eqref{eqn:departure_delay_model_qubo_departure} would be reduced maximally by 
+%\begin{equation*}
+%    \min_\alpha \frac{-\alpha}{d_\text{max}} = - 1    
+%\end{equation*}
+%Hence, sufficiently large penalty weights must fulfill the following conditions
+%\begin{align*}
+%    \lambda_\text{encoding} & > 1 \\
+%    \lambda_\text{conflict} &> 1 \, .
+%\end{align*}
+%This corresponds to a box like shape as it appears in figure~\ref{fig:penalty_weights}.

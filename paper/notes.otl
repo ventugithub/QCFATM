@@ -1,0 +1,18 @@
+scaling of delay
+overloading of B_k
+
+method to avoid D_{i,k,gamma} bits using fewer alternative
+
+more precisely parameterized penalty weights
+
+penalty weight analysis
+
+number to indicate average size of conflict (number of pairs of trajectory points)
+
+T_i vs T_k
+
+Tobias:
+Fix Fig. 3
+Fix Fig. 4
+Fix Fig. 10
+Fix Fig. 12 (rescaling)

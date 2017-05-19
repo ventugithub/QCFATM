@@ -7,7 +7,7 @@ for this reason, they are called the ``wind-optimal'' trajectories.
 Because of the number of such trajectories and the correlation between them, these trajectories are likely to conflict; that is, two or more aircraft are likely to get dangerously close to each other if their ideal trajectories are followed without modification.
 The goal thus is to modify the trajectories to avoid such conflicts.
 
-In theory, the configuration space consists of all physically realistic trajectories; in practice, computational bounds constrain us to consider perturbations of the ideal trajectories.
+In theory, the configuration space consists of all physically realistic trajectories; in practice, computational bounds constrain us to consider certain perturbations of the ideal trajectories.
 The simplest such perturbation is a departure delay, which is the main focus of the present work.
 Previous work~\cite{rodionova16} additionally considered a global perturbation by which a trajectory is sinusoidally shifted parallel to the Earth's surface.
 We focus instead on local perturbations to the trajectories, in which a modification to the trajectory is parameterized by some choice of active maneuvers near a potential conflict; such a modification does not affect the preceding part of the trajectory and only affects the subsequent part by the additional delay it introduces.
@@ -28,6 +28,7 @@ A pair of trajectory points $(x_{i,s}, x_{j,t})$ conflict if their spatial and t
 \begin{equation}
 \left\|x_{i, s} - x_{j,t}\right\| < \Delta_x \text{ and } 
 \left|\left(s + \delta_{i, s}\right) - \left(t + \delta_{j,t}\right)\right|
+< \Delta_t
 \end{equation}.
 The latter condition can be met for some 
 $\left(\delta_{i,s}, \delta_{j,t} \right) \in [0, \delta^*_{i,s}] \times [0, \delta^*_{j,t}]$ if and only if 
@@ -47,7 +48,7 @@ $s'' \in [\min \{s, s'\}, \max\{s, s'\}]$
 there exists some 
 ${t'' \in [\min \{t, t'\}, \max\{t, t'\}]}$
 such that
-${\left\{(i, s''), (j, t'')\right\} \in C_k}$.
+${\left\{(i, s''), (j, t'')\right\} \in C_k}$ and vice versa.
 Thus every conflict $k$ is associated with a pair of flights $I_k = \{i, j\}$.
 Let $K_i = \left\{k \middle| i \in I_k \right\}$ be the set of conflicts to which flight $i$ is associated, $\Nc$ the number of conflicts, and $\Nf$ the number of flights.
 
@@ -70,23 +71,24 @@ This is the quantity we wish to minimize subject to avoiding all potential confl
 \label{fig:example_parallel_conflict}
 \end{figure}
 
-\begin{figure}[htpb]
-    \begin{center}
-        \includegraphics[width=0.45\textwidth]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
-    \end{center}
-    \caption[Conflict preproccesing]{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
-\label{fig:preprocessing_reduction_number_of_conflicts}
-\end{figure}
+%\begin{figure}[htpb]
+%    \begin{center}
+%        \includegraphics[width=0.45\textwidth]{./pics/preprocessing_reduction_number_of_conflicts.pdf}
+%    \end{center}
+%    \caption[Conflict preproccesing]{Preprocessing: Reduction in the number of potential conflicts for various upper delay bounds $D_\text{max}$.}
+%\label{fig:preprocessing_reduction_number_of_conflicts}
+%\end{figure}
 
 A conflict can be avoided locally by introducing earlier delays differentially, thereby increasing the temporal separation; by some active maneuver of one or both of the flights; or by some combination thereof.
 We focus on the former case.
 Let 
 \begin{equation}
 \label{eq:accum-delay}
-D_{i, k} = d_i + \sum_{\left.k' \in K_i \middle| k' < k\right.} d_{i,k'}
+D_{i, k} = d_i + \sum_{k' \in K_{i, k}} d_{i,k'}
 \end{equation}
-be the accumulated delay of flight $i$ by the time it reaches conflict $k$.
-In this case, $\delta_{i, s} = D_{i, k}$ for all $s$ associated with flight $i$ in conflict $k$, $\left\{ s \middle| (s, t) \in T_k\right\}$.
+be the accumulated delay of flight $i$ by the time it reaches conflict $k$,
+where $K_{i, k} = \left\{k' \in K_i \middle| k' < k\right\}$.
+In this case, $\delta_{i, s} = D_{i, k}$ for all $s$ associated with flight $i$ in conflict $k$.
 We assume that the set of conflicts $K_i$ associated with flight $i$ is indexed in temporal order, i.e.\ if $k' < k$ and $k, k' \in K_i$, then flight $i$ reaches conflict $k'$ before conflict $k$.
 The pairs of conflicting trajectory points associated with conflict $k$ are given by 
 \begin{equation}
