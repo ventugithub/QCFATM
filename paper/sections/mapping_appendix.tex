@@ -3,12 +3,13 @@ In this section we describe a mapping to QUBO of a more general version of the d
 
 \subsection{Global trajectory modifications}
 Consider the case in which each trajectory can be modified by a departure delay and some parameterized spatial transformation, i.e.\ for each flight $i$ there is a variable $d_i$ and some parameter $\boldsymbol \theta_i$.
-For example, Rodionova et al.\ consider a single angle $\theta_i$ that determines a sinusoidal transformation of the trajectory.
-To map to QUBO, we require that these variables be allowed to take on values from some finite set, so that are QUBO variables are $\{d_{i, \alpha}\}$ and $\{\boldsymbol \theta_{i,\phi}\}$, where $d_{i, \alpha} = 1$ ($d_{i, \alpha}$) indicates that $d_i = \alpha$ ($d_i \neq \alpha$) and similarly for $\boldsymbol \theta_{i, \phi}$.
+For example, Rodionova et al.~\cite{rodionova16} consider a single angle $\theta_i$ that determines a sinusoidal transformation of the trajectory.
+For the QUBO mapping, we require that these variables be allowed to take on values from some finite set, so that are QUBO variables are $\{d_{i, \alpha}\}$ and $\{\boldsymbol \theta_{i,\phi}\}$, where $d_{i, \alpha} = 1$ ($d_{i, \alpha}$) indicates that $d_i = \alpha$ ($d_i \neq \alpha$) and similarly for $\boldsymbol \theta_{i, \phi}$.
 For every pair of flights $i < j$, we can efficiently (in time and space polynomial in the size of the input) compute whether the corresponding trajectories conflict when modified according to $d_i$, $d_j$, $\boldsymbol \theta_i$ and $\boldsymbol \theta_j$.
 Let $B_{i, j}$ be the set of values of $(d_i, \boldsymbol \theta_i, d_j, \boldsymbol \theta_j)$ such that the the modified trajectories conflict.
 Lastly, let $d_{(i, \alpha), (j, \beta)}$ indicate that $d_i = \alpha$ and $ d_j = \beta$, and similarly for $\boldsymbol \theta_{(i, \phi), (j, \psi)}$.
 The overall cost function is
+\begin{widetext}
 \begin{equation}
 \function{global}
 \left(
@@ -23,7 +24,6 @@ The overall cost function is
 \function{conflict},
 \end{equation}
 where 
-\begin{widetext}
 \begin{equation}
   \function{encoding}
   =
@@ -112,6 +112,7 @@ Let $D_{k, \gamma} = 1$ ($D_{k, \gamma} = 0$) indicate that $D_k = \gamma$ ($D_k
 \function{consistency} + 
 \function{conflict}
 \end{equation}
+\begin{widetext}
 \begin{equation}
 \function{encoding}
 =
@@ -151,6 +152,7 @@ D_{k, \gamma}
 + 2 a_{i, k} a_{j, k}
 \right]
 \end{equation}
+\end{widetext}
 
 If we want to allow both flights to be delayed at conflict $a_{i,k} = a_{j, k} = 1$, we must introduce an ancillary bit $a_k$ that indicates whether at least one flight is delayed at conflict $k$, adding
 \begin{equation}
