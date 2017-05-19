@@ -19,7 +19,7 @@ While not guaranteed to return the global optimum in general, for the sizes of i
 % I_18
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{figure}[h]
+\begin{figure}[htpb]
 \centering
 \includegraphics[width=0.45\textwidth]{./pics/delay_only_cp_results.pdf}
 \caption[Effect of discretization on solution quality]{Top: Minimum total delay of a problem instance with $19$ flights and $47$ conflicts for various values of $\Delta_d$ and $d_{\max}$.
@@ -47,11 +47,11 @@ As expected, the total delay decreases by decreasing $\Delta_d$.
 This is consistent with the idea that smaller $\Delta_d$ allows a finer optimization of the delays of the flights.
 
 
-\begin{figure*}
+\begin{figure}[htpb]
   \includegraphics[width=\columnwidth]{pics/qubo_icm/qubo_icm_3.pdf}
   \caption{Total delay in dependence of the discretization parameter $\Delta_d$ for 9 different problem instances with up to in $12$ flights and $25$ conflicts.}
 \label{fig:icm1}
-\end{figure*}
+\end{figure}
 
 In Figure~(\ref{fig:icm2}) we show the optimal delay time found by ICM as a
 function of the number of the flights in the connected components. Results are
@@ -63,7 +63,7 @@ in Section~\ref{sec:instances}, the underlying graph of connected components
 look more like a fully-connected graph rather than a tree graph by increasing
 the number of flights inside the connected component.
 
-\begin{figure}
+\begin{figure}[h]
   \includegraphics[width=\columnwidth]{pics/qubo_icm/qubo_icm_2.pdf}
   \caption{\label{fig:icm2}. Optimal total delay found by using the Isoenergetic
   Cluster Method (ICM) at fixed time step $\Delta_d$ as a function of numbers of
