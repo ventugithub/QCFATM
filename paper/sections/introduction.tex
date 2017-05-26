@@ -11,10 +11,40 @@ This development is driven also by first commercially available quantum annealin
 In addition to studying the fundamental properties of quantum annealing, it is imperative to find possible real world application for this technology.
 Hard operational planning problems are a promising candidate for the latter \cite{Rieffel2015, AAAI148614, Venturelli2015}.
 
-In this work, we investigate the feasibility of applying quantum annealing to the deconfliction of wind-optimal trajectories. 
-In the course of this, we use wind-optimal trajectory data to extract realistic problem instances.
-To be amenable to a D-Wave Quantum annealer, the problem has to be formulated as a quadratic unconstrained binary optimization (QUBO) problem.
-We demonstrate the mapping of deconfliction problem to a QUBO formulation.
-Since restrictions to the configurations space are necessary for the reformulation of the problem as a QUBO, we investigate the influence of this restriction on the solution quality.
-Moreover, we study the embeddability and solution quality using both classical solvers and quantum annealing runs.
+{
+\color{red} 
+In this work, we investigate the feasibility of applying quantum annealing to the deconflicting of wind-optimal trajectories. 
+To be amenable to a D-Wave quantum annealer, the problem has to be formulated as a quadratic unconstrained binary optimization (QUBO) problem.
+For the main part of the paper, we restrict ourselves to a simplified version of the problem by considering departure delays only while neglecting maneuvers.
+We present a detailed study of the structure of this problem which provides insights beyond the scope of quantum annealing.
+In particular, we perform the following analyses
 
+
+\begin{itemize}
+    \item
+    Given the wind-optimal trajectories, we extract natural subsets of the overall problem and study their hardness.
+    We found that the problems are hard in general and become harder as we increase the upper bound for the departure delays.
+
+    \item
+    Restrictions to the configurations space are necessary for the reformulation of the problem as a QUBO.
+    Therefore, we employ classical solvers to investigating the influence of discretization on the solution quality.
+    As a result, we found that finer discretization increases the solution quality and moderate upper bounds for the departure delays are sufficient for a good solution quality.
+
+    \item
+    We demonstrate the mapping of the deconflicting problem to a QUBO formulation for models with (appendix) and without maneuvers (main text).
+    In the course of this, we investigate the sufficient penalty weights for the hard constraints in the problem.
+    Here we found that these penalty weights are largely independent of the problem instances.
+
+    \item
+    We investigate the embedding of QUBO instances to the D-Wave quantum annealer as well as the quality of their solutions. 
+    We were able to embed and solve smaller problem instances and found that finer model discretizations as well as larger problem sizes decrease the success probability due to the limited precision of the D-Wave 2X machine.
+
+\end{itemize}
+
+The paper is organized as follows:
+We begin by formulating the deconflicting problem as a combinatorial optimization problem and describing the preprocessing necessary for this mapping in Section~\ref{sec:problem_specification}.
+In Section~\ref{sec:instances} we investigate the structure and hardness of problem instances before we study the impact of discretization on the solution quality in Section~\ref{sec:discretization}.
+Afterwards, we discuss the mapping of the problem to a QUBO in Section~\ref{sec:mapping}.
+Finally we report on the embeddability of the QUBO instances and their solution quality on a D-Wave 2X device in Section~\ref{sec:qa}.
+In the appendix, we present more general mappings (including maneuvers) of the original deconflicting problem to QUBOs.
+}

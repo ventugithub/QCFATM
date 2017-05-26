@@ -1,4 +1,4 @@
-personal_ws-1.1 en 59 
+personal_ws-1.1 en 62 
 deconflicting
 qu
 QUBOs
@@ -16,6 +16,7 @@ treewidth
 Discretizing
 deconflicted
 ICM
+encodings
 discretize
 preproccesing
 TODO
@@ -42,7 +43,9 @@ dataset
 prefactor
 deconflict
 discretized
+unary
 misspecification
+versa
 parameterization
 rejectionfree
 pre
