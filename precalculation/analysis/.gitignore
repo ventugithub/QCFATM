@@ -3,4 +3,7 @@
 *.swp
 *.out
 *.pdf
+*.npz
+*.h5
+*pics
 analysis_files/
